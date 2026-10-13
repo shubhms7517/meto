@@ -17,6 +17,7 @@ import Coin from './Coin';
 import { useWallet } from '../context/WalletContext';
 import { colors, gradients } from '../theme';
 import { timeAgo, UserCard as Card } from '../services/users';
+import { tap } from '../lib/haptics';
 
 type Props = { user: Card; onPress: () => void; onCall: () => void };
 
@@ -127,7 +128,13 @@ function UserCard({ user, onPress, onCall }: Props) {
         ) : null}
       </View>
 
-        <Pressable onPress={onCall} hitSlop={6} style={styles.callWrap}>
+        <Pressable
+          onPress={() => {
+            tap();
+            onCall();
+          }}
+          hitSlop={6}
+          style={styles.callWrap}>
           <LinearGradient
             colors={gradients.rose}
             start={{ x: 0, y: 0 }}

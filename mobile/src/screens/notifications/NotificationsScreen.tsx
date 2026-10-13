@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, SectionList, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, SectionList, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { vipDate } from '../../services/rewards';
 import { useCall } from '../../context/CallContext';
 import { openNotification, useNotifications } from '../../context/NotificationContext';
 import type { RootStackParamList } from '../../navigation/types';
+import { EmptyState, ErrorState, refreshControl, SkeletonList } from '../../components/States';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
 
@@ -112,6 +113,8 @@ export default function NotificationsScreen({ navigation }: Props) {
   const [counts, setCounts] = useState<Record<NotifTab, number> | null>(null);
   const [next, setNext] = useState<number | null>(null);
   const [checkIn, setCheckIn] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async (t: NotifTab) => {
     try {
@@ -119,11 +122,16 @@ export default function NotificationsScreen({ navigation }: Props) {
       setItems(r.items);
       setCounts(r.unread);
       setNext(r.nextBefore);
-    } catch (e) {
-      setItems([]);
-      Alert.alert('Notifications', (e as Error).message);
+      setFailed(false);
+    } catch {
+      setFailed(true); // purani list ho to wahi dikhe, warna Retry
     }
   }, []);
+  const refresh = async () => {
+    setRefreshing(true);
+    await load(tab);
+    setRefreshing(false);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -329,11 +337,14 @@ export default function NotificationsScreen({ navigation }: Props) {
         </ScrollView>
       </View>
 
-      {!items ? (
-        <ActivityIndicator color={colors.rose1} style={{ marginTop: 50 }} />
+      {failed && !items ? (
+        <ErrorState onRetry={() => load(tab)} />
+      ) : !items ? (
+        <SkeletonList />
       ) : (
         <SectionList
           sections={sections}
+          refreshControl={refreshControl(refreshing, refresh)}
           keyExtractor={n => String(n.id)}
           stickySectionHeadersEnabled={false}
           contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
@@ -354,13 +365,7 @@ export default function NotificationsScreen({ navigation }: Props) {
             );
           }}
           renderItem={renderItem}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={{ fontSize: 40 }}>🔔</Text>
-              <Text style={styles.emptyTitle}>No notifications yet</Text>
-              <Text style={styles.emptyText}>Gifts, follows and missed calls will show up here.</Text>
-            </View>
-          }
+          ListEmptyComponent={<EmptyState icon="🔔" title="No notifications yet" text="Gifts, follows and missed calls will show up here." />}
         />
       )}
       {checkIn && <CheckInSheet onClose={() => setCheckIn(false)} />}
@@ -409,7 +414,4 @@ const styles = StyleSheet.create({
   noticeTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   noticeTitle: { color: colors.gold1, fontSize: 14, fontWeight: '800', flex: 1 },
   noticeBody: { color: colors.muted, fontSize: 12.5, lineHeight: 18, marginTop: 6, marginBottom: 6 },
-  empty: { alignItems: 'center', marginTop: 70, paddingHorizontal: 40 },
-  emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 10 },
-  emptyText: { color: colors.muted, fontSize: 12.5, textAlign: 'center', marginTop: 6 },
 });

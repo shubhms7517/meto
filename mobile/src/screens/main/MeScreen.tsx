@@ -21,7 +21,6 @@ import Coin from '../../components/Coin';
 import Glow from '../../components/Glow';
 import Icon, { IconName } from '../../components/Icon';
 import { colors, gradients } from '../../theme';
-import { comingSoon } from '../../lib/comingSoon';
 import { useWallet } from '../../context/WalletContext';
 import VipBadge from '../../components/VipBadge';
 import { vipDate } from '../../services/rewards';
@@ -298,7 +297,7 @@ export default function MeScreen() {
 
         <View style={styles.menu}>
           {MENU.map((r, i) => (
-            <Pressable key={r.label} onPress={() => (r.action === 'checkin' ? setCheckInOpen(true) : r.to ? navigation.navigate(r.to) : comingSoon(r.label))} style={[styles.row, i > 0 && styles.rowBorder]}>
+            <Pressable key={r.label} onPress={() => (r.action === 'checkin' ? setCheckInOpen(true) : r.to && navigation.navigate(r.to))} style={[styles.row, i > 0 && styles.rowBorder]}>
               <View style={[styles.rowIc, { backgroundColor: r.bg }]}>
                 <Icon name={r.icon} size={17} color={r.tint} />
               </View>

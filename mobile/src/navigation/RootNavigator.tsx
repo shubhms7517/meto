@@ -26,6 +26,7 @@ import EditProfileScreen from '../screens/settings/EditProfileScreen';
 import CustomerServiceScreen from '../screens/settings/CustomerServiceScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import VisitorsScreen from '../screens/main/VisitorsScreen';
+import SupportChatScreen from '../screens/settings/SupportChatScreen';
 import DeleteAccountScreen from '../screens/settings/DeleteAccountScreen';
 import LegalScreen from '../screens/settings/LegalScreen';
 import HostStatusScreen from '../screens/host/HostStatusScreen';
@@ -78,6 +79,7 @@ export default function RootNavigator() {
         <Stack.Screen name="CustomerService" component={CustomerServiceScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="Visitors" component={VisitorsScreen} />
+        <Stack.Screen name="SupportChat" component={SupportChatScreen} />
         <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
         <Stack.Screen name="Legal" component={LegalScreen} />
         <Stack.Screen name="HostStatus" component={HostStatusScreen} />

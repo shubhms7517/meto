@@ -11,6 +11,7 @@ import { colors, gradients } from '../../theme';
 import { buyPack, fmt, getWallet, IS_TEST_PAYMENTS, type Pack, type WalletSummary, type WalletTx } from '../../services/wallet';
 import { useWallet } from '../../context/WalletContext';
 import type { RootStackParamList } from '../../navigation/types';
+import { PurchaseCancelled } from '../../services/billing';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Wallet'>;
 
@@ -68,10 +69,6 @@ export default function WalletScreen({ navigation }: Props) {
 
   const pay = async () => {
     if (!pack || paying) return;
-    if (!IS_TEST_PAYMENTS) {
-      Alert.alert('Coming soon', 'Payments via Google Play will be available soon.');
-      return;
-    }
     setPaying(true);
     try {
       const r = await buyPack(pack.id);
@@ -79,6 +76,7 @@ export default function WalletScreen({ navigation }: Props) {
       setDone({ tx: r.tx, pack });
       load();
     } catch (e) {
+      if (e instanceof PurchaseCancelled) return; // user ne Play pe khud band kiya
       Alert.alert('Recharge failed', (e as Error).message);
     } finally {
       setPaying(false);

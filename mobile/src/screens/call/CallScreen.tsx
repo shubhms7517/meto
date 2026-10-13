@@ -30,7 +30,6 @@ import Avatar from '../../components/Avatar';
 import Coin from '../../components/Coin';
 import Icon, { IconName } from '../../components/Icon';
 import { colors, gradients } from '../../theme';
-import { comingSoon } from '../../lib/comingSoon';
 import { useCall } from '../../context/CallContext';
 import { useWallet } from '../../context/WalletContext';
 import GiftSheet from '../../components/GiftSheet';

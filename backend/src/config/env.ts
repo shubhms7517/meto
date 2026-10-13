@@ -15,6 +15,10 @@ const schema = z.object({
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().min(1),
   PUBLIC_BASE_URL: z.url(),
 
+  // Google Play billing: app ka package + service account (khaali = Firebase wala hi)
+  PLAY_PACKAGE_NAME: z.string().default('com.meto'),
+  PLAY_SERVICE_ACCOUNT_PATH: z.string().default(''),
+
   // Agora video call (console.agora.io). Khaali ho to calls "not configured" bolengi.
   AGORA_APP_ID: z.string().default(''),
   AGORA_APP_CERTIFICATE: z.string().default(''),

@@ -7,6 +7,7 @@ import { Wallet, WalletTx } from '../models/index.js';
 import type { TxKind } from '../models/Wallet.js';
 import { VIP_RECHARGE_BONUS } from '../lib/pricing.js';
 import { getSettings, userRateFor } from '../lib/settings.js';
+import { consumePlayPurchase, verifyPlayPurchase } from '../lib/playBilling.js';
 import { addXp } from './level.js';
 import { notifyLater } from './notifications.js';
 import { HostProfile, User } from '../models/index.js';
@@ -135,14 +136,15 @@ export type PurchaseProof = { provider: 'dev' | 'google'; token: string };
 export async function purchasePack(userId: number, packId: string, proof: PurchaseProof) {
   const pack = PACKS.find(p => p.id === packId);
   if (!pack) throw badRequest('Unknown pack');
-  if (proof.provider === 'google') {
-    // TODO (Play Console): Google Play Developer API se token verify + consume
-    throw new HttpError(501, 'billing_not_ready', 'Payments are not available yet');
-  }
+  // Google Play: pack id = Play product id. Token sach me paid + isi user ka (warna ek pack ke paise me doosra)
+  const play = proof.provider === 'google' ? await verifyPlayPurchase(pack.id, proof.token, String((await User.findByPk(userId))?.publicId ?? '')) : null;
   // Token lamba ho sakta hai — uska hash rakhte hain
   const uniqueKey = `${proof.provider}:${createHash('sha256').update(proof.token).digest('hex')}`;
   const dup = await existing(uniqueKey);
-  if (dup) return { tx: dup, duplicate: true, balance: dup.balanceAfter };
+  if (dup) {
+    if (play) await consumePlayPurchase(pack.id, proof.token); // pichhli baar consume reh gaya ho
+    return { tx: dup, duplicate: true, balance: dup.balanceAfter };
+  }
 
   const tx = await sequelize.transaction(async t => {
     const { wallet, created } = await lockWallet(userId, t);
@@ -155,11 +157,12 @@ export async function purchasePack(userId: number, packId: string, proof: Purcha
     return post(t, wallet, gems, {
       kind: 'recharge',
       title: `Recharge · ₹${pack.priceInr.toLocaleString('en-IN')}`,
-      subtitle: proof.provider === 'dev' ? 'Test purchase' : 'Google Play',
+      subtitle: proof.provider === 'dev' ? 'Test purchase' : play?.test ? 'Google Play · test' : 'Google Play',
       uniqueKey,
-      meta: { packId: pack.id, gems: pack.gems, bonus: pack.bonus, firstBonus: 0, vipBonus: vipBonusOf(pack, vip), priceInr: pack.priceInr, provider: proof.provider },
+      meta: { packId: pack.id, gems: pack.gems, bonus: pack.bonus, firstBonus: 0, vipBonus: vipBonusOf(pack, vip), priceInr: pack.priceInr, provider: proof.provider, orderId: play?.orderId ?? null },
     });
   });
+  if (play) await consumePlayPurchase(pack.id, proof.token);
   notify(userId, tx.balanceAfter);
   notifyLater(userId, 'recharge', { data: { gems: tx.amount, priceInr: pack.priceInr }, uniqueKey: `recharge:${tx.id}` });
   // Level: kitne gems kharide (pack ke asli gems, bonus nahi)

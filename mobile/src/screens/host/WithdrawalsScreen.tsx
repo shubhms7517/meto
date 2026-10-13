@@ -1,12 +1,13 @@
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, StatusBar, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { FlatList, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
-import { getWithdrawals, rupees, type Withdrawal } from '../../services/host';
+import { getWithdrawals, rupees } from '../../services/host';
 import { HostHeader } from './common';
+import { EmptyState, ErrorState, refreshControl, SkeletonList } from '../../components/States';
+import { useLoad } from '../../hooks/useLoad';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Withdrawals'>;
 
@@ -19,25 +20,21 @@ const STATUS = {
 // Withdraw history: Processing / Paid (UTR) / Rejected (points wapas)
 export default function WithdrawalsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const [items, setItems] = useState<Withdrawal[] | null>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      getWithdrawals()
-        .then(r => setItems(r.items))
-        .catch(() => setItems([]));
-    }, []),
-  );
+  const L = useLoad(() => getWithdrawals().then(r => r.items), { focus: true });
+  const items = L.data;
 
   return (
     <View style={st.root}>
       <StatusBar barStyle="light-content" />
       <HostHeader title="Withdrawals" top={insets.top} onBack={() => navigation.goBack()} />
-      {!items ? (
-        <ActivityIndicator color={colors.rose1} style={{ marginTop: 50 }} />
+      {L.failed ? (
+        <ErrorState onRetry={L.retry} />
+      ) : !items ? (
+        <SkeletonList rows={4} />
       ) : (
         <FlatList
           data={items}
+          refreshControl={refreshControl(L.refreshing, L.refresh)}
           keyExtractor={w => String(w.id)}
           contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
           renderItem={({ item: w }) => {
@@ -61,7 +58,7 @@ export default function WithdrawalsScreen({ navigation }: Props) {
               </View>
             );
           }}
-          ListEmptyComponent={<Text style={st.empty}>No withdrawals yet</Text>}
+          ListEmptyComponent={<EmptyState icon="🏦" title="No withdrawals yet" text="Once you have ₹500 or more, withdraw to your UPI from Me → Withdraw." />}
           ListFooterComponent={
             items.length ? (
               <View style={st.info}>
@@ -85,7 +82,6 @@ const st = StyleSheet.create({
   sub: { color: colors.muted, fontSize: 11, marginTop: 2 },
   pill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   pillText: { fontSize: 10.5, fontWeight: '800' },
-  empty: { color: colors.fine, textAlign: 'center', marginTop: 40 },
   info: { marginHorizontal: 16, marginTop: 16, padding: 11, borderRadius: 12, backgroundColor: 'rgba(246,220,155,0.06)', borderWidth: 1, borderColor: 'rgba(246,220,155,0.22)' },
   infoText: { color: colors.muted, fontSize: 11.5, lineHeight: 17 },
 });

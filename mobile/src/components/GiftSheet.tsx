@@ -10,6 +10,7 @@ import { GIFT_QTYS, GIFT_TABS, getGifts, sendGift, type Gift, type GiftBody } fr
 import { fmt } from '../services/wallet';
 import { useWallet } from '../context/WalletContext';
 import type { ChatMessage } from '../services/chat';
+import { success } from '../lib/haptics';
 
 type Props = {
   to: { id: number; name?: string | null };
@@ -56,6 +57,7 @@ export default function GiftSheet({ to, callId, onClose, onSent, onWallet }: Pro
     if (before != null) setBalance(before - total);
     try {
       const r = await sendGift(to.id, gift.id, qty, newClientId(), callId);
+      success();
       setBalance(r.balance);
       onSent(r.gift, r.message);
       onClose();

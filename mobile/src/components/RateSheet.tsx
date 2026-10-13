@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { colors, gradients } from '../theme';
+import { success } from '../lib/haptics';
 
 type Props = {
   visible: boolean;
@@ -41,6 +42,7 @@ export default function RateSheet({ visible, value, min, max, step, pointsPerInr
     setSaving(true);
     try {
       await onSave(rate);
+      success();
       onClose();
     } finally {
       setSaving(false);

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -10,7 +10,9 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  View, Alert } from 'react-native';
+  View,
+  Alert,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,9 +29,18 @@ import { useCall } from '../../context/CallContext';
 import Icon from '../../components/Icon';
 import { colors, gradients } from '../../theme';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { compact, getProfile, type MediaItem, setFollow, unlockMedia, UserProfile } from '../../services/users';
+import {
+  compact,
+  getProfile,
+  type MediaItem,
+  setFollow,
+  unlockMedia,
+  UserProfile,
+} from '../../services/users';
 import { ApiError } from '../../services/api';
 import type { RootStackParamList } from '../../navigation/types';
+import { refreshControl } from '../../components/States';
+import { tap } from '../../lib/haptics';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
@@ -46,7 +57,13 @@ export default function ProfileScreen({ navigation, route }: Props) {
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [giftOpen, setGiftOpen] = useState(false);
-  const { rateFor, amHost, setBalance, openRecharge, hostRate: myRate } = useWallet();
+  const {
+    rateFor,
+    amHost,
+    setBalance,
+    openRecharge,
+    hostRate: myRate,
+  } = useWallet();
   const [burst, setBurst] = useState<Burst | null>(null);
   const [error, setError] = useState('');
   const [slide, setSlide] = useState(0);
@@ -56,26 +73,58 @@ export default function ProfileScreen({ navigation, route }: Props) {
 
   // Chhota header sirf dikhne pe touch le — warna neeche ke hero buttons (❤, ⋯) block ho jaate hain
   useEffect(() => {
-    const sub = scrollY.addListener(({ value }) => setStickyOn(value > HERO_H - 120));
+    const sub = scrollY.addListener(({ value }) =>
+      setStickyOn(value > HERO_H - 120),
+    );
     return () => scrollY.removeListener(sub);
   }, [scrollY]);
   const beat = useRef(new Animated.Value(1)).current;
 
+  const [refreshing, setRefreshing] = useState(false);
+  const load = useCallback(
+    () =>
+      getProfile(id)
+        .then(u => {
+          setUser(u);
+          setError('');
+        })
+        .catch(e => setError((e as Error).message)),
+    [id],
+  );
   useEffect(() => {
-    getProfile(id)
-      .then(setUser)
-      .catch(e => setError((e as Error).message));
-  }, [id]);
+    load();
+  }, [load]);
+  const refresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
 
   // Follow kiya hua ho to heart dhadakta hai
   useEffect(() => {
     if (!user?.isFollowing || reduced) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(beat, { toValue: 1.22, duration: 160, useNativeDriver: true }),
-        Animated.timing(beat, { toValue: 0.95, duration: 160, useNativeDriver: true }),
-        Animated.timing(beat, { toValue: 1.12, duration: 160, useNativeDriver: true }),
-        Animated.timing(beat, { toValue: 1, duration: 160, useNativeDriver: true }),
+        Animated.timing(beat, {
+          toValue: 1.22,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+        Animated.timing(beat, {
+          toValue: 0.95,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+        Animated.timing(beat, {
+          toValue: 1.12,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+        Animated.timing(beat, {
+          toValue: 1,
+          duration: 160,
+          useNativeDriver: true,
+        }),
         Animated.delay(960),
       ]),
     );
@@ -84,15 +133,24 @@ export default function ProfileScreen({ navigation, route }: Props) {
   }, [user?.isFollowing, reduced, beat]);
 
   const toggleFollow = async () => {
+    tap();
     if (!user || user.isMe) return;
     const next = !user.isFollowing;
     // Turant UI update, server fail ho to wapas
-    setUser({ ...user, isFollowing: next, followersCount: user.followersCount + (next ? 1 : -1) });
+    setUser({
+      ...user,
+      isFollowing: next,
+      followersCount: user.followersCount + (next ? 1 : -1),
+    });
     try {
       const res = await setFollow(user.id, next);
       setUser(u => (u ? { ...u, ...res } : u));
     } catch {
-      setUser(u => (u ? { ...u, isFollowing: !next, followersCount: user.followersCount } : u));
+      setUser(u =>
+        u
+          ? { ...u, isFollowing: !next, followersCount: user.followersCount }
+          : u,
+      );
     }
   };
 
@@ -102,67 +160,129 @@ export default function ProfileScreen({ navigation, route }: Props) {
     blocked: !!user?.isBlockedByMe,
     onBlockedChange: b =>
       setUser(u =>
-        u ? { ...u, isBlockedByMe: b, ...(b ? { isFollowing: false, online: false, followersCount: Math.max(0, u.followersCount - (u.isFollowing ? 1 : 0)) } : {}) } : u,
+        u
+          ? {
+              ...u,
+              isBlockedByMe: b,
+              ...(b
+                ? {
+                    isFollowing: false,
+                    online: false,
+                    followersCount: Math.max(
+                      0,
+                      u.followersCount - (u.isFollowing ? 1 : 0),
+                    ),
+                  }
+                : {}),
+            }
+          : u,
       ),
   });
 
   // Upar swipe hone wali photos: avatar + album ki khuli photos (duplicate hata ke)
   const slides = user
-    ? [...new Set([user.avatarUrl, ...user.photos.map(p => p.url)].filter((u): u is string => !!u))]
+    ? [
+        ...new Set(
+          [user.avatarUrl, ...user.photos.map(p => p.url)].filter(
+            (u): u is string => !!u,
+          ),
+        ),
+      ]
     : [];
 
   // Lock wali photo / video: gems dekar kholo (host ko kamai). Ek baar khuli = hamesha
   const askUnlock = (kind: 'photo' | 'video', m: MediaItem) => {
     if (!user || !m.price) return;
-    Alert.alert(kind === 'photo' ? 'Unlock photo?' : 'Unlock video?', `Unlock for ${m.price} gems. It stays unlocked for you.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: `Unlock · ${m.price}`,
-        onPress: async () => {
-          try {
-            const r = await unlockMedia(user.id, kind, m.id);
-            if (r.balance != null) setBalance(r.balance);
-            const fresh = await getProfile(user.id);
-            setUser(fresh);
-            if (kind === 'photo') {
-              const urls = fresh.photos.filter(x => x.url).map(x => x.url as string);
-              setViewer(urls.indexOf(r.url));
+    Alert.alert(
+      kind === 'photo' ? 'Unlock photo?' : 'Unlock video?',
+      `Unlock for ${m.price} gems. It stays unlocked for you.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: `Unlock · ${m.price}`,
+          onPress: async () => {
+            try {
+              const r = await unlockMedia(user.id, kind, m.id);
+              if (r.balance != null) setBalance(r.balance);
+              const fresh = await getProfile(user.id);
+              setUser(fresh);
+              if (kind === 'photo') {
+                const urls = fresh.photos
+                  .filter(x => x.url)
+                  .map(x => x.url as string);
+                setViewer(urls.indexOf(r.url));
+              }
+            } catch (e) {
+              if (e instanceof ApiError && e.code === 'insufficient_gems')
+                openRecharge({
+                  needed: m.price!,
+                  peerName: user.name ?? undefined,
+                });
+              else Alert.alert('Unlock', (e as Error).message);
             }
-          } catch (e) {
-            if (e instanceof ApiError && e.code === 'insufficient_gems') openRecharge({ needed: m.price!, peerName: user.name ?? undefined });
-            else Alert.alert('Unlock', (e as Error).message);
-          }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const openAlbumPhoto = (p: UserProfile['photos'][number]) => {
     if (p.isLocked || !p.url) {
       if (p.price) askUnlock('photo', p);
       // Aam user ki private photo: chat ya call ke baad khulti hai (paisa nahi)
-      else Alert.alert('Private photo 🔒', `${user?.name ?? 'This user'} shares private photos only with people they have chatted or called with.`);
+      else
+        Alert.alert(
+          'Private photo 🔒',
+          `${
+            user?.name ?? 'This user'
+          } shares private photos only with people they have chatted or called with.`,
+        );
       return;
     }
     setViewer(slides.indexOf(p.url));
   };
-  const stickyOpacity = scrollY.interpolate({ inputRange: [HERO_H - 160, HERO_H - 90], outputRange: [0, 1], extrapolate: 'clamp' });
+  const stickyOpacity = scrollY.interpolate({
+    inputRange: [HERO_H - 160, HERO_H - 90],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
   const followBtn = (small = false) => (
-    <Pressable onPress={toggleFollow} style={[styles.glass, user?.isFollowing && styles.glassFollow, small && styles.glassSolid]}>
-      <Animated.View style={{ transform: [{ scale: user?.isFollowing ? beat : 1 }] }}>
-        <Icon name={user?.isFollowing ? 'heart' : 'heartOutline'} size={19} color={user?.isFollowing ? colors.rose1 : '#fff'} />
+    <Pressable
+      onPress={toggleFollow}
+      style={[
+        styles.glass,
+        user?.isFollowing && styles.glassFollow,
+        small && styles.glassSolid,
+      ]}
+    >
+      <Animated.View
+        style={{ transform: [{ scale: user?.isFollowing ? beat : 1 }] }}
+      >
+        <Icon
+          name={user?.isFollowing ? 'heart' : 'heartOutline'}
+          size={19}
+          color={user?.isFollowing ? colors.rose1 : '#fff'}
+        />
       </Animated.View>
     </Pressable>
   );
 
-  if (error) {
+  if (error && !user) {
     return (
       <View style={[styles.root, styles.center]}>
         <Text style={styles.errorText}>{error}</Text>
-        <Pressable onPress={() => navigation.goBack()} style={styles.errorBtn}>
-          <Text style={styles.errorBtnText}>Go back</Text>
-        </Pressable>
+        <View style={styles.errorRow}>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={styles.errorBtn}
+          >
+            <Text style={styles.errorBtnText}>Go back</Text>
+          </Pressable>
+          <Pressable onPress={load} style={styles.errorBtn}>
+            <Text style={styles.errorBtnText}>Retry</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -174,7 +294,12 @@ export default function ProfileScreen({ navigation, route }: Props) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
         scrollEventThrottle={16}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}>
+        refreshControl={refreshControl(refreshing, refresh)}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+      >
         {/* ---------- Hero photo(s) ---------- */}
         <View style={{ height: HERO_H }}>
           {slides.length > 0 ? (
@@ -184,26 +309,45 @@ export default function ProfileScreen({ navigation, route }: Props) {
               pagingEnabled
               showsHorizontalScrollIndicator={false}
               keyExtractor={(u, i) => `${i}-${u}`}
-              onMomentumScrollEnd={e => setSlide(Math.round(e.nativeEvent.contentOffset.x / W))}
+              onMomentumScrollEnd={e =>
+                setSlide(Math.round(e.nativeEvent.contentOffset.x / W))
+              }
               renderItem={({ item, index }) => (
                 <Pressable onPress={() => setViewer(index)}>
-                  <Image source={{ uri: item }} style={{ width: W, height: HERO_H }} resizeMode="cover" />
+                  <Image
+                    source={{ uri: item }}
+                    style={{ width: W, height: HERO_H }}
+                    resizeMode="cover"
+                  />
                 </Pressable>
               )}
             />
           ) : (
-            <Avatar uri={null} seed={id} style={StyleSheet.absoluteFill} iconScale={0.78} />
+            <Avatar
+              uri={null}
+              seed={id}
+              style={StyleSheet.absoluteFill}
+              iconScale={0.78}
+            />
           )}
           <LinearGradient
             pointerEvents="none"
-            colors={['rgba(0,0,0,0.4)', 'transparent', 'transparent', colors.bg]}
+            colors={[
+              'rgba(0,0,0,0.4)',
+              'transparent',
+              'transparent',
+              colors.bg,
+            ]}
             locations={[0, 0.22, 0.55, 0.98]}
             style={StyleSheet.absoluteFill}
           />
           {slides.length > 1 && (
             <View style={[styles.dots, { top: insets.top + 58 }]}>
               {slides.map((_, i) => (
-                <View key={i} style={[styles.dot, i === slide && styles.dotOn]} />
+                <View
+                  key={i}
+                  style={[styles.dot, i === slide && styles.dotOn]}
+                />
               ))}
             </View>
           )}
@@ -226,17 +370,31 @@ export default function ProfileScreen({ navigation, route }: Props) {
               </Text>
               {user.isVerified && <Icon name="verified" size={20} />}
               {user.isVip && <VipBadge size="md" />}
-              <LinearGradient colors={gradients.rose} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.likes}>
+              <LinearGradient
+                colors={gradients.rose}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.likes}
+              >
                 <Icon name="heart" size={13} color="#fff" />
-                <Text style={styles.likesText}>{compact(user.followersCount)}</Text>
+                <Text style={styles.likesText}>
+                  {compact(user.followersCount)}
+                </Text>
               </LinearGradient>
             </View>
             <Text style={styles.idText}>ID: {user.id}</Text>
 
             <View style={styles.tags}>
-              <Text style={styles.tag}>{COUNTRIES[user.country] ?? user.country}</Text>
+              <Text style={styles.tag}>
+                {COUNTRIES[user.country] ?? user.country}
+              </Text>
               <Text style={[styles.tag, styles.tagAge]}>
-                {user.gender === 'female' ? '♀' : user.gender === 'male' ? '♂' : '⚧'} {user.age}
+                {user.gender === 'female'
+                  ? '♀'
+                  : user.gender === 'male'
+                  ? '♂'
+                  : '⚧'}{' '}
+                {user.age}
               </Text>
               <Text style={[styles.tag, styles.tagLv]}>★ Lv.{user.level}</Text>
               {!!user.city && <Text style={styles.tag}>📍 {user.city}</Text>}
@@ -267,14 +425,29 @@ export default function ProfileScreen({ navigation, route }: Props) {
               <>
                 <View style={styles.secRow}>
                   <Text style={styles.sec}>Videos</Text>
-                  <Text style={styles.secHint}>{user.videos.length} videos</Text>
+                  <Text style={styles.secHint}>
+                    {user.videos.length} videos
+                  </Text>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.album}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.album}
+                >
                   {user.videos.map(v =>
                     v.url ? (
-                      <IntroVideo key={v.id} uri={v.url} style={styles.introVideo} label="Tap for sound" />
+                      <IntroVideo
+                        key={v.id}
+                        uri={v.url}
+                        style={styles.introVideo}
+                        label="Tap for sound"
+                      />
                     ) : (
-                      <Pressable key={v.id} onPress={() => askUnlock('video', v)} style={[styles.introVideo, styles.lockTile]}>
+                      <Pressable
+                        key={v.id}
+                        onPress={() => askUnlock('video', v)}
+                        style={[styles.introVideo, styles.lockTile]}
+                      >
                         <LockFace price={v.price} kind="video" />
                       </Pressable>
                     ),
@@ -287,12 +460,29 @@ export default function ProfileScreen({ navigation, route }: Props) {
               <>
                 <View style={styles.secRow}>
                   <Text style={styles.sec}>Album</Text>
-                  <Text style={styles.secHint}>{user.photos.length} photos</Text>
+                  <Text style={styles.secHint}>
+                    {user.photos.length} photos
+                  </Text>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.album}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.album}
+                >
                   {user.photos.map(p => (
-                    <Pressable key={p.id} onPress={() => openAlbumPhoto(p)} style={styles.albumPh}>
-                      {p.url ? <Image source={{ uri: p.url }} style={StyleSheet.absoluteFill} /> : <LockFace price={p.price} kind="photo" />}
+                    <Pressable
+                      key={p.id}
+                      onPress={() => openAlbumPhoto(p)}
+                      style={styles.albumPh}
+                    >
+                      {p.url ? (
+                        <Image
+                          source={{ uri: p.url }}
+                          style={StyleSheet.absoluteFill}
+                        />
+                      ) : (
+                        <LockFace price={p.price} kind="photo" />
+                      )}
                     </Pressable>
                   ))}
                 </ScrollView>
@@ -306,28 +496,53 @@ export default function ProfileScreen({ navigation, route }: Props) {
               colors={['rgba(246,220,155,0.14)', 'rgba(255,95,143,0.1)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.giftTotal}>
+              style={styles.giftTotal}
+            >
               <View style={styles.giftIc}>
                 <Text style={styles.giftIcText}>🎁</Text>
               </View>
               <View>
-                <Text style={styles.giftTotalNum}>{user.giftTotal.toLocaleString('en-IN')} gifts</Text>
-                <Text style={styles.giftTotalSub}>from {user.giftSenders} people</Text>
+                <Text style={styles.giftTotalNum}>
+                  {user.giftTotal.toLocaleString('en-IN')} gifts
+                </Text>
+                <Text style={styles.giftTotalSub}>
+                  from {user.giftSenders} people
+                </Text>
               </View>
-              {!user.isMe && user.isHost && !amHost && ( // gift sirf user → host
-                <Pressable onPress={() => setGiftOpen(true)} style={styles.sendWrap}>
-                  <LinearGradient colors={gradients.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.send}>
-                    <Text style={styles.sendText}>Send gift</Text>
-                  </LinearGradient>
-                </Pressable>
-              )}
+              {!user.isMe &&
+                user.isHost &&
+                !amHost && ( // gift sirf user → host
+                  <Pressable
+                    onPress={() => setGiftOpen(true)}
+                    style={styles.sendWrap}
+                  >
+                    <LinearGradient
+                      colors={gradients.gold}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.send}
+                    >
+                      <Text style={styles.sendText}>Send gift</Text>
+                    </LinearGradient>
+                  </Pressable>
+                )}
             </LinearGradient>
             {user.gifts.length > 0 ? (
               <View style={styles.gifts}>
                 {user.gifts.map(g => (
-                  <View key={g.id} style={[styles.gift, g.isRare && styles.giftRare]}>
+                  <View
+                    key={g.id}
+                    style={[styles.gift, g.isRare && styles.giftRare]}
+                  >
                     <Text style={styles.giftEmoji}>{g.icon}</Text>
-                    <Text style={[styles.giftCount, g.isRare && { color: colors.gold1 }]}>x{g.count}</Text>
+                    <Text
+                      style={[
+                        styles.giftCount,
+                        g.isRare && { color: colors.gold1 },
+                      ]}
+                    >
+                      x{g.count}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -339,7 +554,10 @@ export default function ProfileScreen({ navigation, route }: Props) {
       </Animated.ScrollView>
 
       {/* ---------- Upar buttons (hero pe) ---------- */}
-      <View style={[styles.heroBar, { top: insets.top + 6 }]} pointerEvents="box-none">
+      <View
+        style={[styles.heroBar, { top: insets.top + 6 }]}
+        pointerEvents="box-none"
+      >
         <Pressable onPress={() => navigation.goBack()} style={styles.glass}>
           <Icon name="back" size={19} color="#fff" />
         </Pressable>
@@ -357,11 +575,23 @@ export default function ProfileScreen({ navigation, route }: Props) {
       {/* ---------- Scroll ke baad chhota header ---------- */}
       <Animated.View
         pointerEvents={user && stickyOn ? 'box-none' : 'none'}
-        style={[styles.sticky, { paddingTop: insets.top + 6, opacity: stickyOpacity }]}>
-        <Pressable onPress={() => navigation.goBack()} style={[styles.glass, styles.glassSolid]}>
+        style={[
+          styles.sticky,
+          { paddingTop: insets.top + 6, opacity: stickyOpacity },
+        ]}
+      >
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={[styles.glass, styles.glassSolid]}
+        >
           <Icon name="back" size={19} color="#fff" />
         </Pressable>
-        <Avatar uri={user?.avatarUrl} seed={id} style={styles.mini} iconScale={0.9} />
+        <Avatar
+          uri={user?.avatarUrl}
+          seed={id}
+          style={styles.mini}
+          iconScale={0.9}
+        />
         <View style={styles.stickyText}>
           <Text style={styles.stickyName} numberOfLines={1}>
             {user?.name ?? initialName}
@@ -373,7 +603,9 @@ export default function ProfileScreen({ navigation, route }: Props) {
 
       {/* ---------- Blocked: Chat/Call ki jagah Unblock ---------- */}
       {user && !user.isMe && user.isBlockedByMe && (
-        <View style={[styles.blockedBar, { paddingBottom: insets.bottom + 14 }]}>
+        <View
+          style={[styles.blockedBar, { paddingBottom: insets.bottom + 14 }]}
+        >
           <Text style={styles.blockedText}>You blocked {user.name}</Text>
           <Pressable onPress={safety.unblock} style={styles.unblockBtn}>
             <Text style={styles.unblockText}>Unblock</Text>
@@ -387,17 +619,33 @@ export default function ProfileScreen({ navigation, route }: Props) {
           pointerEvents="box-none"
           colors={['transparent', colors.bg]}
           locations={[0, 0.35]}
-          style={[styles.actionBar, { paddingBottom: insets.bottom + 14 }]}>
-          <Pressable onPress={() => navigation.navigate('Chat', { id: user.id, name: user.name })} style={styles.chatBtn}>
+          style={[styles.actionBar, { paddingBottom: insets.bottom + 14 }]}
+        >
+          <Pressable
+            onPress={() =>
+              navigation.navigate('Chat', { id: user.id, name: user.name })
+            }
+            style={styles.chatBtn}
+          >
             <Icon name="chat" size={22} />
           </Pressable>
           {/* Video call sirf host ko (uske rate pe) */}
           {/* Call user ↔ host dono taraf (host ki call ka paisa user deta hai) */}
-          {user.isHost !== amHost && <CallButton rate={amHost ? myRate : rateFor(user.rate)} onPress={() => placeCall(user)} style={styles.callBtn} />}
+          {user.isHost !== amHost && (
+            <CallButton
+              rate={amHost ? myRate : rateFor(user.rate)}
+              onPress={() => placeCall(user)}
+              style={styles.callBtn}
+            />
+          )}
         </LinearGradient>
       )}
 
-      <PhotoViewer photos={slides} index={viewer} onClose={() => setViewer(null)} />
+      <PhotoViewer
+        photos={slides}
+        index={viewer}
+        onClose={() => setViewer(null)}
+      />
       {safety.sheets}
       {giftOpen && user && (
         <GiftSheet
@@ -409,7 +657,9 @@ export default function ProfileScreen({ navigation, route }: Props) {
           }}
           onSent={gift => {
             setBurst({ key: Date.now(), gift, text: 'You sent' });
-            getProfile(id).then(setUser).catch(() => {});
+            getProfile(id)
+              .then(setUser)
+              .catch(() => {});
           }}
         />
       )}
@@ -424,11 +674,30 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
   errorText: { color: colors.muted, fontSize: 14 },
-  errorBtn: { marginTop: 14, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, backgroundColor: colors.surface },
+  errorRow: { flexDirection: 'row', gap: 10 },
+  errorBtn: {
+    marginTop: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+  },
   errorBtnText: { color: colors.text, fontWeight: '600' },
 
-  dots: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 5 },
-  dot: { width: 22, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.35)' },
+  dots: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  dot: {
+    width: 22,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.35)',
+  },
   dotOn: { backgroundColor: '#fff' },
   onlineTag: {
     position: 'absolute',
@@ -442,13 +711,32 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: 'rgba(0,0,0,0.42)',
   },
-  live: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.online },
+  live: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.online,
+  },
   onlineText: { color: '#fff', fontSize: 11, fontWeight: '600' },
 
   sheet: { marginTop: -70, paddingHorizontal: 18 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  name: { color: colors.text, fontSize: 26, fontWeight: '700', letterSpacing: -0.3, flexShrink: 1 },
-  likes: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 5, height: 30, paddingHorizontal: 11, borderRadius: 15 },
+  name: {
+    color: colors.text,
+    fontSize: 26,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    flexShrink: 1,
+  },
+  likes: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    height: 30,
+    paddingHorizontal: 11,
+    borderRadius: 15,
+  },
   likesText: { color: '#fff', fontSize: 12.5, fontWeight: '700' },
   idText: { color: colors.fine, fontSize: 12, marginTop: 4 },
 
@@ -466,8 +754,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  tagAge: { color: colors.rose1, backgroundColor: 'rgba(255,95,143,0.12)', borderColor: 'rgba(255,95,143,0.3)' },
-  tagLv: { color: colors.gold1, backgroundColor: 'rgba(246,220,155,0.12)', borderColor: 'rgba(212,166,75,0.35)' },
+  tagAge: {
+    color: colors.rose1,
+    backgroundColor: 'rgba(255,95,143,0.12)',
+    borderColor: 'rgba(255,95,143,0.3)',
+  },
+  tagLv: {
+    color: colors.gold1,
+    backgroundColor: 'rgba(246,220,155,0.12)',
+    borderColor: 'rgba(212,166,75,0.35)',
+  },
 
   bio: {
     flexDirection: 'row',
@@ -481,9 +777,24 @@ const styles = StyleSheet.create({
   },
   bioText: { flex: 1, color: colors.text, fontSize: 13, lineHeight: 19 },
 
-  secRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sec: { color: colors.text, fontSize: 14, fontWeight: '600', marginTop: 18, marginBottom: 9 },
-  secHint: { color: colors.fine, fontSize: 11.5, marginTop: 18, marginBottom: 9 },
+  secRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sec: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 18,
+    marginBottom: 9,
+  },
+  secHint: {
+    color: colors.fine,
+    fontSize: 11.5,
+    marginTop: 18,
+    marginBottom: 9,
+  },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     height: 30,
@@ -531,12 +842,24 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(212,166,75,0.25)',
     marginBottom: 10,
   },
-  giftIc: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)' },
+  giftIc: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
   giftIcText: { fontSize: 20 },
   giftTotalNum: { color: colors.text, fontSize: 14, fontWeight: '700' },
   giftTotalSub: { color: colors.muted, fontSize: 11.5 },
   sendWrap: { marginLeft: 'auto' },
-  send: { height: 32, paddingHorizontal: 12, borderRadius: 11, justifyContent: 'center' },
+  send: {
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 11,
+    justifyContent: 'center',
+  },
   sendText: { color: colors.goldText, fontSize: 12, fontWeight: '600' },
   gifts: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   gift: {
@@ -550,13 +873,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  giftRare: { borderColor: 'rgba(212,166,75,0.45)', backgroundColor: 'rgba(246,220,155,0.08)' },
+  giftRare: {
+    borderColor: 'rgba(212,166,75,0.45)',
+    backgroundColor: 'rgba(246,220,155,0.08)',
+  },
   giftEmoji: { fontSize: 30 },
   giftCount: { color: colors.muted, fontSize: 11, fontWeight: '600' },
   noGifts: { color: colors.muted, fontSize: 12.5 },
 
-  heroBar: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center' },
-  heroTitle: { position: 'absolute', left: 0, right: 0, textAlign: 'center', color: '#fff', fontSize: 15, fontWeight: '600' },
+  heroBar: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  heroTitle: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   heroRight: { marginLeft: 'auto', flexDirection: 'row', gap: 8 },
   glass: {
     width: 40,
@@ -568,7 +908,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.14)',
   },
-  glassFollow: { backgroundColor: 'rgba(255,95,143,0.22)', borderColor: 'rgba(255,95,143,0.5)' },
+  glassFollow: {
+    backgroundColor: 'rgba(255,95,143,0.22)',
+    borderColor: 'rgba(255,95,143,0.5)',
+  },
   glassSolid: { backgroundColor: colors.surface, borderColor: colors.border },
 
   sticky: {
@@ -585,7 +928,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  mini: { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: colors.rose1 },
+  mini: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 2,
+    borderColor: colors.rose1,
+  },
   stickyText: { flex: 1 },
   stickyName: { color: colors.text, fontSize: 14.5, fontWeight: '700' },
   stickyOnline: { color: colors.online, fontSize: 10.5 },
@@ -605,9 +954,26 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   blockedText: { color: colors.muted, fontSize: 13.5 },
-  unblockBtn: { height: 40, paddingHorizontal: 18, borderRadius: 14, justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,95,143,0.5)', backgroundColor: 'rgba(255,95,143,0.1)' },
+  unblockBtn: {
+    height: 40,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,95,143,0.5)',
+    backgroundColor: 'rgba(255,95,143,0.1)',
+  },
   unblockText: { color: colors.rose1, fontSize: 13.5, fontWeight: '700' },
-  actionBar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 10, paddingHorizontal: 18, paddingTop: 26 },
+  actionBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 18,
+    paddingTop: 26,
+  },
   chatBtn: {
     width: 58,
     height: 58,
@@ -622,13 +988,21 @@ const styles = StyleSheet.create({
 });
 
 // Lock wali photo / video ka chehra: dhundhla + 🔒 + daam
-function LockFace({ price, kind }: { price?: number; kind: 'photo' | 'video' }) {
+function LockFace({
+  price,
+  kind,
+}: {
+  price?: number;
+  kind: 'photo' | 'video';
+}) {
   return (
     <LinearGradient colors={['#3a1d2b', '#24101a']} style={styles.locked}>
       <View style={styles.lockCircle}>
         <Icon name="lock" size={18} color={colors.gold1} />
       </View>
-      <Text style={styles.lockText}>{price ? `${kind === 'video' ? '🎥 ' : ''}${price} gems` : 'Private'}</Text>
+      <Text style={styles.lockText}>
+        {price ? `${kind === 'video' ? '🎥 ' : ''}${price} gems` : 'Private'}
+      </Text>
     </LinearGradient>
   );
 }

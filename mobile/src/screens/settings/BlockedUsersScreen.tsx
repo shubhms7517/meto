@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,19 +8,19 @@ import { colors } from '../../theme';
 import { BlockedUser, getBlocked, timeAgo, unblockUser } from '../../services/users';
 import { useChat } from '../../context/ChatContext';
 import type { RootStackParamList } from '../../navigation/types';
+import { EmptyState, ErrorState, refreshControl, SkeletonList } from '../../components/States';
+import { useLoad } from '../../hooks/useLoad';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BlockedUsers'>;
 
 export default function BlockedUsersScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { refresh } = useChat();
-  const [users, setUsers] = useState<BlockedUser[] | null>(null);
+  const L = useLoad(() => getBlocked().then(r => r.users));
+  const users = L.data;
+  const setUsers = L.setData;
   const [busy, setBusy] = useState<number | null>(null);
 
-  const load = useCallback(() => getBlocked().then(r => setUsers(r.users)).catch(() => setUsers([])), []);
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const unblock = (u: BlockedUser) =>
     Alert.alert(`Unblock ${u.name ?? 'user'}?`, 'They will be able to see your profile and message you again.', [
@@ -52,11 +52,14 @@ export default function BlockedUsersScreen({ navigation }: Props) {
         <Text style={styles.title}>Blocked users</Text>
       </View>
 
-      {!users ? (
-        <ActivityIndicator color={colors.rose1} style={{ marginTop: 40 }} />
+      {L.failed ? (
+        <ErrorState onRetry={L.retry} />
+      ) : !users ? (
+        <SkeletonList rows={4} />
       ) : (
         <FlatList
           data={users}
+          refreshControl={refreshControl(L.refreshing, L.refresh)}
           keyExtractor={u => String(u.id)}
           contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: insets.bottom + 20 }}
           ListHeaderComponent={
@@ -74,15 +77,7 @@ export default function BlockedUsersScreen({ navigation }: Props) {
               </Pressable>
             </View>
           )}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <View style={styles.emptyIc}>
-                <Icon name="lock" size={26} color={colors.rose1} />
-              </View>
-              <Text style={styles.emptyTitle}>No blocked users</Text>
-              <Text style={styles.emptyText}>You can block anyone from their profile or chat using the ⋯ menu.</Text>
-            </View>
-          }
+          ListEmptyComponent={<EmptyState icon="🛡️" title="No blocked users" text="You can block anyone from their profile or chat using the ⋯ menu." />}
         />
       )}
     </View>
@@ -101,8 +96,4 @@ const styles = StyleSheet.create({
   sub: { color: colors.fine, fontSize: 11.5, marginTop: 2 },
   btn: { height: 36, minWidth: 90, paddingHorizontal: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,95,143,0.5)', backgroundColor: 'rgba(255,95,143,0.1)' },
   btnText: { color: colors.rose1, fontSize: 13, fontWeight: '700' },
-  empty: { alignItems: 'center', marginTop: 80, paddingHorizontal: 40 },
-  emptyIc: { width: 64, height: 64, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,95,143,0.12)', marginBottom: 14 },
-  emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '600' },
-  emptyText: { color: colors.muted, fontSize: 12.5, textAlign: 'center', marginTop: 6, lineHeight: 18 },
 });

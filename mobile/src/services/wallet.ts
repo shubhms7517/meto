@@ -1,4 +1,5 @@
 import { api, jsonBody } from './api';
+import { finishPlayPurchase, playPurchase, recoverPlayPurchases } from './billing';
 
 export type Pack = {
   id: string;
@@ -34,16 +35,30 @@ export const getWallet = () => api<WalletSummary>('/api/wallet');
 export const getHistory = (filter: HistoryFilter, before?: number | null) =>
   api<HistoryPage>(`/api/wallet/history?filter=${filter}${before ? `&before=${before}` : ''}`);
 
-// Development: asli payment nahi, server test purchase maanta hai.
-// Release me yahan Google Play Billing ka purchase token jayega.
+// Development: asli payment nahi, server test purchase maanta hai. Release: Google Play
 export const IS_TEST_PAYMENTS = __DEV__;
 
-export function buyPack(packId: string) {
-  const token = `dev-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
-  return api<{ balance: number; tx: WalletTx; duplicate: boolean }>(
-    '/api/wallet/purchase',
-    { method: 'POST', ...jsonBody({ packId, provider: 'dev', token }) },
-  );
+type PackResult = { balance: number; tx: WalletTx; duplicate: boolean };
+const sendPack = (packId: string, provider: 'dev' | 'google', token: string) =>
+  api<PackResult>('/api/wallet/purchase', { method: 'POST', ...jsonBody({ packId, provider, token }) });
+
+// Gems kharidna: Play pe payment → server token jaanch ke gems deta hai → Play purchase poora
+export async function buyPack(packId: string): Promise<PackResult> {
+  if (IS_TEST_PAYMENTS) return sendPack(packId, 'dev', `dev-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`);
+  const p = await playPurchase(packId);
+  const r = await sendPack(packId, 'google', p.purchaseToken!);
+  await finishPlayPurchase(p);
+  return r;
+}
+
+// Pichhli baar payment ke beech app band hui ho to bache gems / VIP de do
+export function recoverPurchases() {
+  if (IS_TEST_PAYMENTS) return;
+  recoverPlayPurchases((sku, token) =>
+    sku.startsWith('vip_')
+      ? api('/api/rewards/vip/purchase', { method: 'POST', ...jsonBody({ planId: sku, provider: 'google', token }) })
+      : sendPack(sku, 'google', token),
+  ).catch(() => {});
 }
 
 export const fmt = (n: number) => n.toLocaleString('en-IN');

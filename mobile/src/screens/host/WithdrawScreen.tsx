@@ -8,6 +8,7 @@ import { colors, gradients } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import { getWithdrawInfo, requestWithdraw, rupees, type Withdrawal, type WithdrawInfo } from '../../services/host';
 import { HostHeader } from './common';
+import { success } from '../../lib/haptics';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Withdraw'>;
 
@@ -39,6 +40,7 @@ export default function WithdrawScreen({ navigation }: Props) {
     setSending(true);
     try {
       setSent((await requestWithdraw(amount)).withdrawal);
+      success();
     } catch (e) {
       Alert.alert('Withdraw', (e as Error).message);
     } finally {

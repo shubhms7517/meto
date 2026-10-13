@@ -13,6 +13,7 @@ import { HostProfile } from '../models/index.js';
 import { assertCanBeHost, reviewHost } from '../services/host.js';
 import { Agency } from '../models/index.js';
 import { markWithdrawalPaid, rejectWithdrawal } from '../services/withdraw.js';
+import { replySupport } from '../services/support.js';
 
 /**
  * SIRF DEVELOPMENT + SIRF LOCALHOST: test (seed) users ki taraf se message / typing bhejna,
@@ -148,4 +149,10 @@ devRouter.post('/withdrawals/:id/paid', async (req, res) => {
 devRouter.post('/withdrawals/:id/reject', async (req, res) => {
   const { reason } = z.object({ reason: z.string().min(3).max(200) }).parse(req.body);
   res.json(await rejectWithdrawal(Number(req.params.id), reason));
+});
+
+// POST /api/dev/support/:ticketId/reply { body, solve? } — Meto team ka jawab (admin panel aane tak)
+devRouter.post('/support/:ticketId/reply', async (req, res) => {
+  const p = z.object({ body: z.string().trim().min(1).max(2000), solve: z.boolean().optional() }).parse(req.body);
+  res.json(await replySupport(Number(req.params.ticketId), p.body, p.solve));
 });

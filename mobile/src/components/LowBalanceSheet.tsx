@@ -5,6 +5,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Coin from './Coin';
 import { colors, gradients } from '../theme';
 import { buyPack, fmt, getWallet, IS_TEST_PAYMENTS, type WalletSummary } from '../services/wallet';
+import { PurchaseCancelled } from '../services/billing';
 
 export type RechargeRequest = {
   needed: number; // kitne gems chahiye (call ke liye 1 minute ka rate)
@@ -37,10 +38,6 @@ export default function LowBalanceSheet(p: Props) {
 
   const pay = async () => {
     if (!sel || paying) return;
-    if (!IS_TEST_PAYMENTS) {
-      Alert.alert('Coming soon', 'Payments via Google Play will be available soon.');
-      return;
-    }
     setPaying(true);
     try {
       const r = await buyPack(sel);
@@ -48,6 +45,7 @@ export default function LowBalanceSheet(p: Props) {
       p.onClose();
       p.onRecharged?.(r.balance);
     } catch (e) {
+      if (e instanceof PurchaseCancelled) return; // user ne Play pe khud band kiya
       Alert.alert('Recharge failed', (e as Error).message);
     } finally {
       setPaying(false);

@@ -17,6 +17,7 @@ import { rewardsRouter } from './routes/rewards.routes.js';
 import { matchRouter } from './routes/match.routes.js';
 import { notificationsRouter } from './routes/notifications.routes.js';
 import { hostRouter } from './routes/host.routes.js';
+import { supportRouter } from './routes/support.routes.js';
 import { devicesRouter } from './routes/devices.routes.js';
 
 export const app = express();
@@ -48,6 +49,7 @@ app.use('/api/rewards', rewardsRouter);
 app.use('/api/match', matchRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/host', hostRouter);
+app.use('/api/support', supportRouter);
 app.use('/api/devices', devicesRouter);
 if (env.NODE_ENV === 'development') {
   // Dev: app ki console warnings yahan dikhti hain (phone ka debugger khole bina)

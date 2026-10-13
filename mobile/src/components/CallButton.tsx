@@ -4,6 +4,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Icon from './Icon';
 import { colors, gradients } from '../theme';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { tap } from '../lib/haptics';
 
 type Props = { rate: number; onPress: () => void; style?: StyleProp<ViewStyle> };
 
@@ -34,7 +35,10 @@ export default function CallButton({ rate, onPress, style }: Props) {
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        tap();
+        onPress();
+      }}
       onLayout={e => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       style={({ pressed }) => [styles.wrap, { transform: [{ scale: pressed ? 0.97 : 1 }] }, style]}>
       {sweep > 20 && (

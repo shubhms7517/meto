@@ -11,6 +11,7 @@ import { fmt, IS_TEST_PAYMENTS } from '../../services/wallet';
 import Coin from '../../components/Coin';
 import { useWallet } from '../../context/WalletContext';
 import type { RootStackParamList } from '../../navigation/types';
+import { PurchaseCancelled } from '../../services/billing';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Vip'>;
 
@@ -53,10 +54,6 @@ export default function VipScreen({ navigation }: Props) {
 
   const join = async () => {
     if (!plan || paying) return;
-    if (!IS_TEST_PAYMENTS) {
-      Alert.alert('Coming soon', 'Payments via Google Play will be available soon.');
-      return;
-    }
     setPaying(true);
     try {
       const r = await buyVip(plan.id);
@@ -64,6 +61,7 @@ export default function VipScreen({ navigation }: Props) {
       refresh(); // naya call rate / VIP sab jagah
       if (r.vipUntil) setWelcome({ until: r.vipUntil, bonus: plan.bonusGems });
     } catch (e) {
+      if (e instanceof PurchaseCancelled) return; // user ne Play pe khud band kiya
       Alert.alert('VIP', (e as Error).message);
     } finally {
       setPaying(false);

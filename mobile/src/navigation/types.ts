@@ -37,6 +37,7 @@ export type RootStackParamList = {
   EditProfile: undefined;
   Settings: undefined;
   Visitors: undefined;
+  SupportChat: undefined;
   DeleteAccount: undefined;
   Legal: { kind: 'privacy' | 'terms' | 'host' };
   CustomerService: undefined;

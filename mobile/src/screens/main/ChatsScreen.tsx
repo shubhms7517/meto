@@ -19,7 +19,6 @@ import Avatar from '../../components/Avatar';
 import Icon from '../../components/Icon';
 import Ticks from '../../components/Ticks';
 import { colors, gradients } from '../../theme';
-import { comingSoon } from '../../lib/comingSoon';
 import { useChat } from '../../context/ChatContext';
 import { useCall } from '../../context/CallContext';
 import { formatDuration, getCallLog } from '../../services/calls';

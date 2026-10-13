@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from '../../components/Icon';
 import { colors, gradients } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
+import { useFocusEffect } from '@react-navigation/native';
+import { getSupportSummary, type SupportMessage, type SupportTicket } from '../../services/support';
+import { timeAgo } from '../../services/users';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CustomerService'>;
 
-// Abhi sirf dikhane ke liye: aam sawaal + "Chat with us" (support chat baad me)
+// Aam sawaal + Meto team se chat (pichhli baat-cheet upar, naye jawab ki ginti)
 const FAQ = [
   { q: 'How do I earn as a host?', a: 'You earn points for every call minute, gifts and paid messages. If the user ends the call you get every started minute; if you end it, only full minutes count. 100 points = ₹1.' },
   { q: 'When can I withdraw?', a: 'Once you have at least ₹500, you can withdraw to your UPI. Payouts usually reach within 48 hours.' },
-  { q: 'Why did a call not earn?', a: 'Calls shorter than 1 minute do not earn points.' },
+  { q: 'Why was I charged for a call?', a: 'Calls are charged per started minute. If the host ends the call, only full minutes are charged and the rest comes back to you automatically. Still wrong? Chat with us.' },
+  { q: 'How do I recharge gems?', a: 'Open Me → Recharge and pick a pack. Gems are added right after payment.' },
   { q: 'Someone is rude to me. What do I do?', a: 'Tap the 🛡️ shield during the call or the ⋯ menu in chat to report or block them. Blocking ends the call at once.' },
   { q: 'How do I change my photos?', a: 'Go to Me → Edit profile & photos. Your intro video can be changed from Me too.' },
 ];
@@ -21,6 +25,12 @@ const FAQ = [
 export default function CustomerServiceScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState<number | null>(0);
+  const [conv, setConv] = useState<{ ticket: SupportTicket | null; last: SupportMessage | null } | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      getSupportSummary().then(setConv).catch(() => {});
+    }, []),
+  );
   return (
     <View style={st.root}>
       <StatusBar barStyle="light-content" />
@@ -37,6 +47,26 @@ export default function CustomerServiceScreen({ navigation }: Props) {
           <Text style={st.heroSub}>Our team usually replies within a few hours</Text>
         </LinearGradient>
 
+        {conv?.ticket && (
+          <>
+            <Text style={st.sec}>Your conversation</Text>
+            <Pressable onPress={() => navigation.navigate('SupportChat')} style={[st.card, st.conv]}>
+              <Text style={st.convIc}>💬</Text>
+              <View style={st.flex}>
+                <Text style={st.convTitle}>Meto Support{conv.ticket.status === 'solved' ? ' · ✓ Solved' : ''}</Text>
+                <Text style={st.convSub} numberOfLines={1}>
+                  {conv.last ? `${conv.last.fromTeam ? 'Team: ' : 'You: '}${conv.last.body ?? '📷 Screenshot'}` : ''} · {timeAgo(conv.ticket.lastMessageAt)} ago
+                </Text>
+              </View>
+              {conv.ticket.unread > 0 && (
+                <View style={st.badge}>
+                  <Text style={st.badgeText}>{conv.ticket.unread}</Text>
+                </View>
+              )}
+            </Pressable>
+          </>
+        )}
+
         <Text style={st.sec}>Common questions</Text>
         <View style={st.card}>
           {FAQ.map((f, i) => (
@@ -50,7 +80,7 @@ export default function CustomerServiceScreen({ navigation }: Props) {
           ))}
         </View>
 
-        <Pressable onPress={() => Alert.alert('Customer service', 'Live chat with our team is coming soon.')}>
+        <Pressable onPress={() => navigation.navigate('SupportChat')}>
           <LinearGradient colors={gradients.rose} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={st.btn}>
             <Icon name="chat" size={18} color="#fff" />
             <Text style={st.btnText}>Chat with us</Text>
@@ -62,6 +92,13 @@ export default function CustomerServiceScreen({ navigation }: Props) {
 }
 
 const st = StyleSheet.create({
+  flex: { flex: 1 },
+  conv: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14 },
+  convIc: { fontSize: 20 },
+  convTitle: { color: colors.text, fontSize: 13.5, fontWeight: '700' },
+  convSub: { color: colors.muted, fontSize: 11.5, marginTop: 2 },
+  badge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.rose1 },
+  badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   root: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 10 },
   back: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },

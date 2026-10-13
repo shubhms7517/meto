@@ -2,7 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { AppState } from 'react-native';
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 import { connectSocket } from '../services/socket';
-import { getWallet } from '../services/wallet';
+import { getWallet, recoverPurchases } from '../services/wallet';
+import { resetBillingAccount } from '../services/billing';
 import LowBalanceSheet, { type RechargeRequest } from '../components/LowBalanceSheet';
 import LevelUpModal from '../components/LevelUpModal';
 import { navigationRef } from '../navigation/ref';
@@ -52,9 +53,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       off = null;
       if (!user) {
         setBalance(null);
+        resetBillingAccount();
         return;
       }
       refresh();
+      recoverPurchases(); // payment ke beech app band hui thi to bache gems / VIP
       const s = connectSocket();
       const onBal = (d: { balance: number }) => setBalance(d.balance);
       s.on('wallet:balance', onBal);

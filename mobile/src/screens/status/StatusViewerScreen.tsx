@@ -23,7 +23,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Avatar from '../../components/Avatar';
 import Icon from '../../components/Icon';
 import { colors, gradients } from '../../theme';
-import { comingSoon } from '../../lib/comingSoon';
 import { useSafetyMenu } from '../../hooks/useSafetyMenu';
 import { useCall } from '../../context/CallContext';
 import { newClientId, sendChatMessage } from '../../services/chat';

@@ -6,6 +6,7 @@ import { CHECKIN_REWARDS, VIP_PLANS } from '../lib/pricing.js';
 import { CheckIn, User, VipOrder } from '../models/index.js';
 import { applyTx } from './wallet.js';
 import { notifyLater } from './notifications.js';
+import { consumePlayPurchase, verifyPlayPurchase } from '../lib/playBilling.js';
 
 // India ka aaj (server kahin bhi ho)
 const istDay = (d = new Date()) => new Date(d.getTime() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -62,9 +63,13 @@ export function vipInfo(user: User) {
 export async function buyVip(user: User, planId: string, proof: { provider: 'dev' | 'google'; token: string }) {
   const plan = VIP_PLANS.find(p => p.id === planId);
   if (!plan) throw badRequest('Unknown plan');
-  if (proof.provider === 'google') throw new HttpError(501, 'billing_not_ready', 'Payments are not available yet');
+  // Google Play: plan id = Play product id, token paid + isi user ka
+  const play = proof.provider === 'google' ? await verifyPlayPurchase(plan.id, proof.token, String(user.publicId)) : null;
   const tokenHash = createHash('sha256').update(`${proof.provider}:${proof.token}`).digest('hex');
-  if (await VipOrder.findOne({ where: { tokenHash } })) return vipInfo((await User.findByPk(user.id))!);
+  if (await VipOrder.findOne({ where: { tokenHash } })) {
+    if (play) await consumePlayPurchase(plan.id, proof.token);
+    return vipInfo((await User.findByPk(user.id))!);
+  }
 
   await sequelize.transaction(async t => {
     const u = (await User.findByPk(user.id, { transaction: t, lock: t.LOCK.UPDATE }))!;
@@ -78,6 +83,7 @@ export async function buyVip(user: User, planId: string, proof: { provider: 'dev
       { transaction: t },
     );
   });
+  if (play) await consumePlayPurchase(plan.id, proof.token);
   // VIP lete hi bonus gems (ek order = ek hi baar)
   await applyTx(user.id, plan.bonusGems, { kind: 'bonus', title: 'VIP bonus', subtitle: `${plan.months} month VIP`, uniqueKey: `vip:${tokenHash}` });
   const fresh = (await User.findByPk(user.id))!;

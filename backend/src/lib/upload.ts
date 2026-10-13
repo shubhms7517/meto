@@ -27,7 +27,7 @@ export const imageUpload = multer({
  * - max 1440px, ~80% quality — kam data, fast loading
  * Return: public URL path, jaise "/uploads/photos/<uuid>.jpg"
  */
-export async function saveImage(buffer: Buffer, folder: 'avatars' | 'photos' | 'seed' | 'chat' | 'status', name: string = randomUUID()): Promise<string> {
+export async function saveImage(buffer: Buffer, folder: 'avatars' | 'photos' | 'seed' | 'chat' | 'status' | 'support', name: string = randomUUID()): Promise<string> {
   let output: Buffer;
   try {
     output = await sharp(buffer, { failOn: 'error' })
