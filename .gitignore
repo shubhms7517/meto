@@ -1,0 +1,33 @@
+# Dependencies / builds
+node_modules/
+dist/
+build/
+.gradle/
+.cxx/
+*.apk
+*.aab
+
+# Secrets — kabhi commit nahi
+.env
+!.env.example
+backend/secrets/
+mobile/android/app/google-services.json
+*.keystore
+!mobile/android/app/debug.keystore
+*.jks
+*.pem
+*.p12
+
+# Users ki photos / host selfie-video (private)
+backend/uploads/
+backend/private_uploads/
+
+# Local dev tools (adb pairing code)
+tools/adb-pair*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

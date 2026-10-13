@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meto Status Screens</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #f4eff1; --page-text: #2a1a21; --page-muted: #7a6870;
+    --bg: #12070d; --surface: #1e0f17; --surface-2: #2a1520; --border: rgba(255,255,255,.08);
+    --text: #fbf3f6; --muted: #b39aa6; --dim: #7d6571;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d4a64b; --gold-ink: #3a2508; --online: #3ee08f;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; } }
+  :root[data-theme="dark"] { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--page-bg); color: var(--page-text); font-family: 'Poppins', system-ui, sans-serif; padding: 32px 16px 64px; }
+  header.page { max-width: 1200px; margin: 0 auto 28px; }
+  header.page h1 { font-size: 22px; font-weight: 600; }
+  header.page p { color: var(--page-muted); font-size: 14px; margin-top: 4px; }
+  .grid { max-width: 1600px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 36px; justify-content: center; }
+  figure { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  figcaption { font-size: 13px; color: var(--page-muted); font-weight: 500; }
+  figcaption b { color: var(--page-text); font-weight: 600; }
+
+  .phone { width: 360px; max-width: calc(100vw - 32px); height: 760px; border-radius: 46px; padding: 10px;
+    background: linear-gradient(145deg, #2b2b2e, #0d0d0f); box-shadow: 0 30px 60px -20px rgba(80,10,40,.45), inset 0 0 0 1.5px #3a3a3e; }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 38px; overflow: hidden; background: var(--bg); color: var(--text); }
+  .status { position: absolute; top: 0; left: 0; right: 0; height: 38px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; z-index: 9; }
+  .status .cam { width: 10px; height: 10px; border-radius: 50%; background: #000; box-shadow: 0 0 0 2px #1a1a1a; }
+  .status .icons { display: flex; gap: 5px; } .status .icons i { width: 14px; height: 9px; border-radius: 2px; background: var(--text); opacity: .9; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; }
+  .wordmark { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; background: linear-gradient(180deg, var(--gold-1), var(--gold-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* placeholder photo art */
+  .art { position: absolute; inset: 0; overflow: hidden; }
+  .art::before { content: ""; position: absolute; left: 50%; top: 30%; width: 44%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: var(--ink); opacity: .85; }
+  .art::after { content: ""; position: absolute; left: 10%; right: 10%; bottom: -12%; height: 46%; border-radius: 50% 50% 0 0; background: var(--ink); opacity: .85; }
+  .g1 { background: linear-gradient(160deg, #ff9bbb, #a3164a); --ink: #5c0c2c; }
+  .g2 { background: linear-gradient(160deg, #f6dc9b, #a87a2a); --ink: #5e4012; }
+  .g3 { background: linear-gradient(160deg, #c9a0ff, #6a2bb0); --ink: #3c1470; }
+  .g4 { background: linear-gradient(160deg, #ffb08f, #c2402a); --ink: #6d1c10; }
+  .g5 { background: linear-gradient(160deg, #8fd3ff, #2a5bb0); --ink: #13306b; }
+  .g6 { background: linear-gradient(160deg, #9ff0d0, #1f8a6a); --ink: #0d4535; }
+  .scene { background: linear-gradient(170deg, #ffcf9a 0%, #ff8a7a 35%, #b8326a 70%, #3a0f2c 100%); }
+  .scene::before { left: 62%; top: 16%; width: 22%; background: #fff3c4; opacity: .9; box-shadow: 0 0 60px 20px rgba(255,240,190,.6); }
+  .scene::after { left: -10%; right: -10%; bottom: -5%; height: 38%; border-radius: 60% 60% 0 0; background: #2a0a1f; opacity: 1; }
+
+  /* ---------- 1. Discover with status row ---------- */
+  .topbar { display: flex; align-items: center; padding: 46px 18px 10px; }
+  .coin-chip { margin-left: auto; display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px 0 6px; border-radius: 17px; background: rgba(212,166,75,.12); border: 1px solid rgba(212,166,75,.28); font-size: 13px; font-weight: 600; color: var(--gold-1); }
+  .coin { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, #fff3c8, var(--gold-2) 60%, #9c7426); color: var(--gold-ink); font-size: 11px; font-weight: 800; }
+  .icon-btn { margin-left: 10px; width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border); }
+  .seg { display: flex; gap: 22px; padding: 0 20px; align-items: flex-end; }
+  .seg span { font-size: 15px; font-weight: 600; color: var(--dim); padding-bottom: 8px; position: relative; }
+  .seg span.on { color: var(--text); font-size: 20px; }
+  .seg span.on::after { content: ""; position: absolute; left: 0; bottom: 0; width: 18px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--rose-1), var(--rose-2)); }
+  .rail-title { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 20px 10px; font-size: 13px; font-weight: 600; }
+  .rail-title span { font-size: 11.5px; color: var(--dim); font-weight: 500; }
+  .rail { display: flex; gap: 14px; padding: 0 20px; overflow: hidden; }
+  .st { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 62px; flex-shrink: 0; font-size: 11px; color: var(--muted); }
+  .ring { width: 62px; height: 62px; border-radius: 50%; padding: 2.5px; position: relative; }
+  .ring.new { background: conic-gradient(from 210deg, var(--gold-1), var(--rose-1), var(--rose-2), var(--gold-2), var(--gold-1)); }
+  .ring.seen { background: #4a3540; }
+  .ring.none { background: transparent; padding: 0; }
+  .ring .av { width: 100%; height: 100%; border-radius: 50%; border: 2.5px solid var(--bg); position: relative; overflow: hidden; }
+  .ring .dot { position: absolute; right: 2px; bottom: 3px; width: 13px; height: 13px; border-radius: 50%; background: var(--online); border: 2.5px solid var(--bg); }
+  .ring .plus { position: absolute; right: 0; bottom: 1px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); border: 2.5px solid var(--bg); }
+  .ring .plus svg { width: 11px; height: 11px; stroke-width: 3; }
+  .st.me .name { color: var(--text); font-weight: 500; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px 16px 0; }
+  .card { position: relative; height: 230px; border-radius: 24px; overflow: hidden; }
+  .card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(10,3,7,.85)); }
+  .card .nm { position: absolute; left: 12px; bottom: 14px; z-index: 2; font-size: 15px; font-weight: 600; color: #fff; }
+  .tabbar { position: absolute; left: 14px; right: 14px; bottom: 16px; height: 66px; border-radius: 24px; background: #1e0f17; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-around; z-index: 5; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10.5px; color: var(--dim); }
+  .tab .ic { width: 46px; height: 30px; display: grid; place-items: center; border-radius: 12px; }
+  .tab.on { color: var(--text); } .tab.on .ic { background: rgba(255,95,143,.2); color: var(--rose-1); }
+  .fade { position: absolute; left: 0; right: 0; bottom: 0; height: 130px; background: linear-gradient(180deg, transparent, var(--bg) 60%); z-index: 4; }
+
+  /* ---------- 2. Status viewer ---------- */
+  .viewer .photo { position: absolute; inset: 0; }
+  .viewer .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.55) 0%, transparent 22%, transparent 62%, rgba(0,0,0,.75) 100%); }
+  .bars { position: absolute; top: 44px; left: 12px; right: 12px; display: flex; gap: 4px; z-index: 3; }
+  .bars i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.35); overflow: hidden; position: relative; }
+  .bars i.done { background: #fff; }
+  .bars i.run::after { content: ""; position: absolute; inset: 0; width: 45%; background: #fff; border-radius: 2px; animation: grow 5s linear infinite; }
+  @keyframes grow { from { width: 0; } to { width: 100%; } }
+  .vhead { position: absolute; top: 58px; left: 14px; right: 14px; z-index: 3; display: flex; align-items: center; gap: 10px; }
+  .vhead .av { width: 38px; height: 38px; border-radius: 50%; position: relative; overflow: hidden; border: 2px solid #fff; }
+  .vhead b { font-size: 14px; display: flex; align-items: center; gap: 5px; }
+  .vhead small { font-size: 11px; opacity: .8; }
+  .vhead .x { margin-left: auto; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.3); }
+  .online-mini { width: 7px; height: 7px; border-radius: 50%; background: var(--online); }
+  .caption { position: absolute; left: 18px; right: 18px; bottom: 112px; z-index: 3; font-size: 16px; font-weight: 600; text-shadow: 0 2px 8px rgba(0,0,0,.5); line-height: 1.4; }
+  .reply { position: absolute; left: 14px; right: 14px; bottom: 28px; z-index: 3; display: flex; gap: 8px; align-items: center; }
+  .reply .input { flex: 1; height: 50px; border-radius: 25px; border: 1.5px solid rgba(255,255,255,.55); display: flex; align-items: center; padding: 0 18px; font-size: 13.5px; color: rgba(255,255,255,.85); background: rgba(0,0,0,.25); backdrop-filter: blur(10px); }
+  .reply .btn { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.3); border: 1.5px solid rgba(255,255,255,.35); }
+  .reply .btn.heart { color: var(--rose-1); }
+  .reply .btn.heart svg { fill: currentColor; animation: beat 1.6s ease-in-out infinite; }
+  .reply .btn.call { background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); border: 0; box-shadow: 0 8px 20px -6px rgba(216,27,92,.9); }
+  @keyframes beat { 0%, 40%, 100% { transform: scale(1); } 10% { transform: scale(1.22); } 20% { transform: scale(.95); } 30% { transform: scale(1.12); } }
+
+  /* ---------- 3. Add status ---------- */
+  .add-head { position: absolute; top: 46px; left: 14px; right: 14px; z-index: 3; display: flex; align-items: center; justify-content: space-between; }
+  .glass { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.18); }
+  .tools { display: flex; gap: 8px; }
+  .compose { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 16px 16px 26px; background: linear-gradient(180deg, transparent, rgba(18,7,13,.92) 25%); }
+  .cap-input { height: 50px; border-radius: 16px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); display: flex; align-items: center; padding: 0 16px; font-size: 13.5px; color: rgba(255,255,255,.9); }
+  .cap-input .caret { width: 2px; height: 18px; background: var(--rose-1); margin-left: 2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .who { display: flex; gap: 8px; margin-top: 12px; }
+  .who div { flex: 1; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12.5px; font-weight: 500; background: rgba(255,255,255,.06); border: 1px solid var(--border); color: var(--muted); }
+  .who div.on { color: var(--text); border-color: rgba(255,95,143,.6); background: rgba(255,95,143,.14); }
+  .who svg { width: 15px; height: 15px; }
+  .share { margin-top: 12px; height: 54px; border-radius: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 15px; color: #fff;
+    background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); box-shadow: 0 12px 26px -10px rgba(216,27,92,.9), inset 0 1px 0 rgba(255,255,255,.25); }
+  .rules { margin-top: 10px; font-size: 10.5px; color: var(--dim); text-align: center; }
+
+  /* ---------- 4. My status + viewers ---------- */
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 58%; z-index: 4; border-radius: 28px 28px 0 0; background: #1a0b13; border-top: 1px solid var(--border); padding: 10px 18px 0; }
+  .handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.2); margin: 0 auto 14px; }
+  .sh-head { display: flex; align-items: center; gap: 10px; }
+  .sh-head b { font-size: 16px; }
+  .sh-head .eye { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600; }
+  .sh-head .del { margin-left: auto; height: 34px; padding: 0 12px; border-radius: 12px; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #ff8a8a; background: rgba(255,107,107,.1); border: 1px solid rgba(255,107,107,.25); }
+  .sh-head .del svg { width: 14px; height: 14px; }
+  .sh-sub { font-size: 11.5px; color: var(--dim); margin: 4px 0 12px; }
+  .vrow { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .vrow .av { width: 42px; height: 42px; border-radius: 50%; position: relative; overflow: hidden; flex-shrink: 0; }
+  .vrow b { font-size: 13.5px; font-weight: 600; display: block; }
+  .vrow small { font-size: 11px; color: var(--dim); }
+  .vrow .react { margin-left: auto; font-size: 18px; }
+  .vrow .reply-tag { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--rose-1); padding: 4px 9px; border-radius: 10px; background: rgba(255,95,143,.12); }
+
+  .notes { max-width: 1200px; margin: 40px auto 0; background: color-mix(in srgb, var(--page-text) 4%, transparent); border-radius: 18px; padding: 20px 22px; }
+  .notes h3 { font-size: 15px; margin-bottom: 10px; }
+  .notes ul { padding-left: 20px; font-size: 13.5px; color: var(--page-muted); line-height: 1.8; }
+  .notes b { color: var(--page-text); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+    <symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+    <symbol id="chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/></symbol>
+    <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+    <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="heart" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.6-9.3C.9 7.8 3 4 6.8 4c2.2 0 3.7 1.2 5.2 3 1.5-1.8 3-3 5.2-3C21 4 23.1 7.8 21.6 11.2 19.5 15.9 12 20.5 12 20.5z"/></symbol>
+    <symbol id="video" viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="3"/><path d="M16 10l6-3v10l-6-3"/></symbol>
+    <symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></symbol>
+    <symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14c2.2.6 3.5 2.6 3.5 6"/></symbol>
+    <symbol id="text" viewBox="0 0 24 24"><path d="M5 6h14M12 6v13"/></symbol>
+    <symbol id="crop" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 002 2h14M2 6h14a2 2 0 012 2v14"/></symbol>
+    <symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+    <symbol id="flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+    <symbol id="send" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+  </defs>
+</svg>
+
+<header class="page">
+  <h1>Meto · Status</h1>
+  <p>Design draft 1 · Favourites row + Status (24 hours) · Rose + Gold theme</p>
+</header>
+
+<div class="grid">
+
+  <!-- 1. Discover with status row -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="glow" style="width:260px;height:260px;background:#d81b5c;opacity:.25;top:-90px;right:-60px"></div>
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="topbar">
+        <div class="wordmark" style="font-size:28px;line-height:1">Meto</div>
+        <div class="coin-chip"><span class="coin">M</span>0</div>
+        <div class="icon-btn"><svg class="i"><use href="#bell"/></svg></div>
+      </div>
+      <div class="seg"><span class="on">Discover</span><span>Following</span></div>
+
+      <div class="rail-title">Favourites <span>See all</span></div>
+      <div class="rail">
+        <div class="st me"><div class="ring none"><div class="av"><div class="art g5"></div></div><span class="plus"><svg class="i"><use href="#plus"/></svg></span></div><span class="name">My status</span></div>
+        <div class="st"><div class="ring new"><div class="av"><div class="art g1"></div></div><span class="dot"></span></div>Aisha</div>
+        <div class="st"><div class="ring new"><div class="av"><div class="art g3"></div></div></div>Riya</div>
+        <div class="st"><div class="ring seen"><div class="av"><div class="art g2"></div></div><span class="dot"></span></div>Sana</div>
+        <div class="st"><div class="ring none"><div class="av"><div class="art g4"></div></div><span class="dot"></span></div>Zoya</div>
+      </div>
+
+      <div class="cards">
+        <div class="card g1"><div class="art"></div><div class="nm">Aisha, 24</div></div>
+        <div class="card g3"><div class="art"></div><div class="nm">Kavya, 22</div></div>
+      </div>
+      <div class="fade"></div>
+      <div class="tabbar">
+        <div class="tab on"><div class="ic"><svg class="i"><use href="#compass"/></svg></div>Discover</div>
+        <div class="tab"><div class="ic"><svg class="i"><use href="#chat"/></svg></div>Chats</div>
+        <div class="tab"><div class="ic"><svg class="i"><use href="#user"/></svg></div>Me</div>
+      </div>
+    </div></div>
+    <figcaption><b>1. Favourites row</b> · status ring + online dot</figcaption>
+  </figure>
+
+  <!-- 2. Status viewer -->
+  <figure>
+    <div class="phone"><div class="screen viewer">
+      <div class="photo art scene"></div>
+      <div class="shade"></div>
+      <div class="status" style="color:#fff"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="bars"><i class="done"></i><i class="run"></i><i></i></div>
+      <div class="vhead">
+        <div class="av"><div class="art g1"></div></div>
+        <div><b>Aisha <span class="online-mini"></span></b><small>2h ago</small></div>
+        <div class="x"><svg class="i"><use href="#x"/></svg></div>
+      </div>
+      <div class="caption">Golden hour in Mumbai 🌅✨</div>
+      <div class="reply">
+        <div class="input">Reply to Aisha…</div>
+        <div class="btn heart"><svg class="i"><use href="#heart"/></svg></div>
+        <div class="btn call"><svg class="i"><use href="#video"/></svg></div>
+      </div>
+    </div></div>
+    <figcaption><b>2. Status dekhna</b> · tap = agla, hold = rok do</figcaption>
+  </figure>
+
+  <!-- 3. Add status -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="art g6" style="position:absolute;inset:0"></div>
+      <div class="status" style="color:#fff"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="add-head">
+        <div class="glass"><svg class="i"><use href="#x"/></svg></div>
+        <div class="tools">
+          <div class="glass"><svg class="i"><use href="#crop"/></svg></div>
+          <div class="glass"><svg class="i"><use href="#text"/></svg></div>
+        </div>
+      </div>
+      <div class="compose">
+        <div class="cap-input">Weekend vibes 😎<span class="caret"></span></div>
+        <div class="who">
+          <div class="on"><svg class="i"><use href="#globe"/></svg>Everyone</div>
+          <div><svg class="i"><use href="#users"/></svg>Followers only</div>
+        </div>
+        <div class="share"><svg class="i"><use href="#send"/></svg>Share status</div>
+        <div class="rules">Disappears after 24 hours · Follow the community guidelines</div>
+      </div>
+    </div></div>
+    <figcaption><b>3. Status lagana</b> · photo + caption + kaun dekhe</figcaption>
+  </figure>
+
+  <!-- 4. My status + viewers -->
+  <figure>
+    <div class="phone"><div class="screen viewer">
+      <div class="photo art g6"></div>
+      <div class="shade"></div>
+      <div class="status" style="color:#fff"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="bars"><i class="done"></i></div>
+      <div class="vhead">
+        <div class="av"><div class="art g5"></div></div>
+        <div><b>Your status</b><small>35m ago · Everyone</small></div>
+        <div class="x"><svg class="i"><use href="#x"/></svg></div>
+      </div>
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sh-head">
+          <div class="eye"><svg class="i"><use href="#eye"/></svg>24 views</div>
+          <div class="del"><svg class="i"><use href="#trash"/></svg>Delete</div>
+        </div>
+        <div class="sh-sub">Expires in 23h 25m</div>
+        <div class="vrow"><div class="av"><div class="art g1"></div></div><div><b>Aisha</b><small>2m ago</small></div><span class="react">❤️</span></div>
+        <div class="vrow"><div class="av"><div class="art g3"></div></div><div><b>Kavya</b><small>10m ago</small></div><span class="reply-tag">Replied</span></div>
+        <div class="vrow"><div class="av"><div class="art g2"></div></div><div><b>Sana</b><small>18m ago</small></div></div>
+        <div class="vrow"><div class="av"><div class="art g4"></div></div><div><b>Zoya</b><small>31m ago</small></div><span class="react">❤️</span></div>
+      </div>
+    </div></div>
+    <figcaption><b>4. Apna status</b> · kisne dekha + delete</figcaption>
+  </figure>
+
+</div>
+
+<section class="notes">
+  <h3>Kaise kaam karega</h3>
+  <ul>
+    <li><b>Favourites row:</b> sabse pehle <b>"Your status +"</b>, phir jinhe aap follow karte ho. <b>Rose-gold ring</b> = naya status (abhi dekha nahi), <b>grey ring</b> = dekh liya, <b>bina ring</b> = status nahi. <b>Green dot</b> = online. Order: naya status → online → baaki.</li>
+    <li><b>Status dekhna:</b> full screen photo, upar progress lines (har status 5 second), right tap = agla, left tap = pichla, daba ke rakho = ruk jaao, neeche swipe = band. Neeche <b>reply</b> (seedha chat me jaata hai), ❤ react, aur 📹 <b>video call</b>.</li>
+    <li><b>Status lagana:</b> gallery/camera se photo, caption, aur <b>kaun dekh sake</b>: Everyone ya Followers only. <b>24 ghante</b> baad apne aap gayab.</li>
+    <li><b>Apna status:</b> kitne logon ne dekha, kisne ❤ kiya / reply kiya, kitna time bacha, aur Delete.</li>
+    <li><b>Safety (pehle din se):</b> har status pe ⋯ → Report, photos ko server pe compress + GPS hataana (album jaisa), ek din me max 10 status.</li>
+  </ul>
+</section>
+
+</body>
+</html>

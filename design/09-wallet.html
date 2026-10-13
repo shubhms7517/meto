@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meto Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #f4eff1; --page-text: #2a1a21; --page-muted: #7a6870;
+    --bg: #12070d; --surface: #1e0f17; --surface-2: #2a1520; --border: rgba(255,255,255,.08);
+    --text: #fbf3f6; --muted: #b39aa6; --dim: #7d6571;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d4a64b; --gold-ink: #3a2508; --online: #3ee08f;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; } }
+  :root[data-theme="dark"] { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--page-bg); color: var(--page-text); font-family: 'Poppins', system-ui, sans-serif; padding: 32px 16px 64px; }
+  header.page { max-width: 1200px; margin: 0 auto 28px; }
+  header.page h1 { font-size: 22px; font-weight: 600; }
+  header.page p { color: var(--page-muted); font-size: 14px; margin-top: 4px; }
+  .grid { max-width: 1640px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 36px; justify-content: center; }
+  figure { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  figcaption { font-size: 13px; color: var(--page-muted); font-weight: 500; }
+  figcaption b { color: var(--page-text); font-weight: 600; }
+
+  .phone { width: 340px; height: 720px; border-radius: 44px; padding: 10px; background: linear-gradient(145deg, #2b2b2e, #0d0d0f); box-shadow: 0 30px 60px -20px rgba(80,10,40,.45), inset 0 0 0 1.5px #3a3a3e; }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 36px; overflow: hidden; color: var(--text);
+    background: linear-gradient(180deg, #4a0f28 0%, #22091a 26%, var(--bg) 46%); display: flex; flex-direction: column; }
+  .status { height: 36px; flex-shrink: 0; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; }
+  .status .cam { width: 10px; height: 10px; border-radius: 50%; background: #000; }
+  .status .icons { display: flex; gap: 5px; } .status .icons i { width: 14px; height: 9px; border-radius: 2px; background: var(--text); opacity: .9; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .coin { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; flex-shrink: 0;
+    background: radial-gradient(circle at 35% 30%, #fff3c8, var(--gold-2) 60%, #9c7426); color: var(--gold-ink); font-size: 11px; font-weight: 800; box-shadow: inset 0 -1px 0 rgba(0,0,0,.2); }
+  .coin.lg { width: 34px; height: 34px; font-size: 16px; }
+
+  .head { display: flex; align-items: center; gap: 10px; padding: 4px 16px 10px; }
+  .back { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border); }
+  .head h2 { font-size: 18px; font-weight: 700; }
+  .head .right { margin-left: auto; font-size: 12px; color: var(--gold-1); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+  /* Balance card */
+  .bal, .first, .vipbar, .packs, .head, .sec { flex-shrink: 0; }
+  .bal { margin: 2px 16px 0; border-radius: 24px; padding: 14px 18px; position: relative; overflow: hidden;
+    background: linear-gradient(125deg, #3b1d0c 0%, #6b4316 45%, #c4973c 100%); border: 1px solid rgba(246,220,155,.3); box-shadow: 0 18px 34px -18px rgba(196,151,60,.8); }
+  .bal::before { content: ""; position: absolute; width: 200px; height: 200px; border-radius: 50%; right: -60px; top: -80px; background: radial-gradient(circle, rgba(255,240,200,.5), transparent 65%); }
+  .bal::after { content: ""; position: absolute; top: 0; bottom: 0; width: 60px; left: -80px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent); transform: skewX(-20deg); animation: shine 4s ease-in-out infinite; }
+  @keyframes shine { 0% { left: -80px; } 60%, 100% { left: 120%; } }
+  .bal .lbl { font-size: 12px; color: rgba(255,240,210,.8); position: relative; }
+  .bal .num { display: flex; align-items: center; gap: 10px; font-size: 32px; font-weight: 800; color: #fff7e3; margin-top: 2px; position: relative; letter-spacing: -.5px; }
+  .bal .sub { font-size: 11.5px; color: rgba(255,240,210,.75); margin-top: 4px; position: relative; }
+  .bal .hist { position: absolute; right: 14px; top: 14px; height: 30px; padding: 0 10px; border-radius: 10px; display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: #fff3d6; background: rgba(0,0,0,.22); }
+  .bal .hist svg { width: 14px; height: 14px; }
+
+  /* First recharge banner */
+  .first { margin: 10px 16px 0; border-radius: 18px; padding: 9px 14px; display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(100deg, rgba(255,95,143,.22), rgba(246,220,155,.14)); border: 1px solid rgba(255,95,143,.4); }
+  .first .gift { font-size: 28px; }
+  .first b { font-size: 13.5px; display: block; }
+  .first small { font-size: 11px; color: var(--muted); }
+  .first .tag { margin-left: auto; font-size: 11px; font-weight: 800; color: #fff; padding: 4px 9px; border-radius: 10px; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); }
+
+  .sec { font-size: 13px; font-weight: 600; padding: 12px 18px 10px; color: var(--muted); }
+
+  /* Packs */
+  .packs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 16px; }
+  .pack { position: relative; border-radius: 18px; padding: 12px 6px 8px; text-align: center; background: var(--surface); border: 1px solid var(--border); }
+  .pack .c { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 16px; font-weight: 800; }
+  .pack .bonus { font-size: 10.5px; color: var(--online); font-weight: 600; margin-top: 2px; height: 14px; }
+  .pack .price { margin-top: 8px; font-size: 13px; font-weight: 700; height: 30px; border-radius: 10px; display: grid; place-items: center; background: rgba(255,255,255,.06); }
+  .pack.on { border-color: rgba(246,220,155,.7); background: linear-gradient(180deg, rgba(246,220,155,.16), var(--surface)); box-shadow: 0 10px 22px -14px rgba(212,166,75,.9); }
+  .pack.on .price { color: var(--gold-ink); background: linear-gradient(100deg, var(--gold-1), var(--gold-2)); }
+  .pack .ribbon { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9.5px; font-weight: 800; color: #fff; padding: 2px 8px; border-radius: 8px; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); }
+  .pack .ribbon.gold { color: var(--gold-ink); background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); }
+
+  .vipbar { margin: 10px 16px 0; white-space: nowrap; border-radius: 16px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; background: #1f1018; border: 1px solid rgba(212,166,75,.3); font-size: 12px; }
+  .vipbar .crown { font-size: 20px; }
+  .vipbar b { color: var(--gold-1); }
+  .vipbar span.go { margin-left: auto; color: var(--gold-1); font-weight: 600; }
+
+  .pay { margin-top: auto; padding: 10px 16px 16px; }
+  .btn { height: 54px; border-radius: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 15px; color: #fff;
+    background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); box-shadow: 0 12px 26px -10px rgba(216,27,92,.9), inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn.gold { color: var(--gold-ink); background: linear-gradient(100deg, var(--gold-1), var(--gold-2)); box-shadow: 0 12px 26px -12px rgba(212,166,75,.9); }
+  .secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; font-size: 10.5px; color: var(--dim); }
+  .secure svg { width: 13px; height: 13px; }
+
+  /* History */
+  .filters { display: flex; gap: 6px; padding: 4px 16px 10px; }
+  .filters span { height: 32px; padding: 0 14px; border-radius: 16px; display: flex; align-items: center; font-size: 12.5px; font-weight: 600; color: var(--muted); background: var(--surface); border: 1px solid var(--border); }
+  .filters span.on { color: #fff; background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); border-color: transparent; }
+  .sum { display: flex; gap: 8px; padding: 0 16px 10px; }
+  .sum div { flex: 1; border-radius: 16px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); }
+  .sum small { font-size: 10.5px; color: var(--dim); display: block; }
+  .sum b { font-size: 16px; }
+  .day { font-size: 11px; font-weight: 600; color: var(--dim); padding: 8px 18px 6px; letter-spacing: .4px; }
+  .tx { display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+  .tx .ic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
+  .tx .ic.in { background: rgba(62,224,143,.12); }
+  .tx .ic.out { background: rgba(255,95,143,.12); }
+  .tx .ic.gold { background: rgba(212,166,75,.14); }
+  .tx b { font-size: 13.5px; font-weight: 600; display: block; }
+  .tx small { font-size: 11px; color: var(--dim); }
+  .tx .amt { margin-left: auto; font-size: 14px; font-weight: 700; text-align: right; }
+  .tx .amt.plus { color: var(--online); }
+  .tx .amt.minus { color: var(--text); }
+  .tx .amt small { display: block; font-weight: 500; }
+
+  /* Sheet */
+  .dim { position: absolute; inset: 0; background: rgba(0,0,0,.55); z-index: 5; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; border-radius: 28px 28px 0 0; background: #1a0b13; border-top: 1px solid var(--border); padding: 10px 16px 20px; }
+  .handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.2); margin: 0 auto 14px; }
+  .warn { width: 58px; height: 58px; border-radius: 20px; margin: 0 auto; display: grid; place-items: center; font-size: 28px; background: rgba(255,95,143,.12); border: 1px solid rgba(255,95,143,.35); }
+  .sheet h3 { text-align: center; font-size: 18px; margin-top: 10px; }
+  .sheet p { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+  .need { display: flex; justify-content: center; gap: 8px; margin: 12px 0; }
+  .need div { padding: 8px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); font-size: 11.5px; color: var(--muted); text-align: center; }
+  .need b { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 15px; color: var(--text); }
+  .mini-packs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .mini-packs .pack { padding: 10px 4px 8px; }
+  .mini-packs .pack .c { font-size: 14px; }
+
+  /* Success */
+  .succ { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 26px;
+    background: radial-gradient(70% 45% at 50% 40%, rgba(246,220,155,.22), transparent 70%); }
+  .burst { position: relative; width: 150px; height: 150px; display: grid; place-items: center; }
+  .burst::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent, rgba(246,220,155,.5), transparent 30%, rgba(255,95,143,.4), transparent 60%, rgba(246,220,155,.5), transparent 90%); animation: spin 8s linear infinite; filter: blur(2px); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .burst .coin { width: 92px; height: 92px; font-size: 42px; position: relative; box-shadow: 0 14px 40px -6px rgba(212,166,75,.9), inset 0 -3px 0 rgba(0,0,0,.2); animation: pop 1.4s ease-in-out infinite alternate; }
+  @keyframes pop { to { transform: translateY(-6px) scale(1.04); } }
+  .succ h3 { font-size: 22px; margin-top: 18px; }
+  .succ .got { display: flex; align-items: center; gap: 8px; font-size: 30px; font-weight: 800; color: var(--gold-1); margin-top: 6px; }
+  .succ p { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .receipt { width: 100%; margin-top: 20px; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); padding: 4px 14px; }
+  .receipt div { display: flex; justify-content: space-between; padding: 9px 0; font-size: 12.5px; color: var(--muted); }
+  .receipt div + div { border-top: 1px solid var(--border); }
+  .receipt b { color: var(--text); font-weight: 600; }
+
+  .notes { max-width: 1200px; margin: 40px auto 0; background: color-mix(in srgb, var(--page-text) 4%, transparent); border-radius: 18px; padding: 20px 22px; }
+  .notes h3 { font-size: 15px; margin-bottom: 10px; }
+  .notes ul { padding-left: 20px; font-size: 13.5px; color: var(--page-muted); line-height: 1.8; }
+  .notes b { color: var(--page-text); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3"/></symbol>
+    <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<header class="page">
+  <h1>Meto · Wallet</h1>
+  <p>Design draft 1 · Recharge · History · Low balance · Success · Rose Night theme</p>
+</header>
+
+<div class="grid">
+
+  <!-- 1. Recharge -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="head"><div class="back"><svg class="i"><use href="#back"/></svg></div><h2>Wallet</h2></div>
+      <div class="bal">
+        <div class="hist"><svg class="i"><use href="#clock"/></svg>History</div>
+        <div class="lbl">Gems balance</div>
+        <div class="num"><span class="coin lg">M</span>1,250</div>
+        <div class="sub">≈ 20 min of video calls</div>
+      </div>
+      <div class="first">
+        <span class="gift">🎁</span>
+        <div><b>First recharge bonus</b><small>+100% extra gems, one time</small></div>
+        <span class="tag">2×</span>
+      </div>
+      <div class="sec">Choose a pack</div>
+      <div class="packs">
+        <div class="pack"><div class="c"><span class="coin">M</span>500</div><div class="bonus">&nbsp;</div><div class="price">₹49</div></div>
+        <div class="pack on"><span class="ribbon">Most popular</span><div class="c"><span class="coin">M</span>2,200</div><div class="bonus">+200 bonus</div><div class="price">₹199</div></div>
+        <div class="pack"><div class="c"><span class="coin">M</span>4,600</div><div class="bonus">+600 bonus</div><div class="price">₹399</div></div>
+        <div class="pack"><div class="c"><span class="coin">M</span>9,500</div><div class="bonus">+1,500 bonus</div><div class="price">₹799</div></div>
+        <div class="pack"><div class="c"><span class="coin">M</span>20,000</div><div class="bonus">+4,000 bonus</div><div class="price">₹1,599</div></div>
+        <div class="pack"><span class="ribbon gold">Best value</span><div class="c"><span class="coin">M</span>52,000</div><div class="bonus">+12,000 bonus</div><div class="price">₹3,999</div></div>
+      </div>
+      <div class="vipbar"><span class="crown">👑</span><span><b>VIP</b> · +10% gems on every pack</span><span class="go">Join</span></div>
+      <div class="pay">
+        <div class="btn">Pay ₹199 · Get 2,200 gems</div>
+        <div class="secure"><svg class="i"><use href="#lock"/></svg>Secure payment via Google Play</div>
+      </div>
+    </div></div>
+    <figcaption><b>1. Wallet / Recharge</b> · balance + packs</figcaption>
+  </figure>
+
+  <!-- 2. History -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="head"><div class="back"><svg class="i"><use href="#back"/></svg></div><h2>Gems history</h2></div>
+      <div class="filters"><span class="on">All</span><span>Added</span><span>Spent</span></div>
+      <div class="sum">
+        <div><small>Added this month</small><b style="color:var(--online)">+4,600</b></div>
+        <div><small>Spent this month</small><b>−3,350</b></div>
+      </div>
+      <div class="day">TODAY</div>
+      <div class="tx"><div class="ic out">📹</div><div><b>Video call · Aisha</b><small>12:40 min · 10:05</small></div><div class="amt minus">−780</div></div>
+      <div class="tx"><div class="ic out">🌹</div><div><b>Gift · Rose to Riya</b><small>09:12</small></div><div class="amt minus">−10</div></div>
+      <div class="tx"><div class="ic gold">📅</div><div><b>Daily check-in</b><small>Day 3 · 08:00</small></div><div class="amt plus">+20</div></div>
+      <div class="day">YESTERDAY</div>
+      <div class="tx"><div class="ic in">💳</div><div><b>Recharge · ₹399</b><small>Google Play · 21:14</small></div><div class="amt plus">+4,600<small>incl. 600 bonus</small></div></div>
+      <div class="tx"><div class="ic out">📹</div><div><b>Video call · Sana</b><small>4:12 min · 20:30</small></div><div class="amt minus">−300</div></div>
+      <div class="tx"><div class="ic gold">🎁</div><div><b>Welcome bonus</b><small>New account · 19:02</small></div><div class="amt plus">+50</div></div>
+    </div></div>
+    <figcaption><b>2. History</b> · har gem ka hisaab</figcaption>
+  </figure>
+
+  <!-- 3. Low balance -->
+  <figure>
+    <div class="phone"><div class="screen" style="background:#2a0f1c">
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="warn">💎</div>
+        <h3>Not enough gems</h3>
+        <p>A video call with <b style="color:var(--text)">Aisha</b> needs at least 1 minute of gems.</p>
+        <div class="need">
+          <div>You have<b><span class="coin">M</span>20</b></div>
+          <div>Needed<b><span class="coin">M</span>60/min</b></div>
+        </div>
+        <div class="mini-packs">
+          <div class="pack"><div class="c"><span class="coin">M</span>500</div><div class="price">₹49</div></div>
+          <div class="pack on"><span class="ribbon">Popular</span><div class="c"><span class="coin">M</span>2,200</div><div class="price">₹199</div></div>
+          <div class="pack"><div class="c"><span class="coin">M</span>4,600</div><div class="price">₹399</div></div>
+        </div>
+        <div class="btn">Recharge & Call</div>
+        <div class="secure" style="margin-top:12px">More packs in Wallet ›</div>
+      </div>
+    </div></div>
+    <figcaption><b>3. Gems kam</b> · call/gift se pehle</figcaption>
+  </figure>
+
+  <!-- 4. Success -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="succ">
+        <div class="burst"><span class="coin">M</span></div>
+        <h3>Recharge successful</h3>
+        <div class="got">+2,200</div>
+        <p>Gems added to your wallet</p>
+        <div class="receipt">
+          <div>Pack<b>2,000 + 200 bonus</b></div>
+          <div>Paid<b>₹199 · Google Play</b></div>
+          <div>New balance<b style="color:var(--gold-1)">3,450 gems</b></div>
+        </div>
+      </div>
+      <div class="pay"><div class="btn gold">Done</div></div>
+    </div></div>
+    <figcaption><b>4. Recharge successful</b></figcaption>
+  </figure>
+
+</div>
+
+<section class="notes">
+  <h3>Kaise kaam karega</h3>
+  <ul>
+    <li><b>Gems</b> = app ki currency. Video call (60 gems/min), gifts, private photo unlock me lagti hain.</li>
+    <li><b>Recharge:</b> 6 packs, bade pack pe zyada bonus. <b>Pehli recharge pe 2× gems</b> (sirf ek baar, asli offer — nakli countdown nahi).</li>
+    <li><b>Payment:</b> Google Play Billing (Play Store ka niyam: digital coins sirf isi se). Server Google se purchase verify karke hi gems deta hai.</li>
+    <li><b>History:</b> har gem ka hisaab — call, gift, check-in, recharge, bonus. Filter: All / Added / Spent.</li>
+    <li><b>Gems kam:</b> call/gift se pehle check, seedha chhota recharge popup.</li>
+    <li><b>Safety:</b> balance sirf server pe badalta hai (app se kabhi nahi), har badlaav ka record (ledger), double charge se bachav.</li>
+  </ul>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theme Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --page-bg: #f4eff1; --page-text: #2a1a21; --page-muted: #7a6870; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; } }
+  :root[data-theme="dark"] { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--page-bg); color: var(--page-text); font-family: 'Poppins', system-ui, sans-serif; padding: 32px 16px 64px; }
+  header.page { max-width: 1200px; margin: 0 auto 28px; }
+  header.page h1 { font-size: 22px; font-weight: 600; }
+  header.page p { color: var(--page-muted); font-size: 14px; margin-top: 4px; }
+  .grid { max-width: 1640px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 36px; justify-content: center; }
+  figure { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  figcaption { font-size: 13px; color: var(--page-muted); text-align: center; max-width: 340px; line-height: 1.5; }
+  figcaption b { color: var(--page-text); font-weight: 700; font-size: 14px; display: block; }
+
+  /* ===== Theme tokens ===== */
+  .t-current  { --top: #5a0f2e; --top2: #2a0a19; --bg: #12070d; --card: #23111b; --border: rgba(255,255,255,.07); --text: #fbf3f6; --muted: #b39aa6; --dim: #7d6571; --acc1: #ff5f8f; --acc2: #d81b5c; --gold: #f6dc9b; --bar: #1e0f17; --ring-bg: #23111b; }
+  .t-midnight { --top: #1a1622; --top2: #0f0d14; --bg: #0b0a0f; --card: #17151d; --border: rgba(255,255,255,.07); --text: #f5f3f8; --muted: #a6a1b3; --dim: #6f6a7d; --acc1: #ff4f8b; --acc2: #ff7a59; --gold: #ffd36e; --bar: #16141c; --ring-bg: #17151d; }
+  .t-plum     { --top: #3b1d6e; --top2: #22123f; --bg: #140b24; --card: #211536; --border: rgba(255,255,255,.08); --text: #f6f1ff; --muted: #b9a9d6; --dim: #7f6f9c; --acc1: #ff5fa2; --acc2: #a64dff; --gold: #ffd87a; --bar: #1d1230; --ring-bg: #211536; }
+  .t-light    { --top: #ffe1ea; --top2: #fff3f6; --bg: #fff7f9; --card: #ffffff; --border: rgba(160,40,80,.10); --text: #2a1320; --muted: #7c5f6c; --dim: #a8909b; --acc1: #ff4f81; --acc2: #ff7a59; --gold: #c8952e; --bar: #ffffff; --ring-bg: #ffffff; }
+
+  .phone { width: 340px; height: 720px; border-radius: 44px; padding: 10px; background: linear-gradient(145deg, #2b2b2e, #0d0d0f); box-shadow: 0 30px 60px -20px rgba(80,10,40,.4), inset 0 0 0 1.5px #3a3a3e; }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 36px; overflow: hidden; color: var(--text);
+    background: linear-gradient(180deg, var(--top) 0%, var(--top2) 22%, var(--bg) 42%); display: flex; flex-direction: column; }
+  .status { height: 36px; flex-shrink: 0; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; }
+  .status .cam { width: 10px; height: 10px; border-radius: 50%; background: #000; }
+  .status .icons { display: flex; gap: 5px; } .status .icons i { width: 14px; height: 9px; border-radius: 2px; background: var(--text); opacity: .85; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  .title { padding: 4px 18px 8px; font-size: 26px; font-weight: 700; letter-spacing: -.3px; }
+  .utabs { display: flex; margin: 0 14px 12px; border-bottom: 1px solid var(--border); position: relative; }
+  .utabs span { flex: 1; text-align: center; padding: 8px 0 11px; font-size: 13px; font-weight: 600; color: var(--dim); display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .utabs span.on { color: var(--text); }
+  .utabs .line { position: absolute; bottom: -1px; left: 0; width: 25%; height: 3px; display: flex; justify-content: center; }
+  .utabs .line::after { content: ""; width: 34px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--acc1), var(--acc2)); }
+  .n { min-width: 17px; height: 17px; padding: 0 5px; border-radius: 9px; font-size: 10px; font-weight: 700; display: inline-grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--acc1), var(--acc2)); font-style: normal; }
+
+  .list { flex: 1; padding: 0 14px; display: flex; flex-direction: column; gap: 10px; }
+  .card { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 22px; background: var(--card); border: 1px solid var(--border); }
+  .t-light .card { box-shadow: 0 8px 20px -14px rgba(160,40,80,.35); }
+  .card.notice { background: linear-gradient(100deg, color-mix(in srgb, var(--gold) 18%, var(--card)), var(--card)); border-color: color-mix(in srgb, var(--gold) 35%, transparent); }
+  .bell { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: radial-gradient(circle at 35% 30%, #ffd27a, #f08a24 60%, #c4570f); }
+  .bell svg { width: 22px; height: 22px; fill: #fff; stroke: #fff; }
+  .avw { position: relative; flex-shrink: 0; }
+  .av { width: 52px; height: 52px; border-radius: 50%; position: relative; overflow: hidden; }
+  .av.ring { padding: 2px; background: conic-gradient(from 210deg, var(--gold), var(--acc1), var(--acc2), var(--gold)); }
+  .av.ring .in { position: relative; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 2px solid var(--ring-bg); }
+  .dot { position: absolute; left: 1px; bottom: 1px; width: 13px; height: 13px; border-radius: 50%; background: #3ee08f; border: 2.5px solid var(--card); }
+  .art { position: absolute; inset: 0; }
+  .art::before { content: ""; position: absolute; left: 50%; top: 22%; width: 46%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: var(--ink); opacity: .85; }
+  .art::after { content: ""; position: absolute; left: 8%; right: 8%; bottom: -16%; height: 50%; border-radius: 50% 50% 0 0; background: var(--ink); opacity: .85; }
+  .g1 { background: linear-gradient(160deg, #ff9bbb, #a3164a); --ink: #5c0c2c; }
+  .g2 { background: linear-gradient(160deg, #f6dc9b, #a87a2a); --ink: #5e4012; }
+  .g3 { background: linear-gradient(160deg, #c9a0ff, #6a2bb0); --ink: #3c1470; }
+  .g4 { background: linear-gradient(160deg, #ffb08f, #c2402a); --ink: #6d1c10; }
+  .body { flex: 1; min-width: 0; }
+  .top { display: flex; align-items: center; gap: 6px; }
+  .top b { font-size: 14.5px; font-weight: 600; }
+  .top .time { margin-left: auto; font-size: 11px; color: var(--dim); }
+  .msg { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+  .msg .t { flex: 1; min-width: 0; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg .t.unread { color: var(--text); font-weight: 500; }
+  .msg .t.typing { color: #2fcf80; font-style: italic; }
+  .badge { min-width: 21px; height: 21px; padding: 0 6px; border-radius: 11px; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--acc1), var(--acc2)); }
+  .verified { width: 15px; height: 15px; }
+  .lvl { font-size: 9.5px; font-weight: 700; color: #3a2508; background: linear-gradient(100deg, #f6dc9b, #d4a64b); padding: 1px 6px; border-radius: 6px; }
+
+  .tabbar { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 64px; border-radius: 24px; background: var(--bar); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-around; }
+  .t-light .tabbar { box-shadow: 0 10px 30px -12px rgba(160,40,80,.35); }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10.5px; color: var(--dim); position: relative; }
+  .tab .ic { width: 46px; height: 30px; display: grid; place-items: center; border-radius: 12px; }
+  .tab.on { color: var(--text); } .tab.on .ic { background: color-mix(in srgb, var(--acc1) 18%, transparent); color: var(--acc1); }
+  .tab .tb { position: absolute; top: -4px; right: 8px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--acc1); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; border: 2px solid var(--bar); }
+
+  .swatch { display: flex; gap: 6px; justify-content: center; }
+  .swatch i { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(128,128,128,.3); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+    <symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+    <symbol id="chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/></symbol>
+    <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+    <symbol id="check-badge" viewBox="0 0 24 24"><path fill="#4ea7ff" stroke="none" d="M12 1.8l2.3 1.7 2.8-.2 1 2.6 2.4 1.5-.6 2.8 1.2 2.6-2 2 .1 2.8-2.7.8-1.4 2.5-2.8-.6-2.4 1.5-2.1-1.9-2.8-.1-.8-2.7-2.4-1.5.7-2.8-1.1-2.6 2-2-.1-2.8 2.7-.8 1.4-2.5 2.8.6z"/><path stroke="#fff" stroke-width="2.4" fill="none" d="M8 12.2l2.7 2.6L16.2 9"/></symbol>
+  </defs>
+</svg>
+
+<template id="tpl">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+    <div class="title">Chats</div>
+    <div class="utabs"><span class="on">Chats</span><span>Friends</span><span>Followed <i class="n">2</i></span><span>Calls</span><i class="line"></i></div>
+    <div class="list">
+      <div class="card notice"><div class="bell"><svg class="i"><use href="#bell"/></svg></div>
+        <div class="body"><div class="top"><b>Official Notice</b><span class="time">11:34</span></div><div class="msg"><span class="t">Welcome to Meto 💖 Stay safe</span></div></div></div>
+      <div class="card"><div class="avw"><div class="av ring"><div class="in"><div class="art g1"></div></div></div><span class="dot"></span></div>
+        <div class="body"><div class="top"><b>Aisha Mehra</b><svg class="verified"><use href="#check-badge"/></svg><span class="time">00:50</span></div><div class="msg"><span class="t unread">Aapse baat karke accha laga 😊</span><span class="badge">3</span></div></div></div>
+      <div class="card"><div class="avw"><div class="av"><div class="art g3"></div></div><span class="dot"></span></div>
+        <div class="body"><div class="top"><b>Noor ✨</b><span class="time">00:50</span></div><div class="msg"><span class="t typing">typing…</span><span class="badge">2</span></div></div></div>
+      <div class="card"><div class="avw"><div class="av ring"><div class="in"><div class="art g2"></div></div></div></div>
+        <div class="body"><div class="top"><b>Bhavna</b><span class="lvl">Lv.6</span><span class="time">00:49</span></div><div class="msg"><span class="t">📞 Missed video call</span></div></div></div>
+      <div class="card"><div class="avw"><div class="av"><div class="art g4"></div></div></div>
+        <div class="body"><div class="top"><b>Zara 🌙</b><span class="time">Yesterday</span></div><div class="msg"><span class="t">Good night, kal baat karte hain</span></div></div></div>
+    </div>
+    <div class="tabbar">
+      <div class="tab"><div class="ic"><svg class="i"><use href="#compass"/></svg></div>Discover</div>
+      <div class="tab on"><div class="ic"><svg class="i"><use href="#chat"/></svg></div>Chats<span class="tb">5</span></div>
+      <div class="tab"><div class="ic"><svg class="i"><use href="#user"/></svg></div>Me</div>
+    </div>
+  </div></div>
+</template>
+
+<header class="page">
+  <h1>Meto · Theme options</h1>
+  <p>Wahi Chats screen, 4 alag rang. Jo theme chunoge wo poori app (Login, Discover, Profile, Me, Chat) pe lagegi.</p>
+</header>
+
+<div class="grid">
+  <figure class="t-current"><div class="slot"></div><div class="swatch"><i style="background:#12070d"></i><i style="background:#5a0f2e"></i><i style="background:#ff5f8f"></i><i style="background:#f6dc9b"></i></div>
+    <figcaption><b>1 · Rose Night (abhi wala)</b>Gehra maroon + rose + gold. Romantic lekin thoda bhaari/udaas lag sakta hai.</figcaption></figure>
+  <figure class="t-midnight"><div class="slot"></div><div class="swatch"><i style="background:#0b0a0f"></i><i style="background:#17151d"></i><i style="background:#ff4f8b"></i><i style="background:#ff7a59"></i></div>
+    <figcaption><b>2 · Midnight Glow</b>Saaf kaala-grey base, pink→coral chamak. Laal kam, modern (Tinder/Bumble dark jaisa).</figcaption></figure>
+  <figure class="t-plum"><div class="slot"></div><div class="swatch"><i style="background:#140b24"></i><i style="background:#3b1d6e"></i><i style="background:#ff5fa2"></i><i style="background:#a64dff"></i></div>
+    <figcaption><b>3 · Royal Plum</b>Gehra baingani + pink→purple. Raat jaisa premium, party feel.</figcaption></figure>
+  <figure class="t-light"><div class="slot"></div><div class="swatch"><i style="background:#fff7f9"></i><i style="background:#ffe1ea"></i><i style="background:#ff4f81"></i><i style="background:#ff7a59"></i></div>
+    <figcaption><b>4 · Blush Light</b>Halka safed-gulabi, pink→coral. Vato jaisa roshan aur friendly, din me padhne me aasaan.</figcaption></figure>
+</div>
+
+<script>
+  const tpl = document.getElementById('tpl');
+  document.querySelectorAll('.slot').forEach(s => s.replaceWith(tpl.content.cloneNode(true)));
+</script>
+</body>
+</html>

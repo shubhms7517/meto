@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meto Auth Screens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #f4eff1;
+    --page-text: #2a1a21;
+    --page-muted: #7a6870;
+
+    /* App theme (screens are always dark-premium) */
+    --app-bg: #12070d;
+    --app-surface: #1e0f17;
+    --app-surface-2: #2a1520;
+    --app-border: rgba(255, 255, 255, 0.08);
+    --app-text: #fbf3f6;
+    --app-muted: #b39aa6;
+    --rose-1: #ff5f8f;
+    --rose-2: #d81b5c;
+    --rose-3: #8e0f3c;
+    --gold-1: #f6dc9b;
+    --gold-2: #d4a64b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page-bg: #0b0508;
+      --page-text: #f3e9ee;
+      --page-muted: #9d8792;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #0b0508;
+    --page-text: #f3e9ee;
+    --page-muted: #9d8792;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg);
+    color: var(--page-text);
+    font-family: 'Poppins', system-ui, sans-serif;
+    padding: 32px 16px 64px;
+  }
+  header.page { max-width: 1200px; margin: 0 auto 28px; }
+  header.page h1 { font-size: 22px; font-weight: 600; }
+  header.page p { color: var(--page-muted); font-size: 14px; margin-top: 4px; }
+
+  .grid {
+    max-width: 1600px; margin: 0 auto;
+    display: flex; flex-wrap: wrap; gap: 36px; justify-content: center;
+  }
+  figure { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  figcaption { font-size: 13px; color: var(--page-muted); font-weight: 500; }
+  figcaption b { color: var(--page-text); font-weight: 600; }
+
+  /* Phone frame */
+  .phone {
+    width: 340px; max-width: calc(100vw - 32px); height: 720px;
+    border-radius: 44px; padding: 10px;
+    background: linear-gradient(145deg, #2b2b2e, #0d0d0f);
+    box-shadow: 0 30px 60px -20px rgba(80, 10, 40, 0.45), inset 0 0 0 1.5px #3a3a3e;
+  }
+  .screen {
+    position: relative; width: 100%; height: 100%;
+    border-radius: 36px; overflow: hidden;
+    background: var(--app-bg); color: var(--app-text);
+    display: flex; flex-direction: column;
+  }
+  .status {
+    height: 38px; flex-shrink: 0; padding: 0 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; font-weight: 600; position: relative; z-index: 3;
+  }
+  .status .cam { width: 10px; height: 10px; border-radius: 50%; background: #000; box-shadow: 0 0 0 2px #1a1a1a; }
+  .status .icons { display: flex; gap: 5px; align-items: center; }
+  .status .icons i { display: block; width: 14px; height: 9px; border-radius: 2px; background: var(--app-text); opacity: .9; }
+  .status .icons i:first-child { width: 10px; clip-path: polygon(0 100%, 100% 0, 100% 100%); border-radius: 0; }
+
+  .glow {
+    position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; z-index: 0;
+  }
+  .content { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding: 8px 24px 28px; }
+
+  /* Brand */
+  .logo-mark {
+    width: 72px; height: 72px; border-radius: 22px;
+    background: linear-gradient(140deg, var(--rose-1), var(--rose-2) 55%, var(--rose-3));
+    display: grid; place-items: center;
+    box-shadow: 0 14px 34px -8px rgba(216, 27, 92, .7), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .logo-mark svg { width: 38px; height: 38px; }
+  .wordmark {
+    font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+    background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  /* Buttons */
+  .btn {
+    height: 54px; border-radius: 18px; border: 0; width: 100%;
+    font: 600 15px 'Poppins', sans-serif; display: flex; align-items: center; justify-content: center; gap: 10px;
+    cursor: pointer;
+  }
+  .btn-primary {
+    color: #fff;
+    background: linear-gradient(100deg, var(--rose-1), var(--rose-2));
+    box-shadow: 0 12px 26px -10px rgba(216, 27, 92, .85), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .btn-ghost {
+    color: var(--app-text); background: rgba(255,255,255,.06);
+    border: 1px solid var(--app-border); backdrop-filter: blur(10px);
+  }
+  .btn-gold {
+    color: #3a2508;
+    background: linear-gradient(100deg, var(--gold-1), var(--gold-2));
+    box-shadow: 0 12px 26px -12px rgba(212, 166, 75, .8);
+  }
+  .btn svg { width: 20px; height: 20px; }
+
+  .top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+  .back {
+    width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center;
+    background: var(--app-surface); border: 1px solid var(--app-border);
+  }
+  .back svg { width: 18px; height: 18px; }
+  .steps { margin-left: auto; display: flex; gap: 6px; }
+  .steps span { width: 18px; height: 5px; border-radius: 3px; background: var(--app-surface-2); }
+  .steps span.on { background: linear-gradient(90deg, var(--rose-1), var(--rose-2)); width: 28px; }
+
+  h2.title { font-size: 26px; font-weight: 700; line-height: 1.2; letter-spacing: -.3px; }
+  p.sub { font-size: 13.5px; color: var(--app-muted); margin-top: 8px; line-height: 1.55; }
+  p.sub b { color: var(--app-text); font-weight: 600; }
+
+  .label { font-size: 12px; color: var(--app-muted); font-weight: 500; margin: 0 0 8px 4px; }
+  .field {
+    height: 56px; border-radius: 18px; background: var(--app-surface);
+    border: 1px solid var(--app-border); display: flex; align-items: center; padding: 0 16px; gap: 12px;
+    font-size: 15px;
+  }
+  .field.focus { border-color: rgba(255, 95, 143, .6); box-shadow: 0 0 0 4px rgba(255, 95, 143, .12); }
+  .field .cc { display: flex; align-items: center; gap: 6px; padding-right: 12px; border-right: 1px solid var(--app-border); font-weight: 600; }
+  .field .ph { color: #6f5864; }
+  .field .caret { width: 2px; height: 20px; background: var(--rose-1); margin-left: -8px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .field svg { width: 18px; height: 18px; color: var(--app-muted); flex-shrink: 0; }
+  .field .end { margin-left: auto; }
+
+  .otp { display: flex; gap: 9px; margin-top: 30px; }
+  .otp div {
+    flex: 1; height: 58px; border-radius: 16px; background: var(--app-surface);
+    border: 1px solid var(--app-border); display: grid; place-items: center; font-size: 22px; font-weight: 600;
+  }
+  .otp div.filled { border-color: rgba(212, 166, 75, .45); }
+  .otp div.active { border-color: rgba(255, 95, 143, .7); box-shadow: 0 0 0 4px rgba(255, 95, 143, .12); }
+
+  .divider { display: flex; align-items: center; gap: 12px; color: #6f5864; font-size: 12px; margin: 18px 0; }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--app-border); }
+
+  .fine { font-size: 11.5px; color: #7d6571; text-align: center; line-height: 1.6; }
+  .fine a { color: var(--gold-1); text-decoration: none; font-weight: 500; }
+
+  .chips { display: flex; gap: 10px; }
+  .chip {
+    flex: 1; height: 50px; border-radius: 16px; background: var(--app-surface); border: 1px solid var(--app-border);
+    display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--app-muted);
+  }
+  .chip.on { color: var(--app-text); border-color: rgba(255, 95, 143, .55); background: linear-gradient(180deg, rgba(255,95,143,.16), rgba(216,27,92,.06)); }
+  .chip svg { width: 16px; height: 16px; }
+
+  .avatar-pick { align-self: center; position: relative; margin: 4px 0 22px; }
+  .avatar-pick .ring {
+    width: 108px; height: 108px; border-radius: 50%; padding: 3px;
+    background: conic-gradient(from 200deg, var(--gold-1), var(--rose-1), var(--rose-2), var(--gold-2), var(--gold-1));
+  }
+  .avatar-pick .inner {
+    width: 100%; height: 100%; border-radius: 50%; background: var(--app-surface);
+    display: grid; place-items: center; border: 3px solid var(--app-bg);
+  }
+  .avatar-pick .inner svg { width: 40px; height: 40px; color: #5e4652; }
+  .avatar-pick .plus {
+    position: absolute; right: 2px; bottom: 4px; width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(140deg, var(--rose-1), var(--rose-2)); display: grid; place-items: center;
+    border: 3px solid var(--app-bg);
+  }
+  .avatar-pick .plus svg { width: 16px; height: 16px; }
+
+  .check { display: flex; gap: 10px; align-items: flex-start; font-size: 12px; color: var(--app-muted); line-height: 1.5; }
+  .check .box {
+    width: 20px; height: 20px; border-radius: 7px; flex-shrink: 0; margin-top: 1px;
+    background: linear-gradient(140deg, var(--gold-1), var(--gold-2)); display: grid; place-items: center;
+  }
+  .check .box svg { width: 12px; height: 12px; color: #3a2508; }
+
+  .home-ind { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 110px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.35); z-index: 3; }
+
+  /* Welcome screen collage */
+  .collage { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+  .tile {
+    position: absolute; border-radius: 26px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .tile::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(18,7,13,.55)); }
+  .tile .person { position: absolute; left: 50%; bottom: -8%; transform: translateX(-50%); width: 78%; }
+  .fade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,7,13,.2) 0%, rgba(18,7,13,.35) 35%, var(--app-bg) 66%); z-index: 1; }
+  .badge-online {
+    position: absolute; top: 12px; left: 12px; z-index: 2; font-size: 10px; font-weight: 600;
+    padding: 4px 9px 4px 7px; border-radius: 20px; background: rgba(0,0,0,.4); backdrop-filter: blur(8px);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .badge-online::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #3ee08f; box-shadow: 0 0 6px #3ee08f; }
+  .feature-row { display: flex; justify-content: center; gap: 18px; margin: 18px 0 22px; }
+  .feature-row div { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--app-muted); }
+  .feature-row svg { width: 14px; height: 14px; color: var(--gold-2); }
+
+  .notes { max-width: 1200px; margin: 40px auto 0; background: color-mix(in srgb, var(--page-text) 4%, transparent); border-radius: 18px; padding: 20px 22px; }
+  .notes h3 { font-size: 15px; margin-bottom: 10px; }
+  .notes ol { padding-left: 20px; font-size: 13.5px; color: var(--page-muted); line-height: 1.8; }
+  .notes ol b { color: var(--page-text); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="person" viewBox="0 0 100 120">
+      <circle cx="50" cy="38" r="22" fill="currentColor" opacity=".9"/>
+      <path d="M8 120c0-26 19-44 42-44s42 18 42 44z" fill="currentColor" opacity=".9"/>
+    </symbol>
+    <symbol id="heart" viewBox="0 0 24 24">
+      <path d="M12 20.5s-7.5-4.6-9.6-9.3C.9 7.8 3 4 6.8 4c2.2 0 3.7 1.2 5.2 3 1.5-1.8 3-3 5.2-3C21 4 23.1 7.8 21.6 11.2 19.5 15.9 12 20.5 12 20.5z" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="page">
+  <h1>Meto · Login & Registration</h1>
+  <p>Design draft 1 · Rose + Gold premium theme · Screens 1–5</p>
+</header>
+
+<div class="grid">
+
+  <!-- 1. Splash -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="glow" style="width:300px;height:300px;background:#d81b5c;opacity:.45;top:120px;left:-40px"></div>
+      <div class="glow" style="width:220px;height:220px;background:#d4a64b;opacity:.22;bottom:90px;right:-60px"></div>
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="content" style="align-items:center;justify-content:center;gap:20px">
+        <div class="logo-mark">
+          <svg viewBox="0 0 24 24" style="color:#fff"><use href="#heart"/></svg>
+        </div>
+        <div class="wordmark" style="font-size:48px;line-height:1">Meto</div>
+        <p class="sub" style="text-align:center;margin-top:-6px;letter-spacing:2.5px;font-size:11px;text-transform:uppercase">Real people · Real connections</p>
+        <div style="position:absolute;bottom:56px;width:44px;height:4px;border-radius:2px;background:var(--app-surface-2);overflow:hidden">
+          <div style="width:60%;height:100%;background:linear-gradient(90deg,var(--gold-1),var(--gold-2))"></div>
+        </div>
+      </div>
+      <div class="home-ind"></div>
+    </div></div>
+    <figcaption><b>1. Splash</b> · app khulte hi</figcaption>
+  </figure>
+
+  <!-- 2. Welcome -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="collage">
+        <div class="tile" style="width:150px;height:200px;top:30px;left:-20px;transform:rotate(-8deg);background:linear-gradient(160deg,#ff8fb1,#a3164a)">
+          <span class="badge-online">Online</span>
+          <svg class="person" style="color:#5c0c2c"><use href="#person"/></svg>
+        </div>
+        <div class="tile" style="width:150px;height:200px;top:70px;right:-16px;transform:rotate(7deg);background:linear-gradient(160deg,#f6dc9b,#b0802d)">
+          <svg class="person" style="color:#6b4a14"><use href="#person"/></svg>
+        </div>
+        <div class="tile" style="width:130px;height:170px;top:240px;left:40px;transform:rotate(4deg);background:linear-gradient(160deg,#c48bff,#6a2bb0)">
+          <span class="badge-online">Online</span>
+          <svg class="person" style="color:#3c1470"><use href="#person"/></svg>
+        </div>
+        <div class="tile" style="width:130px;height:170px;top:250px;right:30px;transform:rotate(-6deg);background:linear-gradient(160deg,#ff9f7a,#c2402a)">
+          <svg class="person" style="color:#6d1c10"><use href="#person"/></svg>
+        </div>
+      </div>
+      <div class="fade"></div>
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="content" style="justify-content:flex-end">
+        <div class="wordmark" style="font-size:30px;margin-bottom:6px">Meto</div>
+        <h2 class="title">Meet someone<br>worth talking to.</h2>
+        <p class="sub">Verified profiles, private chats and HD video calls — all in one place.</p>
+        <div class="feature-row">
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Verified</div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>Private</div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="3"/><path d="M16 10l6-3v10l-6-3"/></svg>HD Calls</div>
+        </div>
+        <button class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+          Continue with Phone
+        </button>
+        <button class="btn btn-ghost" style="margin-top:12px">
+          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 01-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0012 22z"/><path fill="#FBBC05" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 000 9.2z"/><path fill="#EA4335" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 003.1 7.4L6.4 10C7.2 7.7 9.4 6 12 6z"/></svg>
+          Continue with Google
+        </button>
+        <p class="fine" style="margin-top:16px">By continuing you agree to our <a href="#">Terms</a> &amp; <a href="#">Privacy Policy</a>.<br>18+ only.</p>
+      </div>
+      <div class="home-ind"></div>
+    </div></div>
+    <figcaption><b>2. Welcome</b> · login options</figcaption>
+  </figure>
+
+  <!-- 3. Phone -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="glow" style="width:260px;height:260px;background:#d81b5c;opacity:.28;top:-80px;right:-80px"></div>
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="content">
+        <div class="top-bar">
+          <div class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></div>
+          <div class="steps"><span class="on"></span><span></span><span></span></div>
+        </div>
+        <h2 class="title">What's your<br>phone number?</h2>
+        <p class="sub">We'll send you a 6-digit code to verify it's really you.</p>
+        <div style="margin-top:32px">
+          <div class="label">Mobile number</div>
+          <div class="field focus">
+            <span class="cc">🇮🇳 +91
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+            <span style="letter-spacing:1px;font-weight:500">98765 43210</span><span class="caret"></span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:16px;font-size:12px;color:var(--app-muted)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-2)" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+          Your number is never shown on your profile.
+        </div>
+        <div style="margin-top:auto">
+          <button class="btn btn-primary">Send Code</button>
+        </div>
+      </div>
+      <div class="home-ind"></div>
+    </div></div>
+    <figcaption><b>3. Phone number</b> · login + signup dono</figcaption>
+  </figure>
+
+  <!-- 4. OTP -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="glow" style="width:260px;height:260px;background:#d4a64b;opacity:.16;top:-60px;left:-90px"></div>
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="content">
+        <div class="top-bar">
+          <div class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></div>
+          <div class="steps"><span class="on"></span><span class="on"></span><span></span></div>
+        </div>
+        <h2 class="title">Enter the code</h2>
+        <p class="sub">Sent to <b>+91 98765 43210</b> · <span style="color:var(--rose-1);font-weight:600">Edit</span></p>
+        <div class="otp">
+          <div class="filled">4</div><div class="filled">8</div><div class="filled">2</div>
+          <div class="active"><span class="caret" style="margin:0"></span></div><div></div><div></div>
+        </div>
+        <p class="sub" style="text-align:center;margin-top:26px">Didn't get it? Resend in <b style="color:var(--gold-1)">00:24</b></p>
+        <div style="margin-top:auto">
+          <button class="btn btn-primary" style="opacity:.45">Verify</button>
+        </div>
+      </div>
+      <div class="home-ind"></div>
+    </div></div>
+    <figcaption><b>4. OTP verify</b> · auto-read SMS</figcaption>
+  </figure>
+
+  <!-- 5. Profile setup -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="glow" style="width:280px;height:280px;background:#d81b5c;opacity:.22;top:-100px;left:30px"></div>
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="content">
+        <div class="top-bar" style="margin-bottom:12px">
+          <div class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></div>
+          <div class="steps"><span class="on"></span><span class="on"></span><span class="on"></span></div>
+        </div>
+        <h2 class="title" style="font-size:23px">Create your profile</h2>
+        <div class="avatar-pick" style="margin-top:16px">
+          <div class="ring"><div class="inner"><svg viewBox="0 0 100 120"><use href="#person"/></svg></div></div>
+          <div class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+        </div>
+        <div class="label">Name</div>
+        <div class="field"><span style="font-weight:500">Rahul</span></div>
+        <div class="label" style="margin-top:14px">Gender</div>
+        <div class="chips">
+          <div class="chip on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="14" r="6"/><path d="M14.5 9.5L20 4M15 4h5v5"/></svg>Male</div>
+          <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="6"/><path d="M12 15v7M9 19h6"/></svg>Female</div>
+          <div class="chip">Other</div>
+        </div>
+        <div class="label" style="margin-top:14px">Birthday</div>
+        <div class="field">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          <span style="font-weight:500">14 Feb 1998</span>
+          <span class="end" style="font-size:12px;color:var(--gold-1)">27 yrs</span>
+        </div>
+        <div class="check" style="margin-top:14px">
+          <div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-10"/></svg></div>
+          I confirm I am 18 or older and agree to the Community Guidelines.
+        </div>
+        <div style="margin-top:auto">
+          <button class="btn btn-gold">Start Exploring</button>
+        </div>
+      </div>
+      <div class="home-ind"></div>
+    </div></div>
+    <figcaption><b>5. Profile setup</b> · sirf naye users ke liye</figcaption>
+  </figure>
+
+</div>
+
+<section class="notes">
+  <h3>Flow</h3>
+  <ol>
+    <li><b>Splash</b> → app check karta hai ki user pehle se logged in hai ya nahi.</li>
+    <li>Logged in hai → seedha Home. Nahi hai → <b>Welcome</b>.</li>
+    <li><b>Phone</b> → <b>OTP</b>. Naya number ho to registration, purana ho to login. Alag signup page ki zaroorat nahi.</li>
+    <li>Naye user ke liye <b>Profile setup</b> (photo, naam, gender, birthday, 18+ confirm). Iske baad Home.</li>
+    <li>Google login → agar profile adhoora hai to Profile setup, warna Home.</li>
+  </ol>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meto Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #f4eff1; --page-text: #2a1a21; --page-muted: #7a6870;
+    --bg: #12070d; --surface: #1e0f17; --surface-2: #2a1520; --border: rgba(255,255,255,.08);
+    --text: #fbf3f6; --muted: #b39aa6; --dim: #7d6571;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d4a64b; --gold-ink: #3a2508; --online: #3ee08f;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; } }
+  :root[data-theme="dark"] { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--page-bg); color: var(--page-text); font-family: 'Poppins', system-ui, sans-serif; padding: 32px 16px 64px; }
+  header.page { max-width: 1200px; margin: 0 auto 28px; }
+  header.page h1 { font-size: 22px; font-weight: 600; }
+  header.page p { color: var(--page-muted); font-size: 14px; margin-top: 4px; }
+  .grid { max-width: 1640px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 36px; justify-content: center; }
+  figure { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  figcaption { font-size: 13px; color: var(--page-muted); font-weight: 500; }
+  figcaption b { color: var(--page-text); font-weight: 600; }
+
+  .phone { width: 340px; height: 720px; border-radius: 44px; padding: 10px; background: linear-gradient(145deg, #2b2b2e, #0d0d0f); box-shadow: 0 30px 60px -20px rgba(80,10,40,.45), inset 0 0 0 1.5px #3a3a3e; }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 36px; overflow: hidden; color: var(--text);
+    background: linear-gradient(180deg, #4a0f28 0%, #22091a 26%, var(--bg) 46%); display: flex; flex-direction: column; }
+  .status { height: 36px; flex-shrink: 0; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; }
+  .status .cam { width: 10px; height: 10px; border-radius: 50%; background: #000; }
+  .status .icons { display: flex; gap: 5px; } .status .icons i { width: 14px; height: 9px; border-radius: 2px; background: var(--text); opacity: .9; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .coin { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; flex-shrink: 0;
+    background: radial-gradient(circle at 35% 30%, #fff3c8, var(--gold-2) 60%, #9c7426); color: var(--gold-ink); font-size: 11px; font-weight: 800; box-shadow: inset 0 -1px 0 rgba(0,0,0,.2); }
+  .coin.lg { width: 34px; height: 34px; font-size: 16px; }
+
+  .head { display: flex; align-items: center; gap: 10px; padding: 4px 16px 10px; }
+  .back { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border); }
+  .head h2 { font-size: 18px; font-weight: 700; }
+  .head .right { margin-left: auto; font-size: 12px; color: var(--gold-1); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+  /* Balance card */
+  .bal, .first, .vipbar, .packs, .head, .sec { flex-shrink: 0; }
+  .bal { margin: 2px 16px 0; border-radius: 24px; padding: 14px 18px; position: relative; overflow: hidden;
+    background: linear-gradient(125deg, #3b1d0c 0%, #6b4316 45%, #c4973c 100%); border: 1px solid rgba(246,220,155,.3); box-shadow: 0 18px 34px -18px rgba(196,151,60,.8); }
+  .bal::before { content: ""; position: absolute; width: 200px; height: 200px; border-radius: 50%; right: -60px; top: -80px; background: radial-gradient(circle, rgba(255,240,200,.5), transparent 65%); }
+  .bal::after { content: ""; position: absolute; top: 0; bottom: 0; width: 60px; left: -80px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent); transform: skewX(-20deg); animation: shine 4s ease-in-out infinite; }
+  @keyframes shine { 0% { left: -80px; } 60%, 100% { left: 120%; } }
+  .bal .lbl { font-size: 12px; color: rgba(255,240,210,.8); position: relative; }
+  .bal .num { display: flex; align-items: center; gap: 10px; font-size: 32px; font-weight: 800; color: #fff7e3; margin-top: 2px; position: relative; letter-spacing: -.5px; }
+  .bal .sub { font-size: 11.5px; color: rgba(255,240,210,.75); margin-top: 4px; position: relative; }
+  .bal .hist { position: absolute; right: 14px; top: 14px; height: 30px; padding: 0 10px; border-radius: 10px; display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: #fff3d6; background: rgba(0,0,0,.22); }
+  .bal .hist svg { width: 14px; height: 14px; }
+
+  /* First recharge banner */
+  .first { margin: 10px 16px 0; border-radius: 18px; padding: 9px 14px; display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(100deg, rgba(255,95,143,.22), rgba(246,220,155,.14)); border: 1px solid rgba(255,95,143,.4); }
+  .first .gift { font-size: 28px; }
+  .first b { font-size: 13.5px; display: block; }
+  .first small { font-size: 11px; color: var(--muted); }
+  .first .tag { margin-left: auto; font-size: 11px; font-weight: 800; color: #fff; padding: 4px 9px; border-radius: 10px; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); }
+
+  .sec { font-size: 13px; font-weight: 600; padding: 12px 18px 10px; color: var(--muted); }
+
+  /* Packs */
+  .packs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 16px; }
+  .pack { position: relative; border-radius: 18px; padding: 12px 6px 8px; text-align: center; background: var(--surface); border: 1px solid var(--border); }
+  .pack .c { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 16px; font-weight: 800; }
+  .pack .bonus { font-size: 10.5px; color: var(--online); font-weight: 600; margin-top: 2px; height: 14px; }
+  .pack .price { margin-top: 8px; font-size: 13px; font-weight: 700; height: 30px; border-radius: 10px; display: grid; place-items: center; background: rgba(255,255,255,.06); }
+  .pack.on { border-color: rgba(246,220,155,.7); background: linear-gradient(180deg, rgba(246,220,155,.16), var(--surface)); box-shadow: 0 10px 22px -14px rgba(212,166,75,.9); }
+  .pack.on .price { color: var(--gold-ink); background: linear-gradient(100deg, var(--gold-1), var(--gold-2)); }
+  .pack .ribbon { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9.5px; font-weight: 800; color: #fff; padding: 2px 8px; border-radius: 8px; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); }
+  .pack .ribbon.gold { color: var(--gold-ink); background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); }
+
+  .vipbar { margin: 10px 16px 0; white-space: nowrap; border-radius: 16px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; background: #1f1018; border: 1px solid rgba(212,166,75,.3); font-size: 12px; }
+  .vipbar .crown { font-size: 20px; }
+  .vipbar b { color: var(--gold-1); }
+  .vipbar span.go { margin-left: auto; color: var(--gold-1); font-weight: 600; }
+
+  .pay { margin-top: auto; padding: 10px 16px 16px; }
+  .btn { height: 54px; border-radius: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 15px; color: #fff;
+    background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); box-shadow: 0 12px 26px -10px rgba(216,27,92,.9), inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn.gold { color: var(--gold-ink); background: linear-gradient(100deg, var(--gold-1), var(--gold-2)); box-shadow: 0 12px 26px -12px rgba(212,166,75,.9); }
+  .secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; font-size: 10.5px; color: var(--dim); }
+  .secure svg { width: 13px; height: 13px; }
+
+  /* History */
+  .filters { display: flex; gap: 6px; padding: 4px 16px 10px; }
+  .filters span { height: 32px; padding: 0 14px; border-radius: 16px; display: flex; align-items: center; font-size: 12.5px; font-weight: 600; color: var(--muted); background: var(--surface); border: 1px solid var(--border); }
+  .filters span.on { color: #fff; background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); border-color: transparent; }
+  .sum { display: flex; gap: 8px; padding: 0 16px 10px; }
+  .sum div { flex: 1; border-radius: 16px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); }
+  .sum small { font-size: 10.5px; color: var(--dim); display: block; }
+  .sum b { font-size: 16px; }
+  .day { font-size: 11px; font-weight: 600; color: var(--dim); padding: 8px 18px 6px; letter-spacing: .4px; }
+  .tx { display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+  .tx .ic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
+  .tx .ic.in { background: rgba(62,224,143,.12); }
+  .tx .ic.out { background: rgba(255,95,143,.12); }
+  .tx .ic.gold { background: rgba(212,166,75,.14); }
+  .tx b { font-size: 13.5px; font-weight: 600; display: block; }
+  .tx small { font-size: 11px; color: var(--dim); }
+  .tx .amt { margin-left: auto; font-size: 14px; font-weight: 700; text-align: right; }
+  .tx .amt.plus { color: var(--online); }
+  .tx .amt.minus { color: var(--text); }
+  .tx .amt small { display: block; font-weight: 500; }
+
+  /* Sheet */
+  .dim { position: absolute; inset: 0; background: rgba(0,0,0,.55); z-index: 5; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; border-radius: 28px 28px 0 0; background: #1a0b13; border-top: 1px solid var(--border); padding: 10px 16px 20px; }
+  .handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.2); margin: 0 auto 14px; }
+  .warn { width: 58px; height: 58px; border-radius: 20px; margin: 0 auto; display: grid; place-items: center; font-size: 28px; background: rgba(255,95,143,.12); border: 1px solid rgba(255,95,143,.35); }
+  .sheet h3 { text-align: center; font-size: 18px; margin-top: 10px; }
+  .sheet p { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+  .need { display: flex; justify-content: center; gap: 8px; margin: 12px 0; }
+  .need div { padding: 8px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); font-size: 11.5px; color: var(--muted); text-align: center; }
+  .need b { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 15px; color: var(--text); }
+  .mini-packs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .mini-packs .pack { padding: 10px 4px 8px; }
+  .mini-packs .pack .c { font-size: 14px; }
+
+  /* Success */
+  .succ { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 26px;
+    background: radial-gradient(70% 45% at 50% 40%, rgba(246,220,155,.22), transparent 70%); }
+  .burst { position: relative; width: 150px; height: 150px; display: grid; place-items: center; }
+  .burst::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent, rgba(246,220,155,.5), transparent 30%, rgba(255,95,143,.4), transparent 60%, rgba(246,220,155,.5), transparent 90%); animation: spin 8s linear infinite; filter: blur(2px); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .burst .coin { width: 92px; height: 92px; font-size: 42px; position: relative; box-shadow: 0 14px 40px -6px rgba(212,166,75,.9), inset 0 -3px 0 rgba(0,0,0,.2); animation: pop 1.4s ease-in-out infinite alternate; }
+  @keyframes pop { to { transform: translateY(-6px) scale(1.04); } }
+  .succ h3 { font-size: 22px; margin-top: 18px; }
+  .succ .got { display: flex; align-items: center; gap: 8px; font-size: 30px; font-weight: 800; color: var(--gold-1); margin-top: 6px; }
+  .succ p { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .receipt { width: 100%; margin-top: 20px; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); padding: 4px 14px; }
+  .receipt div { display: flex; justify-content: space-between; padding: 9px 0; font-size: 12.5px; color: var(--muted); }
+  .receipt div + div { border-top: 1px solid var(--border); }
+  .receipt b { color: var(--text); font-weight: 600; }
+
+  .notes { max-width: 1200px; margin: 40px auto 0; background: color-mix(in srgb, var(--page-text) 4%, transparent); border-radius: 18px; padding: 20px 22px; }
+  .notes h3 { font-size: 15px; margin-bottom: 10px; }
+  .notes ul { padding-left: 20px; font-size: 13.5px; color: var(--page-muted); line-height: 1.8; }
+  .notes b { color: var(--page-text); font-weight: 600; }
+</style>
+
+<style>
+  .grid3 { max-width: 1600px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; }
+  .opt { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .opt h3 { font-size: 15px; } .opt p { font-size: 12.5px; color: var(--page-muted); max-width: 300px; text-align: center; line-height: 1.5; }
+  .pair { display: flex; gap: 10px; padding: 14px; border-radius: 26px; background: #12070d; }
+  .card { position: relative; width: 158px; height: 230px; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,.06); color: #fff; font-family: Poppins, sans-serif; }
+  .card .bg { position: absolute; inset: 0; }
+  .card .h { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; background: rgba(0,0,0,.2); }
+  .card .b { position: absolute; left: 50%; top: 55%; transform: translateX(-50%); width: 140px; height: 160px; border-radius: 70px 70px 0 0; background: rgba(0,0,0,.2); }
+  .card .shade { position: absolute; inset: 0; background: linear-gradient(transparent 45%, rgba(10,3,7,.88)); }
+  .card .pill { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 11px; background: rgba(0,0,0,.38); font-size: 10px; font-weight: 600; }
+  .card .pill i { width: 6px; height: 6px; border-radius: 50%; background: #3ee08f; }
+  .card .info { position: absolute; left: 12px; right: 56px; bottom: 12px; }
+  .card .city { font-size: 11px; color: rgba(255,255,255,.72); margin-top: 2px; }
+  .vf { width: 14px; height: 14px; border-radius: 50%; background: #4ea7ff; display: inline-grid; place-items: center; font-size: 8px; vertical-align: 1px; margin-left: 3px; }
+  .callw { position: absolute; right: 10px; bottom: 10px; width: 40px; height: 40px; }
+  .call { position: relative; width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(135deg, #ff5f8f, #d81b5c); box-shadow: 0 6px 16px -4px rgba(216,27,92,.9); z-index: 2; }
+  .call svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---- Naam / umar styles ---- */
+  .n1 { font-size: 15px; font-weight: 700; }
+  .age1 { display: inline-flex; align-items: center; gap: 3px; height: 18px; padding: 0 6px; margin-left: 6px; border-radius: 9px; font-size: 10.5px; font-weight: 700; vertical-align: 2px; }
+  .age1.f { background: rgba(255,95,143,.9); } .age1.m { background: rgba(78,167,255,.9); }
+  .n2 { font-size: 16px; font-weight: 700; }
+  .n2 span { font-weight: 400; font-size: 15px; color: rgba(255,255,255,.75); margin-left: 6px; }
+  .n3 { font-size: 15px; font-weight: 700; display: block; }
+  .row3 { display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 11px; color: rgba(255,255,255,.75); }
+  .row3 b { display: inline-flex; align-items: center; gap: 3px; padding: 0 6px; height: 17px; border-radius: 6px; background: rgba(255,255,255,.16); font-size: 10.5px; color: #fff; }
+
+  /* ---- Call animation A: dhadakti rings ---- */
+  .pulse .callw::before, .pulse .callw::after { content: ""; position: absolute; inset: 0; border-radius: 14px; border: 2px solid rgba(255,95,143,.8); animation: ring 2s ease-out infinite; }
+  .pulse .callw::after { animation-delay: 1s; }
+  @keyframes ring { from { transform: scale(1); opacity: .9; } to { transform: scale(1.7); opacity: 0; } }
+
+  /* ---- B: ghanti jaisa hilna (har 3 sec) ---- */
+  .wig .call svg { animation: wig 3s ease-in-out infinite; transform-origin: 50% 50%; }
+  @keyframes wig { 0%, 70%, 100% { transform: rotate(0); } 74% { transform: rotate(-14deg) scale(1.12); } 78% { transform: rotate(12deg) scale(1.12); } 82% { transform: rotate(-10deg) scale(1.12); } 86% { transform: rotate(8deg); } 90% { transform: rotate(0); } }
+  .wig .call { animation: glow 3s ease-in-out infinite; }
+  @keyframes glow { 0%, 70%, 100% { box-shadow: 0 6px 16px -4px rgba(216,27,92,.9); } 80% { box-shadow: 0 0 22px 2px rgba(255,95,143,.9); } }
+
+  /* ---- C: ghoomti gold roshni (border pe) + chamak ---- */
+  .shine .callw { border-radius: 15px; padding: 2px; margin: -2px; width: 44px; height: 44px; overflow: hidden; }
+  .shine .callw::before { content: ""; position: absolute; inset: -50%; background: conic-gradient(from 0deg, transparent 0 60%, #f6dc9b 75%, #fff 80%, transparent 95%); animation: spin 2.2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .shine .call { overflow: hidden; }
+  .shine .call::after { content: ""; position: absolute; top: 0; bottom: 0; width: 14px; left: -20px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); transform: skewX(-20deg); animation: sw 2.6s ease-in-out infinite; }
+  @keyframes sw { 0% { left: -20px; } 55%, 100% { left: 60px; } }
+
+  /* ---- Vato jaisa: icon apni jagah upar-neeche ---- */
+  .bob .call svg { animation: rock 3.1s ease-in-out infinite; transform-origin: 50% 50%; }
+  @keyframes rock { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-20deg); } 75% { transform: rotate(20deg); } }
+  /* naam ka halka entry animation (sabme) */
+  @keyframes up { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3"/></symbol>
+    <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<header class="page"><h1>Meto · Discover card</h1><p>Call: button fix, video icon beech me tika — 20° upar, 20° neeche jhoolta hai (teeno me same) · Naam/umar ka tareeka chuniye — A / B / C</p></header><div class="grid3"><div class="opt"><div class="pair"><div class="card bob"><div class="bg" style="background:linear-gradient(160deg,#ff9ab8,#b3245a 60%,#3a0d20)"></div><div class="h"></div><div class="b"></div><div class="shade"></div>
+      <div class="pill"><i></i>Online</div><div class="info"><span class="n1">Aisha</span><span class="age1 f">♀ 24</span><div class="city">Jaipur</div></div><div class="callw"><div class="call"><svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="12" height="11" rx="3"/><path d="M15 10.5l5-3v9l-5-3"/></svg></div></div></div><div class="card bob"><div class="bg" style="background:linear-gradient(160deg,#7fb0ff,#2b3f8f)"></div><div class="h"></div><div class="b"></div><div class="shade"></div>
+      <div class="pill"><i></i>Online</div><div class="info"><span class="n1">Arjun</span><span class="vf">✓</span><span class="age1 m">♂ 30</span><div class="city">Mumbai</div></div><div class="callw"><div class="call"><svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="12" height="11" rx="3"/><path d="M15 10.5l5-3v9l-5-3"/></svg></div></div></div></div><h3>A · Umar ka rangeen chip</h3><p>Naam ke saath ♀ 24 (rose) / ♂ 30 (blue) chip.</p></div><div class="opt"><div class="pair"><div class="card bob"><div class="bg" style="background:linear-gradient(160deg,#ff9ab8,#b3245a 60%,#3a0d20)"></div><div class="h"></div><div class="b"></div><div class="shade"></div>
+      <div class="pill"><i></i>Online</div><div class="info"><div class="n2">Aisha<span>24</span></div><div class="city">Jaipur</div></div><div class="callw"><div class="call"><svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="12" height="11" rx="3"/><path d="M15 10.5l5-3v9l-5-3"/></svg></div></div></div><div class="card bob"><div class="bg" style="background:linear-gradient(160deg,#7fb0ff,#2b3f8f)"></div><div class="h"></div><div class="b"></div><div class="shade"></div>
+      <div class="pill"><i></i>Online</div><div class="info"><div class="n2">Arjun<span>30</span></div><div class="city">Mumbai</div></div><div class="callw"><div class="call"><svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="12" height="11" rx="3"/><path d="M15 10.5l5-3v9l-5-3"/></svg></div></div></div></div><h3>B · Halki umar</h3><p>Naam bold, umar thodi patli/halki saath me (comma nahi).</p></div><div class="opt"><div class="pair"><div class="card bob"><div class="bg" style="background:linear-gradient(160deg,#ff9ab8,#b3245a 60%,#3a0d20)"></div><div class="h"></div><div class="b"></div><div class="shade"></div>
+      <div class="pill"><i></i>Online</div><div class="info"><span class="n3">Aisha</span><div class="row3"><b>♀ 24</b>Jaipur</div></div><div class="callw"><div class="call"><svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="12" height="11" rx="3"/><path d="M15 10.5l5-3v9l-5-3"/></svg></div></div></div><div class="card bob"><div class="bg" style="background:linear-gradient(160deg,#7fb0ff,#2b3f8f)"></div><div class="h"></div><div class="b"></div><div class="shade"></div>
+      <div class="pill"><i></i>Online</div><div class="info"><span class="n3">Arjun <span class="vf">✓</span></span><div class="row3"><b>♂ 30</b>Mumbai</div></div><div class="callw"><div class="call"><svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="12" height="11" rx="3"/><path d="M15 10.5l5-3v9l-5-3"/></svg></div></div></div></div><h3>C · Umar city ke saath</h3><p>Naam upar, neeche “♀ 24 · Jaipur”.</p></div></div></body></html>

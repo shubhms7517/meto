@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat Tabs Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #f4eff1; --page-text: #2a1a21; --page-muted: #7a6870;
+    --bg: #12070d; --surface: #1e0f17; --surface-2: #2a1520; --border: rgba(255,255,255,.08);
+    --text: #fbf3f6; --muted: #b39aa6; --dim: #7d6571;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d4a64b;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; } }
+  :root[data-theme="dark"] { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--page-bg); color: var(--page-text); font-family: 'Poppins', system-ui, sans-serif; padding: 32px 16px 64px; }
+  h1 { font-size: 22px; font-weight: 600; max-width: 900px; margin: 0 auto; }
+  .lead { color: var(--page-muted); font-size: 14px; max-width: 900px; margin: 4px auto 28px; }
+  .opts { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 24px; }
+  .opt h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .opt p { font-size: 12.5px; color: var(--page-muted); margin-bottom: 10px; }
+
+  .strip { max-width: 360px; border-radius: 26px; overflow: hidden; color: var(--text); padding: 18px 0 16px;
+    background: linear-gradient(180deg, #5a0f2e 0%, #2a0a19 55%, var(--bg) 100%); }
+  .peek { margin: 14px 14px 0; height: 54px; border-radius: 20px; background: rgba(42,21,32,.9); border: 1px solid rgba(255,255,255,.06); display: flex; align-items: center; gap: 12px; padding: 0 12px; }
+  .peek i { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #ffd27a, #f08a24); }
+  .peek b { font-size: 13px; }
+  svg.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .n { min-width: 17px; height: 17px; padding: 0 5px; border-radius: 9px; font-size: 10px; font-weight: 700; display: inline-grid; place-items: center; color: #fff; background: #e0103f; font-style: normal; }
+
+  /* A: Segmented pill */
+  .a { margin: 0 14px; display: flex; padding: 4px; border-radius: 18px; background: rgba(0,0,0,.28); border: 1px solid var(--border); position: relative; }
+  .a span { flex: 1; height: 38px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--muted); position: relative; z-index: 1; }
+  .a span.on { color: #fff; }
+  .a .slider { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 4); border-radius: 14px; background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); box-shadow: 0 6px 16px -8px rgba(216,27,92,.95); animation: slideA 6s ease-in-out infinite; }
+  @keyframes slideA { 0%, 20% { transform: translateX(0); } 25%, 45% { transform: translateX(100%); } 50%, 70% { transform: translateX(200%); } 75%, 95% { transform: translateX(300%); } 100% { transform: translateX(0); } }
+
+  /* B: Even underline tabs + title */
+  .title { padding: 0 18px 12px; font-size: 24px; font-weight: 700; letter-spacing: -.3px; }
+  .b { display: flex; margin: 0 14px; border-bottom: 1px solid var(--border); position: relative; }
+  .b span { flex: 1; text-align: center; padding: 10px 0 12px; font-size: 13px; font-weight: 600; color: var(--dim); display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .b span.on { color: #fff; }
+  .b .line { position: absolute; bottom: -1px; left: 0; width: 25%; height: 3px; display: flex; justify-content: center; animation: slideA 6s ease-in-out infinite; }
+  .b .line::after { content: ""; width: 34px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--gold-1), var(--rose-1)); }
+
+  /* C: Title + scrollable chips */
+  .c { display: flex; gap: 8px; padding: 0 18px; }
+  .c span { height: 36px; padding: 0 14px; border-radius: 18px; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--muted); background: rgba(255,255,255,.06); border: 1px solid var(--border); white-space: nowrap; }
+  .c span.on { color: #fff; border-color: transparent; background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); box-shadow: 0 6px 16px -8px rgba(216,27,92,.95); }
+  .c span.on .n { background: rgba(255,255,255,.28); }
+
+  /* D: Icon cards */
+  .d { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 14px; }
+  .d span { height: 62px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--muted);
+    background: rgba(255,255,255,.05); border: 1px solid var(--border); position: relative; }
+  .d span svg { width: 20px; height: 20px; }
+  .d span.on { color: #fff; background: linear-gradient(160deg, rgba(255,95,143,.35), rgba(216,27,92,.2)); border-color: rgba(255,95,143,.55); box-shadow: 0 8px 18px -10px rgba(216,27,92,.9); }
+  .d span.on svg { color: var(--rose-1); }
+  .d span .n { position: absolute; top: 6px; right: 8px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/></symbol>
+    <symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14c2.2.6 3.5 2.6 3.5 6"/></symbol>
+    <symbol id="heart" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.6-9.3C.9 7.8 3 4 6.8 4c2.2 0 3.7 1.2 5.2 3 1.5-1.8 3-3 5.2-3C21 4 23.1 7.8 21.6 11.2 19.5 15.9 12 20.5 12 20.5z"/></symbol>
+    <symbol id="phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2"/></symbol>
+  </defs>
+</svg>
+
+<h1>Chat tabs: 4 options</h1>
+<p class="lead">Sab me 4 tabs barabar size ke hain aur badge text pe nahi chadhta. A aur B me highlight tabs ke beech chalta dikhaya hai (animation).</p>
+
+<div class="opts">
+
+  <div class="opt">
+    <h2>A · Segmented Pill</h2>
+    <p>Ek dark capsule, uske andar pink pill tab badalne pe slide karti hai. Saaf aur modern (iOS jaisa).</p>
+    <div class="strip">
+      <div class="title">Chats</div>
+      <div class="a"><i class="slider"></i><span class="on">Chats</span><span>Friends</span><span>Followed <i class="n">2</i></span><span>Calls</span></div>
+      <div class="peek"><i></i><b>Official Notice</b></div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <h2>B · Classic Underline</h2>
+    <p>Upar bada "Chats" title, neeche 4 barabar tabs aur gold-pink line jo slide karti hai (Instagram / WhatsApp jaisa).</p>
+    <div class="strip">
+      <div class="title">Chats</div>
+      <div class="b"><span class="on">Chats</span><span>Friends</span><span>Followed <i class="n">2</i></span><span>Calls</span><i class="line"></i></div>
+      <div class="peek"><i></i><b>Official Notice</b></div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <h2>C · Chips</h2>
+    <p>Title ke neeche gol chips, chuna hua pink. Zyada tabs aaye to side me scroll ho jaate hain.</p>
+    <div class="strip">
+      <div class="title">Chats</div>
+      <div class="c"><span class="on">Chats <i class="n">6</i></span><span>Friends</span><span>Followed <i class="n">2</i></span><span>Calls</span></div>
+      <div class="peek"><i></i><b>Official Notice</b></div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <h2>D · Icon Cards</h2>
+    <p>4 chhote cards, har ek me icon + naam. Sabse "premium app" feel, ek nazar me samajh aata hai.</p>
+    <div class="strip">
+      <div class="title">Chats</div>
+      <div class="d">
+        <span class="on"><svg class="i"><use href="#chat"/></svg>Chats<i class="n">6</i></span>
+        <span><svg class="i"><use href="#users"/></svg>Friends</span>
+        <span><svg class="i"><use href="#heart"/></svg>Followed<i class="n">2</i></span>
+        <span><svg class="i"><use href="#phone"/></svg>Calls</span>
+      </div>
+      <div class="peek"><i></i><b>Official Notice</b></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

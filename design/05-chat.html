@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meto Chat Screens</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #f4eff1; --page-text: #2a1a21; --page-muted: #7a6870;
+    --bg: #12070d; --surface: #1e0f17; --surface-2: #2a1520; --border: rgba(255,255,255,.08);
+    --text: #fbf3f6; --muted: #b39aa6; --dim: #7d6571;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d4a64b; --gold-ink: #3a2508; --online: #3ee08f; --tick: #6fd3ff;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; } }
+  :root[data-theme="dark"] { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--page-bg); color: var(--page-text); font-family: 'Poppins', system-ui, sans-serif; padding: 32px 16px 64px; }
+  header.page { max-width: 1200px; margin: 0 auto 28px; }
+  header.page h1 { font-size: 22px; font-weight: 600; }
+  header.page p { color: var(--page-muted); font-size: 14px; margin-top: 4px; }
+  .grid { max-width: 1600px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 36px; justify-content: center; }
+  figure { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  figcaption { font-size: 13px; color: var(--page-muted); font-weight: 500; }
+  figcaption b { color: var(--page-text); font-weight: 600; }
+
+  .phone { width: 360px; max-width: calc(100vw - 32px); height: 760px; border-radius: 46px; padding: 10px;
+    background: linear-gradient(145deg, #2b2b2e, #0d0d0f); box-shadow: 0 30px 60px -20px rgba(80,10,40,.45), inset 0 0 0 1.5px #3a3a3e; }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 38px; overflow: hidden; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+  .status { height: 38px; flex-shrink: 0; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; position: relative; z-index: 5; }
+  .status .cam { width: 10px; height: 10px; border-radius: 50%; background: #000; box-shadow: 0 0 0 2px #1a1a1a; }
+  .status .icons { display: flex; gap: 5px; } .status .icons i { width: 14px; height: 9px; border-radius: 2px; background: var(--text); opacity: .9; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; z-index: 0; }
+
+  .art { position: absolute; inset: 0; overflow: hidden; }
+  .art::before { content: ""; position: absolute; left: 50%; top: 22%; width: 46%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: var(--ink); opacity: .85; }
+  .art::after { content: ""; position: absolute; left: 8%; right: 8%; bottom: -16%; height: 50%; border-radius: 50% 50% 0 0; background: var(--ink); opacity: .85; }
+  .g1 { background: linear-gradient(160deg, #ff9bbb, #a3164a); --ink: #5c0c2c; }
+  .g2 { background: linear-gradient(160deg, #f6dc9b, #a87a2a); --ink: #5e4012; }
+  .g3 { background: linear-gradient(160deg, #c9a0ff, #6a2bb0); --ink: #3c1470; }
+  .g4 { background: linear-gradient(160deg, #ffb08f, #c2402a); --ink: #6d1c10; }
+  .g5 { background: linear-gradient(160deg, #8fd3ff, #2a5bb0); --ink: #13306b; }
+  .g6 { background: linear-gradient(160deg, #9ff0d0, #1f8a6a); --ink: #0d4535; }
+  .av { position: relative; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+  .av-wrap { position: relative; flex-shrink: 0; }
+  .av-wrap .dot { position: absolute; right: 1px; bottom: 1px; width: 13px; height: 13px; border-radius: 50%; background: var(--online); border: 2.5px solid var(--bg); }
+
+  /* ---------- Chats list ---------- */
+  .lh { padding: 4px 20px 0; position: relative; z-index: 1; display: flex; align-items: center; }
+  .lh h2 { font-size: 26px; font-weight: 700; letter-spacing: -.3px; }
+  .lh .icon-btn { margin-left: auto; width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border); }
+  .search { margin: 14px 18px 0; height: 44px; border-radius: 15px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; gap: 10px; padding: 0 14px; color: var(--dim); font-size: 13px; position: relative; z-index: 1; }
+  .search svg { width: 17px; height: 17px; }
+  .pills { display: flex; gap: 8px; padding: 14px 18px 6px; position: relative; z-index: 1; }
+  .pill { height: 32px; padding: 0 14px; border-radius: 16px; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--muted); background: var(--surface); border: 1px solid var(--border); }
+  .pill.on { color: #fff; background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); border-color: transparent; }
+  .pill .n { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 10px; font-weight: 700; display: grid; place-items: center; background: rgba(255,255,255,.25); }
+  .list { flex: 1; overflow: hidden; padding: 4px 10px 0; position: relative; z-index: 1; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 18px; }
+  .row.pinned { background: linear-gradient(100deg, rgba(246,220,155,.1), rgba(255,95,143,.06)); border: 1px solid rgba(212,166,75,.2); margin-bottom: 4px; }
+  .row .av { width: 52px; height: 52px; }
+  .row .body { flex: 1; min-width: 0; }
+  .row .top { display: flex; align-items: center; gap: 6px; }
+  .row .top b { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .top .time { margin-left: auto; font-size: 11px; color: var(--dim); flex-shrink: 0; }
+  .row .top .time.hot { color: var(--rose-1); font-weight: 600; }
+  .row .msg { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+  .row .msg span.t { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .row .msg span.t.unread { color: var(--text); font-weight: 500; }
+  .row .msg .typing { color: var(--online); font-weight: 500; font-style: italic; }
+  .badge { min-width: 21px; height: 21px; padding: 0 6px; border-radius: 11px; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); flex-shrink: 0; }
+  .ticks { width: 16px; height: 16px; flex-shrink: 0; }
+  .verified { width: 15px; height: 15px; flex-shrink: 0; }
+  .official { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); color: var(--gold-ink); flex-shrink: 0; }
+  .tabbar { position: absolute; left: 14px; right: 14px; bottom: 16px; height: 66px; border-radius: 24px; background: #1e0f17; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-around; z-index: 5; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10.5px; color: var(--dim); position: relative; }
+  .tab .ic { width: 46px; height: 30px; display: grid; place-items: center; border-radius: 12px; }
+  .tab.on { color: var(--text); } .tab.on .ic { background: rgba(255,95,143,.2); color: var(--rose-1); }
+  .tab .tb { position: absolute; top: -4px; right: 6px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--rose-1); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; border: 2px solid #1e0f17; }
+  .fade { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(180deg, transparent, var(--bg) 60%); z-index: 4; }
+
+  /* ---------- Chat screen ---------- */
+  .ch { display: flex; align-items: center; gap: 10px; padding: 4px 14px 12px; border-bottom: 1px solid var(--border); background: rgba(18,7,13,.9); position: relative; z-index: 2; }
+  .back { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; }
+  .ch .av { width: 42px; height: 42px; }
+  .ch .who b { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .ch .who small { font-size: 11px; color: var(--online); }
+  .ch .who small.typing { font-style: italic; }
+  .ch .acts { margin-left: auto; display: flex; gap: 8px; }
+  .callmini { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); box-shadow: 0 6px 16px -6px rgba(216,27,92,.9); }
+  .ghost { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border); }
+  .msgs { flex: 1; overflow: hidden; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; position: relative; z-index: 1;
+    background: radial-gradient(120% 60% at 100% 0%, rgba(216,27,92,.12), transparent 60%), radial-gradient(100% 50% at 0% 100%, rgba(212,166,75,.08), transparent 60%); }
+  .day { align-self: center; font-size: 10.5px; color: var(--muted); padding: 4px 10px; border-radius: 10px; background: rgba(255,255,255,.06); margin: 4px 0 6px; }
+  .safety { align-self: center; max-width: 92%; display: flex; gap: 8px; font-size: 10.5px; line-height: 1.5; color: var(--gold-1); padding: 8px 12px; border-radius: 14px; background: rgba(212,166,75,.08); border: 1px solid rgba(212,166,75,.22); margin-bottom: 6px; }
+  .safety svg { width: 14px; height: 14px; margin-top: 2px; }
+  .b { max-width: 78%; padding: 9px 13px 7px; border-radius: 18px; font-size: 13.5px; line-height: 1.45; position: relative; }
+  .b .meta { display: flex; align-items: center; gap: 3px; justify-content: flex-end; font-size: 9.5px; margin-top: 2px; opacity: .75; }
+  .b.in { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
+  .b.out { align-self: flex-end; color: #fff; background: linear-gradient(135deg, #ff6a95, var(--rose-2)); border-bottom-right-radius: 6px; box-shadow: 0 6px 16px -10px rgba(216,27,92,.9); }
+  .b.out .meta { opacity: .9; }
+  .b.photo { padding: 4px; width: 62%; }
+  .b.photo .img { position: relative; height: 170px; border-radius: 14px; overflow: hidden; }
+  .b.photo .meta { position: absolute; right: 12px; bottom: 10px; color: #fff; background: rgba(0,0,0,.35); padding: 2px 6px; border-radius: 8px; opacity: 1; }
+  .gift { align-self: flex-end; width: 62%; border-radius: 18px; padding: 12px; text-align: center; border: 1px solid rgba(212,166,75,.4);
+    background: linear-gradient(160deg, rgba(246,220,155,.18), rgba(255,95,143,.12)); }
+  .gift .e { font-size: 42px; line-height: 1.1; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
+  .gift b { display: block; font-size: 13px; margin-top: 4px; }
+  .gift small { font-size: 11px; color: var(--gold-1); }
+  .typing-b { align-self: flex-start; display: flex; gap: 4px; padding: 12px 14px; border-radius: 18px; border-bottom-left-radius: 6px; background: var(--surface-2); }
+  .typing-b i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: dots 1.2s ease-in-out infinite; }
+  .typing-b i:nth-child(2) { animation-delay: .15s; } .typing-b i:nth-child(3) { animation-delay: .3s; }
+  @keyframes dots { 0%, 60%, 100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-4px); opacity: 1; } }
+  .composer { display: flex; align-items: center; gap: 8px; padding: 10px 12px 24px; border-top: 1px solid var(--border); background: rgba(18,7,13,.95); position: relative; z-index: 2; }
+  .cbtn { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border); color: var(--muted); flex-shrink: 0; }
+  .cbtn.giftb { color: var(--gold-1); border-color: rgba(212,166,75,.35); background: rgba(212,166,75,.1); }
+  .field { flex: 1; height: 44px; border-radius: 22px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; padding: 0 14px; font-size: 13px; color: var(--text); gap: 8px; }
+  .field .ph { color: var(--dim); }
+  .field svg { margin-left: auto; color: var(--dim); width: 19px; height: 19px; }
+  .send { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); box-shadow: 0 6px 16px -6px rgba(216,27,92,.9); flex-shrink: 0; }
+  .send svg { width: 18px; height: 18px; }
+
+  /* ---------- New chat ---------- */
+  .hello { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 28px; text-align: center; position: relative; z-index: 1; }
+  .hello .big { width: 110px; height: 110px; border-radius: 50%; padding: 3px; background: conic-gradient(from 200deg, var(--gold-1), var(--rose-1), var(--rose-2), var(--gold-2), var(--gold-1)); }
+  .hello .big .av { width: 100%; height: 100%; border: 3px solid var(--bg); }
+  .hello h3 { font-size: 20px; margin-top: 14px; display: flex; align-items: center; gap: 6px; }
+  .hello p { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+  .chip { height: 36px; padding: 0 14px; border-radius: 18px; display: flex; align-items: center; font-size: 13px; background: var(--surface); border: 1px solid rgba(255,95,143,.35); }
+  .wave { font-size: 30px; animation: wave 2s ease-in-out infinite; transform-origin: 70% 70%; display: inline-block; margin-top: 18px; }
+  @keyframes wave { 0%, 60%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(16deg); } 20%, 40% { transform: rotate(-8deg); } }
+  .cost { margin-top: 14px; font-size: 11px; color: var(--gold-1); display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 12px; background: rgba(212,166,75,.08); border: 1px solid rgba(212,166,75,.22); }
+
+  /* ---------- Call log ---------- */
+  .call-row .ic { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; }
+  .call-row .ic svg { width: 15px; height: 15px; stroke-width: 2.4; }
+  .in-ok { background: rgba(62,224,143,.12); color: var(--online); }
+  .out-ok { background: rgba(111,211,255,.12); color: var(--tick); }
+  .missed { background: rgba(255,107,107,.12); color: #ff7a7a; }
+  .call-row .dur { font-size: 11.5px; color: var(--muted); }
+  .call-row .coins { font-size: 11px; color: var(--gold-1); display: flex; align-items: center; gap: 3px; }
+  .recall { width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center; color: var(--rose-1); background: rgba(255,95,143,.12); border: 1px solid rgba(255,95,143,.3); flex-shrink: 0; }
+
+  .notes { max-width: 1200px; margin: 40px auto 0; background: color-mix(in srgb, var(--page-text) 4%, transparent); border-radius: 18px; padding: 20px 22px; }
+  .notes h3 { font-size: 15px; margin-bottom: 10px; }
+  .notes ul { padding-left: 20px; font-size: 13.5px; color: var(--page-muted); line-height: 1.8; }
+  .notes b { color: var(--page-text); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+    <symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+    <symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+    <symbol id="chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/></symbol>
+    <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+    <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+    <symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="video" viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="3"/><path d="M16 10l6-3v10l-6-3"/></symbol>
+    <symbol id="more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="19" r="1.3" fill="currentColor"/></symbol>
+    <symbol id="image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></symbol>
+    <symbol id="gift" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="12" rx="2"/><path d="M12 9v12M3 13h18M12 9C10 5 6 5 7 8M12 9c2-4 6-4 5-1"/></symbol>
+    <symbol id="smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9.5h.01M15 9.5h.01"/></symbol>
+    <symbol id="send" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+    <symbol id="shield" viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></symbol>
+    <symbol id="megaphone" viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1zM15 8a5 5 0 010 8M18 5a9 9 0 010 14"/></symbol>
+    <symbol id="arrow-in" viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></symbol>
+    <symbol id="arrow-out" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></symbol>
+    <symbol id="ticks" viewBox="0 0 24 24"><path d="M2 13l4 4 8-9M10 15l2 2 9-10"/></symbol>
+    <symbol id="tick" viewBox="0 0 24 24"><path d="M5 13l4 4 10-11"/></symbol>
+    <symbol id="check-badge" viewBox="0 0 24 24"><path fill="#4ea7ff" stroke="none" d="M12 1.8l2.3 1.7 2.8-.2 1 2.6 2.4 1.5-.6 2.8 1.2 2.6-2 2 .1 2.8-2.7.8-1.4 2.5-2.8-.6-2.4 1.5-2.1-1.9-2.8-.1-.8-2.7-2.4-1.5.7-2.8-1.1-2.6 2-2-.1-2.8 2.7-.8 1.4-2.5 2.8.6z"/><path stroke="#fff" stroke-width="2.4" fill="none" d="M8 12.2l2.7 2.6L16.2 9"/></symbol>
+  </defs>
+</svg>
+
+<header class="page">
+  <h1>Meto · Chat</h1>
+  <p>Design draft 1 · Chats list, Chat, New chat, Call log · Rose + Gold theme</p>
+</header>
+
+<div class="grid">
+
+  <!-- 1. Chats list -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="glow" style="width:260px;height:260px;background:#d81b5c;opacity:.22;top:-100px;right:-70px"></div>
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="lh"><h2>Chats</h2><div class="icon-btn"><svg class="i"><use href="#edit"/></svg></div></div>
+      <div class="search"><svg class="i"><use href="#search"/></svg>Search chats</div>
+      <div class="pills">
+        <div class="pill on">All</div>
+        <div class="pill">Unread <span class="n" style="background:var(--rose-1);color:#fff">3</span></div>
+        <div class="pill">Calls</div>
+      </div>
+      <div class="list">
+        <div class="row pinned">
+          <div class="official"><svg class="i"><use href="#megaphone"/></svg></div>
+          <div class="body"><div class="top"><b>Meto Team</b><svg class="verified"><use href="#check-badge"/></svg><span class="time">Yesterday</span></div>
+            <div class="msg"><span class="t">Welcome to Meto! Stay safe while chatting 💖</span></div></div>
+        </div>
+        <div class="row">
+          <div class="av-wrap"><div class="av"><div class="art g1"></div></div><span class="dot"></span></div>
+          <div class="body"><div class="top"><b>Aisha</b><svg class="verified"><use href="#check-badge"/></svg><span class="time hot">now</span></div>
+            <div class="msg"><span class="t typing">typing…</span><span class="badge">2</span></div></div>
+        </div>
+        <div class="row">
+          <div class="av-wrap"><div class="av"><div class="art g3"></div></div><span class="dot"></span></div>
+          <div class="body"><div class="top"><b>Riya</b><span class="time hot">10:42</span></div>
+            <div class="msg"><span class="t unread">📷 Photo</span><span class="badge">1</span></div></div>
+        </div>
+        <div class="row">
+          <div class="av-wrap"><div class="av"><div class="art g2"></div></div></div>
+          <div class="body"><div class="top"><b>Sana</b><span class="time">09:15</span></div>
+            <div class="msg"><svg class="ticks" style="color:var(--tick)"><use href="#ticks"/></svg><span class="t">Haha sure, see you then 😄</span></div></div>
+        </div>
+        <div class="row">
+          <div class="av-wrap"><div class="av"><div class="art g4"></div></div></div>
+          <div class="body"><div class="top"><b>Zoya</b><span class="time">Yesterday</span></div>
+            <div class="msg"><span class="t">🎁 You sent a Rose</span></div></div>
+        </div>
+        <div class="row">
+          <div class="av-wrap"><div class="av"><div class="art g6"></div></div></div>
+          <div class="body"><div class="top"><b>Meera</b><span class="time">Mon</span></div>
+            <div class="msg"><svg class="ticks" style="color:var(--dim)"><use href="#tick"/></svg><span class="t">Good night 🌙</span></div></div>
+        </div>
+      </div>
+      <div class="fade"></div>
+      <div class="tabbar">
+        <div class="tab"><div class="ic"><svg class="i"><use href="#compass"/></svg></div>Discover</div>
+        <div class="tab on"><div class="ic"><svg class="i"><use href="#chat"/></svg></div>Chats<span class="tb">3</span></div>
+        <div class="tab"><div class="ic"><svg class="i"><use href="#user"/></svg></div>Me</div>
+      </div>
+    </div></div>
+    <figcaption><b>1. Chats list</b> · unread, typing, seen ✓✓</figcaption>
+  </figure>
+
+  <!-- 2. Chat screen -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="ch">
+        <div class="back"><svg class="i"><use href="#back"/></svg></div>
+        <div class="av-wrap"><div class="av"><div class="art g1"></div></div><span class="dot" style="width:11px;height:11px"></span></div>
+        <div class="who"><b>Aisha <svg class="verified"><use href="#check-badge"/></svg></b><small class="typing">typing…</small></div>
+        <div class="acts">
+          <div class="callmini"><svg class="i"><use href="#video"/></svg></div>
+          <div class="ghost"><svg class="i"><use href="#more"/></svg></div>
+        </div>
+      </div>
+      <div class="msgs">
+        <div class="day">Today</div>
+        <div class="b in">Hi! Loved your profile 😊<div class="meta">10:30</div></div>
+        <div class="b out">Hey Aisha! Thanks, yours too ✨ Mumbai me kahan se ho?<div class="meta">10:31 <svg class="ticks" style="width:14px;height:14px;color:#cfefff"><use href="#ticks"/></svg></div></div>
+        <div class="b in">Bandra! Golden hour yahan best hai 🌅<div class="meta">10:32</div></div>
+        <div class="b in photo"><div class="img"><div class="art g4"></div></div><div class="meta">10:32</div></div>
+        <div class="gift"><div class="e">🌹</div><b>You sent a Rose</b><small>10 coins</small></div>
+        <div class="typing-b"><i></i><i></i><i></i></div>
+      </div>
+      <div class="composer">
+        <div class="cbtn"><svg class="i"><use href="#image"/></svg></div>
+        <div class="field">Wow, beautiful!<svg class="i"><use href="#smile"/></svg></div>
+        <div class="cbtn giftb"><svg class="i"><use href="#gift"/></svg></div>
+        <div class="send"><svg class="i"><use href="#send"/></svg></div>
+      </div>
+    </div></div>
+    <figcaption><b>2. Chat</b> · text, photo, gift, typing, seen</figcaption>
+  </figure>
+
+  <!-- 3. New chat -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="glow" style="width:300px;height:300px;background:#d81b5c;opacity:.22;top:200px;left:20px"></div>
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="ch">
+        <div class="back"><svg class="i"><use href="#back"/></svg></div>
+        <div class="av-wrap"><div class="av"><div class="art g3"></div></div><span class="dot" style="width:11px;height:11px"></span></div>
+        <div class="who"><b>Kavya</b><small>Online</small></div>
+        <div class="acts"><div class="callmini"><svg class="i"><use href="#video"/></svg></div><div class="ghost"><svg class="i"><use href="#more"/></svg></div></div>
+      </div>
+      <div class="hello">
+        <div class="big"><div class="av"><div class="art g3"></div></div></div>
+        <h3>Kavya, 22</h3>
+        <p>Pune · Marathi, Hindi</p>
+        <span class="wave">👋</span>
+        <div class="chips">
+          <div class="chip">Hi Kavya! 👋</div>
+          <div class="chip">How's your day?</div>
+          <div class="chip">Love your vibe ✨</div>
+        </div>
+        <div class="safety" style="margin-top:22px"><svg class="i"><use href="#shield"/></svg>Never send money or share OTP, bank or personal details. Report anyone who asks.</div>
+      </div>
+      <div class="composer">
+        <div class="cbtn"><svg class="i"><use href="#image"/></svg></div>
+        <div class="field"><span class="ph">Say hi…</span><svg class="i"><use href="#smile"/></svg></div>
+        <div class="cbtn giftb"><svg class="i"><use href="#gift"/></svg></div>
+        <div class="send" style="opacity:.5"><svg class="i"><use href="#send"/></svg></div>
+      </div>
+    </div></div>
+    <figcaption><b>3. Naya chat</b> · quick hello + safety tip</figcaption>
+  </figure>
+
+  <!-- 4. Calls tab -->
+  <figure>
+    <div class="phone"><div class="screen">
+      <div class="glow" style="width:260px;height:260px;background:#d81b5c;opacity:.22;top:-100px;right:-70px"></div>
+      <div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div>
+      <div class="lh"><h2>Chats</h2><div class="icon-btn"><svg class="i"><use href="#edit"/></svg></div></div>
+      <div class="search"><svg class="i"><use href="#search"/></svg>Search chats</div>
+      <div class="pills">
+        <div class="pill">All</div>
+        <div class="pill">Unread <span class="n" style="background:var(--rose-1);color:#fff">3</span></div>
+        <div class="pill on">Calls</div>
+      </div>
+      <div class="list">
+        <div class="row call-row">
+          <div class="av"><div class="art g1" style="width:52px;height:52px;position:relative"></div></div>
+          <div class="body"><div class="top"><b>Aisha</b><span class="time">10:05</span></div>
+            <div class="msg"><span class="ic out-ok"><svg class="i"><use href="#arrow-out"/></svg></span><span class="dur">Video · 12:40</span><span class="coins">· −780 🪙</span></div></div>
+          <div class="recall"><svg class="i"><use href="#video"/></svg></div>
+        </div>
+        <div class="row call-row">
+          <div class="av"><div class="art g3" style="width:52px;height:52px;position:relative"></div></div>
+          <div class="body"><div class="top"><b>Riya</b><span class="time">Yesterday</span></div>
+            <div class="msg"><span class="ic in-ok"><svg class="i"><use href="#arrow-in"/></svg></span><span class="dur">Video · 4:12</span></div></div>
+          <div class="recall"><svg class="i"><use href="#video"/></svg></div>
+        </div>
+        <div class="row call-row">
+          <div class="av"><div class="art g2" style="width:52px;height:52px;position:relative"></div></div>
+          <div class="body"><div class="top"><b style="color:#ff8a8a">Sana</b><span class="time">Yesterday</span></div>
+            <div class="msg"><span class="ic missed"><svg class="i"><use href="#arrow-in"/></svg></span><span class="dur">Missed call</span></div></div>
+          <div class="recall"><svg class="i"><use href="#video"/></svg></div>
+        </div>
+        <div class="row call-row">
+          <div class="av"><div class="art g4" style="width:52px;height:52px;position:relative"></div></div>
+          <div class="body"><div class="top"><b>Zoya</b><span class="time">Mon</span></div>
+            <div class="msg"><span class="ic out-ok"><svg class="i"><use href="#arrow-out"/></svg></span><span class="dur">Not answered</span></div></div>
+          <div class="recall"><svg class="i"><use href="#video"/></svg></div>
+        </div>
+      </div>
+      <div class="fade"></div>
+      <div class="tabbar">
+        <div class="tab"><div class="ic"><svg class="i"><use href="#compass"/></svg></div>Discover</div>
+        <div class="tab on"><div class="ic"><svg class="i"><use href="#chat"/></svg></div>Chats<span class="tb">3</span></div>
+        <div class="tab"><div class="ic"><svg class="i"><use href="#user"/></svg></div>Me</div>
+      </div>
+    </div></div>
+    <figcaption><b>4. Calls</b> · call history + dobara call</figcaption>
+  </figure>
+
+</div>
+
+<section class="notes">
+  <h3>Kaise kaam karega</h3>
+  <ul>
+    <li><b>Real-time:</b> Socket.io se message turant aata hai. <b>typing…</b>, online/offline, aur ticks: ✓ = bheja, ✓✓ grey = pahuncha, <b style="color:#6fd3ff">✓✓ blue</b> = padh liya.</li>
+    <li><b>Chats list:</b> upar <b>Meto Team</b> (official notice, pinned). Filters: All · Unread · Calls. Unread count pink badge me, Chats tab pe bhi total count.</li>
+    <li><b>Chat:</b> text, emoji, <b>photo</b> bhejna, <b>gift</b> bhejna (Wallet phase me coins kategi), upar se seedha <b>Video Call</b>. ⋯ menu me: View profile, Mute, Block, Report, Clear chat.</li>
+    <li><b>Naya chat:</b> user ki photo + 3 quick "hello" buttons, aur <b>safety tip</b> (paise/OTP kabhi mat bhejo). Ye scam rokne ke liye zaroori hai.</li>
+    <li><b>Calls tab:</b> outgoing ↗ / incoming ↙ / missed (laal), duration, kitne coins kate, aur dobara call button. (Video call phase ke baad data aayega.)</li>
+    <li><b>Safety:</b> blocked user message nahi bhej sakta, links/phone numbers pe warning, spam rate limit, report karne pe chat admin ko jaati hai.</li>
+  </ul>
+</section>
+
+</body>
+</html>

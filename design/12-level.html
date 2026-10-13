@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meto Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #f4eff1; --page-text: #2a1a21; --page-muted: #7a6870;
+    --bg: #12070d; --surface: #1e0f17; --surface-2: #2a1520; --border: rgba(255,255,255,.08);
+    --text: #fbf3f6; --muted: #b39aa6; --dim: #7d6571;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d4a64b; --gold-ink: #3a2508; --online: #3ee08f;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; } }
+  :root[data-theme="dark"] { --page-bg: #0b0508; --page-text: #f3e9ee; --page-muted: #9d8792; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--page-bg); color: var(--page-text); font-family: 'Poppins', system-ui, sans-serif; padding: 32px 16px 64px; }
+  header.page { max-width: 1200px; margin: 0 auto 28px; }
+  header.page h1 { font-size: 22px; font-weight: 600; }
+  header.page p { color: var(--page-muted); font-size: 14px; margin-top: 4px; }
+  .grid { max-width: 1640px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 36px; justify-content: center; }
+  figure { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  figcaption { font-size: 13px; color: var(--page-muted); font-weight: 500; }
+  figcaption b { color: var(--page-text); font-weight: 600; }
+
+  .phone { width: 340px; height: 720px; border-radius: 44px; padding: 10px; background: linear-gradient(145deg, #2b2b2e, #0d0d0f); box-shadow: 0 30px 60px -20px rgba(80,10,40,.45), inset 0 0 0 1.5px #3a3a3e; }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 36px; overflow: hidden; color: var(--text);
+    background: linear-gradient(180deg, #4a0f28 0%, #22091a 26%, var(--bg) 46%); display: flex; flex-direction: column; }
+  .status { height: 36px; flex-shrink: 0; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; }
+  .status .cam { width: 10px; height: 10px; border-radius: 50%; background: #000; }
+  .status .icons { display: flex; gap: 5px; } .status .icons i { width: 14px; height: 9px; border-radius: 2px; background: var(--text); opacity: .9; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .coin { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; flex-shrink: 0;
+    background: radial-gradient(circle at 35% 30%, #fff3c8, var(--gold-2) 60%, #9c7426); color: var(--gold-ink); font-size: 11px; font-weight: 800; box-shadow: inset 0 -1px 0 rgba(0,0,0,.2); }
+  .coin.lg { width: 34px; height: 34px; font-size: 16px; }
+
+  .head { display: flex; align-items: center; gap: 10px; padding: 4px 16px 10px; }
+  .back { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border); }
+  .head h2 { font-size: 18px; font-weight: 700; }
+  .head .right { margin-left: auto; font-size: 12px; color: var(--gold-1); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+  /* Balance card */
+  .bal, .first, .vipbar, .packs, .head, .sec { flex-shrink: 0; }
+  .bal { margin: 2px 16px 0; border-radius: 24px; padding: 14px 18px; position: relative; overflow: hidden;
+    background: linear-gradient(125deg, #3b1d0c 0%, #6b4316 45%, #c4973c 100%); border: 1px solid rgba(246,220,155,.3); box-shadow: 0 18px 34px -18px rgba(196,151,60,.8); }
+  .bal::before { content: ""; position: absolute; width: 200px; height: 200px; border-radius: 50%; right: -60px; top: -80px; background: radial-gradient(circle, rgba(255,240,200,.5), transparent 65%); }
+  .bal::after { content: ""; position: absolute; top: 0; bottom: 0; width: 60px; left: -80px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent); transform: skewX(-20deg); animation: shine 4s ease-in-out infinite; }
+  @keyframes shine { 0% { left: -80px; } 60%, 100% { left: 120%; } }
+  .bal .lbl { font-size: 12px; color: rgba(255,240,210,.8); position: relative; }
+  .bal .num { display: flex; align-items: center; gap: 10px; font-size: 32px; font-weight: 800; color: #fff7e3; margin-top: 2px; position: relative; letter-spacing: -.5px; }
+  .bal .sub { font-size: 11.5px; color: rgba(255,240,210,.75); margin-top: 4px; position: relative; }
+  .bal .hist { position: absolute; right: 14px; top: 14px; height: 30px; padding: 0 10px; border-radius: 10px; display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: #fff3d6; background: rgba(0,0,0,.22); }
+  .bal .hist svg { width: 14px; height: 14px; }
+
+  /* First recharge banner */
+  .first { margin: 10px 16px 0; border-radius: 18px; padding: 9px 14px; display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(100deg, rgba(255,95,143,.22), rgba(246,220,155,.14)); border: 1px solid rgba(255,95,143,.4); }
+  .first .gift { font-size: 28px; }
+  .first b { font-size: 13.5px; display: block; }
+  .first small { font-size: 11px; color: var(--muted); }
+  .first .tag { margin-left: auto; font-size: 11px; font-weight: 800; color: #fff; padding: 4px 9px; border-radius: 10px; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); }
+
+  .sec { font-size: 13px; font-weight: 600; padding: 12px 18px 10px; color: var(--muted); }
+
+  /* Packs */
+  .packs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 16px; }
+  .pack { position: relative; border-radius: 18px; padding: 12px 6px 8px; text-align: center; background: var(--surface); border: 1px solid var(--border); }
+  .pack .c { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 16px; font-weight: 800; }
+  .pack .bonus { font-size: 10.5px; color: var(--online); font-weight: 600; margin-top: 2px; height: 14px; }
+  .pack .price { margin-top: 8px; font-size: 13px; font-weight: 700; height: 30px; border-radius: 10px; display: grid; place-items: center; background: rgba(255,255,255,.06); }
+  .pack.on { border-color: rgba(246,220,155,.7); background: linear-gradient(180deg, rgba(246,220,155,.16), var(--surface)); box-shadow: 0 10px 22px -14px rgba(212,166,75,.9); }
+  .pack.on .price { color: var(--gold-ink); background: linear-gradient(100deg, var(--gold-1), var(--gold-2)); }
+  .pack .ribbon { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9.5px; font-weight: 800; color: #fff; padding: 2px 8px; border-radius: 8px; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); }
+  .pack .ribbon.gold { color: var(--gold-ink); background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); }
+
+  .vipbar { margin: 10px 16px 0; white-space: nowrap; border-radius: 16px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; background: #1f1018; border: 1px solid rgba(212,166,75,.3); font-size: 12px; }
+  .vipbar .crown { font-size: 20px; }
+  .vipbar b { color: var(--gold-1); }
+  .vipbar span.go { margin-left: auto; color: var(--gold-1); font-weight: 600; }
+
+  .pay { margin-top: auto; padding: 10px 16px 16px; }
+  .btn { height: 54px; border-radius: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 15px; color: #fff;
+    background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); box-shadow: 0 12px 26px -10px rgba(216,27,92,.9), inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn.gold { color: var(--gold-ink); background: linear-gradient(100deg, var(--gold-1), var(--gold-2)); box-shadow: 0 12px 26px -12px rgba(212,166,75,.9); }
+  .secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; font-size: 10.5px; color: var(--dim); }
+  .secure svg { width: 13px; height: 13px; }
+
+  /* History */
+  .filters { display: flex; gap: 6px; padding: 4px 16px 10px; }
+  .filters span { height: 32px; padding: 0 14px; border-radius: 16px; display: flex; align-items: center; font-size: 12.5px; font-weight: 600; color: var(--muted); background: var(--surface); border: 1px solid var(--border); }
+  .filters span.on { color: #fff; background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); border-color: transparent; }
+  .sum { display: flex; gap: 8px; padding: 0 16px 10px; }
+  .sum div { flex: 1; border-radius: 16px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); }
+  .sum small { font-size: 10.5px; color: var(--dim); display: block; }
+  .sum b { font-size: 16px; }
+  .day { font-size: 11px; font-weight: 600; color: var(--dim); padding: 8px 18px 6px; letter-spacing: .4px; }
+  .tx { display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+  .tx .ic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
+  .tx .ic.in { background: rgba(62,224,143,.12); }
+  .tx .ic.out { background: rgba(255,95,143,.12); }
+  .tx .ic.gold { background: rgba(212,166,75,.14); }
+  .tx b { font-size: 13.5px; font-weight: 600; display: block; }
+  .tx small { font-size: 11px; color: var(--dim); }
+  .tx .amt { margin-left: auto; font-size: 14px; font-weight: 700; text-align: right; }
+  .tx .amt.plus { color: var(--online); }
+  .tx .amt.minus { color: var(--text); }
+  .tx .amt small { display: block; font-weight: 500; }
+
+  /* Sheet */
+  .dim { position: absolute; inset: 0; background: rgba(0,0,0,.55); z-index: 5; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; border-radius: 28px 28px 0 0; background: #1a0b13; border-top: 1px solid var(--border); padding: 10px 16px 20px; }
+  .handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.2); margin: 0 auto 14px; }
+  .warn { width: 58px; height: 58px; border-radius: 20px; margin: 0 auto; display: grid; place-items: center; font-size: 28px; background: rgba(255,95,143,.12); border: 1px solid rgba(255,95,143,.35); }
+  .sheet h3 { text-align: center; font-size: 18px; margin-top: 10px; }
+  .sheet p { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+  .need { display: flex; justify-content: center; gap: 8px; margin: 12px 0; }
+  .need div { padding: 8px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); font-size: 11.5px; color: var(--muted); text-align: center; }
+  .need b { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 15px; color: var(--text); }
+  .mini-packs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .mini-packs .pack { padding: 10px 4px 8px; }
+  .mini-packs .pack .c { font-size: 14px; }
+
+  /* Success */
+  .succ { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 26px;
+    background: radial-gradient(70% 45% at 50% 40%, rgba(246,220,155,.22), transparent 70%); }
+  .burst { position: relative; width: 150px; height: 150px; display: grid; place-items: center; }
+  .burst::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent, rgba(246,220,155,.5), transparent 30%, rgba(255,95,143,.4), transparent 60%, rgba(246,220,155,.5), transparent 90%); animation: spin 8s linear infinite; filter: blur(2px); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .burst .coin { width: 92px; height: 92px; font-size: 42px; position: relative; box-shadow: 0 14px 40px -6px rgba(212,166,75,.9), inset 0 -3px 0 rgba(0,0,0,.2); animation: pop 1.4s ease-in-out infinite alternate; }
+  @keyframes pop { to { transform: translateY(-6px) scale(1.04); } }
+  .succ h3 { font-size: 22px; margin-top: 18px; }
+  .succ .got { display: flex; align-items: center; gap: 8px; font-size: 30px; font-weight: 800; color: var(--gold-1); margin-top: 6px; }
+  .succ p { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .receipt { width: 100%; margin-top: 20px; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); padding: 4px 14px; }
+  .receipt div { display: flex; justify-content: space-between; padding: 9px 0; font-size: 12.5px; color: var(--muted); }
+  .receipt div + div { border-top: 1px solid var(--border); }
+  .receipt b { color: var(--text); font-weight: 600; }
+
+  .notes { max-width: 1200px; margin: 40px auto 0; background: color-mix(in srgb, var(--page-text) 4%, transparent); border-radius: 18px; padding: 20px 22px; }
+  .notes h3 { font-size: 15px; margin-bottom: 10px; }
+  .notes ul { padding-left: 20px; font-size: 13.5px; color: var(--page-muted); line-height: 1.8; }
+  .notes b { color: var(--page-text); font-weight: 600; }
+</style>
+
+<style>
+  .scr > *, .scr .btnR { flex-shrink: 0; }
+  .scr { background: radial-gradient(120% 60% at 50% 0%, #4a1230 0%, #1c0a15 45%, #12070d 70%); }
+  .badge { position: relative; display: grid; place-items: center; }
+  .badge .d { position: absolute; border-radius: 30%; transform: rotate(45deg); border: 1.5px solid rgba(255,255,255,.45); box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 14px 30px -10px rgba(255,95,143,.8); }
+  .badge .t { position: relative; text-align: center; line-height: 1; font-weight: 800; }
+  .badge .t small { display: block; font-size: .38em; opacity: .85; letter-spacing: .5px; }
+  .aura { position: absolute; border-radius: 50%; background: conic-gradient(from 0deg, transparent, rgba(255,95,143,.55), transparent 30%, rgba(246,220,155,.6), transparent 60%, rgba(255,95,143,.5), transparent 85%); filter: blur(6px); animation: spin 7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .halo { position: absolute; border-radius: 50%; background: radial-gradient(circle, rgba(246,220,155,.35), transparent 65%); }
+  .spark { position: absolute; color: var(--gold-1); font-size: 12px; animation: tw 1.8s ease-in-out infinite; }
+  @keyframes tw { 50% { opacity: .2; transform: scale(.6); } }
+  .btnR { height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; font-size: 14.5px; color: #fff; background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); box-shadow: 0 12px 26px -10px rgba(216,27,92,.9); position: relative; overflow: hidden; }
+  .btnR::after { content: ""; position: absolute; top: 0; bottom: 0; width: 50px; left: -70px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); transform: skewX(-20deg); animation: sh 2.8s ease-in-out infinite; }
+  @keyframes sh { 0% { left: -70px; } 60%, 100% { left: 120%; } }
+  .coinx { border-radius: 50%; display: inline-grid; place-items: center; background: radial-gradient(circle at 35% 30%, #fff3c8, var(--gold-2) 60%, #9c7426); color: var(--gold-ink); font-weight: 800; width: 14px; height: 14px; font-size: 7px; vertical-align: -2px; }
+
+  /* A: Hero aura */
+  .A .hero { position: relative; margin: 0 16px; padding: 18px 16px 16px; border-radius: 26px; text-align: center; overflow: hidden;
+    background: linear-gradient(160deg, rgba(255,95,143,.22), rgba(40,10,25,.9) 55%), #1d0a14; border: 1px solid rgba(255,95,143,.4); }
+  .A .hero::before { content: ""; position: absolute; inset: auto -40px -120px; height: 200px; background: radial-gradient(closest-side, rgba(246,220,155,.18), transparent); }
+  .A .bwrap { position: relative; width: 150px; height: 150px; margin: 0 auto; display: grid; place-items: center; }
+  .A .lvl { font-size: 13px; font-weight: 800; letter-spacing: 2px; color: var(--gold-1); margin-top: 6px; position: relative; }
+  .A .nm { font-size: 22px; font-weight: 800; position: relative; }
+  .A .needx { font-size: 12px; color: var(--muted); margin-top: 3px; position: relative; }
+  .A .needx b { color: var(--gold-1); }
+  .prog { position: relative; margin-top: 14px; }
+  .prog .tr { height: 12px; border-radius: 6px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .prog .fl { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--rose-1), var(--gold-1)); box-shadow: 0 0 14px rgba(246,220,155,.7); position: relative; }
+  .prog .fl::after { content: ""; position: absolute; right: -2px; top: -3px; width: 18px; height: 18px; border-radius: 50%; background: #fff4d6; box-shadow: 0 0 12px #f6dc9b; }
+  .prog .ends { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; font-weight: 700; color: var(--muted); }
+  .A .rew { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; padding: 5px 12px; border-radius: 14px; background: rgba(246,220,155,.12); border: 1px solid rgba(246,220,155,.35); font-size: 12px; color: var(--gold-1); font-weight: 700; position: relative; }
+  .A .sec { padding: 14px 18px 8px; font-size: 13px; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; }
+  .A .rows { margin: 0 16px; display: flex; flex-direction: column; gap: 6px; }
+  .A .r { position: relative; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 8px; border-radius: 14px; background: #241c20; border: 1px solid rgba(255,255,255,.08); overflow: hidden; }
+  .A .r::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--tc); }
+  .A .r .p { width: 46px; height: 24px; border-radius: 8px; display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+  .A .r .g { flex: 1; font-size: 12.5px; font-weight: 600; }
+  .A .r .g small { color: var(--dim); font-weight: 500; }
+  .A .r .w { font-size: 12px; font-weight: 800; color: var(--gold-1); }
+  .A .r.done { opacity: .5; } .A .r.done .w::after { content: " ✓"; color: var(--rose-1); }
+  .A .r.cur { background: linear-gradient(90deg, rgba(255,95,143,.2), #241c20 70%); border-color: rgba(255,95,143,.6); box-shadow: 0 0 18px -6px rgba(255,95,143,.8); }
+
+  /* B: Journey path */
+  .B .top { display: flex; align-items: center; gap: 14px; margin: 0 16px; padding: 14px; border-radius: 22px; background: #241c20; border: 1px solid rgba(255,255,255,.1); }
+  .ring { position: relative; width: 104px; height: 104px; flex-shrink: 0; }
+  .ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .ring .in { position: absolute; inset: 14px; display: grid; place-items: center; }
+  .B .info b { font-size: 22px; display: block; }
+  .B .info small { font-size: 12px; color: var(--muted); display: block; line-height: 1.45; }
+  .B .info small i { font-style: normal; color: var(--gold-1); font-weight: 700; }
+  .B .btnR { margin: 12px 16px 0; }
+  .path { position: relative; margin: 16px 16px 0; padding-left: 4px; }
+  .path .ln { position: absolute; left: 27px; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: rgba(255,255,255,.08); }
+  .path .ln i { position: absolute; left: 0; right: 0; top: 0; height: 30%; border-radius: 2px; background: linear-gradient(var(--rose-1), var(--gold-1)); }
+  .st { position: relative; display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+  .st .nd { width: 48px; display: grid; place-items: center; flex-shrink: 0; }
+  .st .card { flex: 1; display: flex; align-items: center; padding: 9px 12px; border-radius: 14px; background: #241c20; border: 1px solid rgba(255,255,255,.08); }
+  .st .card b { font-size: 13px; } .st .card small { display: block; font-size: 11px; color: var(--dim); }
+  .st .card .w { margin-left: auto; font-size: 12px; font-weight: 800; color: var(--gold-1); padding: 4px 9px; border-radius: 10px; background: rgba(246,220,155,.1); }
+  .st.done { opacity: .5; }
+  .st.cur .card { border-color: rgba(255,95,143,.65); background: linear-gradient(90deg, rgba(255,95,143,.18), #241c20); box-shadow: 0 0 20px -6px rgba(255,95,143,.9); }
+  .st.cur .card b::after { content: "  · YOU"; color: var(--rose-1); font-size: 10.5px; letter-spacing: .6px; }
+
+  /* C: Tier cards */
+  .C .deck { position: relative; height: 196px; margin: 4px 0 0; }
+  .tcard { position: absolute; top: 0; width: 262px; height: 168px; border-radius: 22px; padding: 16px; overflow: hidden; box-shadow: 0 20px 40px -18px rgba(0,0,0,.9); }
+  .tcard::before { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.35) 48%, transparent 60%); animation: gl 3.5s ease-in-out infinite; }
+  @keyframes gl { 0% { transform: translateX(-120%); } 60%, 100% { transform: translateX(120%); } }
+  .tcard .tn { font-size: 11px; font-weight: 800; letter-spacing: 2px; opacity: .8; }
+  .tcard .lv { font-size: 40px; font-weight: 800; line-height: 1; margin-top: 8px; }
+  .tcard .rg { font-size: 11.5px; opacity: .85; margin-top: 4px; }
+  .tcard .chip { position: absolute; right: 16px; top: 16px; width: 38px; height: 28px; border-radius: 7px; background: linear-gradient(135deg, rgba(255,255,255,.7), rgba(255,255,255,.2)); }
+  .tcard .me { position: absolute; left: 16px; bottom: 14px; right: 16px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px; font-weight: 700; }
+  .C .dots { display: flex; justify-content: center; gap: 6px; margin-top: 2px; }
+  .C .dots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.2); } .C .dots i.on { width: 18px; background: var(--rose-1); }
+  .C .box { margin: 14px 16px 0; padding: 14px; border-radius: 20px; background: #241c20; border: 1px solid rgba(255,255,255,.1); }
+  .C .box .h { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+  .C .box .h b { color: var(--text); }
+  .C .grid2 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 12px 16px 0; }
+  .C .g { border-radius: 14px; padding: 8px 2px; text-align: center; background: #241c20; border: 1px solid rgba(255,255,255,.08); }
+  .C .g .p { display: inline-block; padding: 2px 7px; border-radius: 7px; font-size: 10px; font-weight: 800; }
+  .C .g b { display: block; font-size: 12px; color: var(--gold-1); margin-top: 5px; }
+  .C .g small { display: block; font-size: 9.5px; color: var(--dim); }
+  .C .g.done { opacity: .5; } .C .g.cur { border-color: rgba(255,95,143,.65); background: rgba(255,95,143,.12); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3"/></symbol>
+    <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<header class="page"><h1>Meto · My level</h1><p>3 premium options (Vato jaisa niyam: recharge se level + inaam) — A / B / C</p></header><div class="grid"><figure><div class="phone"><div class="screen scr A"><div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div><div class="head"><div class="back"><svg class="i"><use href="#back"/></svg></div><h2>My level</h2></div><div class="hero"><div class="bwrap"><div class="aura" style="inset:6px"></div><div class="halo" style="inset:-10px"></div><div class="badge" style="width:118px;height:118px"><div class="d" style="width:82.6px;height:82.6px;background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a)"></div><div class="t" style="color:#fff;font-size:35px"><small>Lv.</small>4</div></div>
+   <span class="spark" style="left:18px;top:26px">✦</span><span class="spark" style="right:16px;top:44px;animation-delay:.7s">✦</span><span class="spark" style="left:30px;bottom:14px;font-size:9px;animation-delay:1.2s">✦</span></div>
+   <div class="lvl">ROSE TIER</div><div class="nm">Level 4</div><div class="needx">Recharge <b>13,333 gems</b> more to reach Lv.5</div>
+   <div class="prog"><div class="tr"><div class="fl" style="width:67%"></div></div><div class="ends"><span>Lv.4 · 40K</span><span style="color:var(--gold-1)">66,667</span><span>Lv.5 · 80K</span></div></div>
+   <div class="rew">Next reward <span class="coinx">M</span> +800</div>
+   <div class="btnR" style="margin-top:12px">⚡ Level up now</div></div>
+  <div class="sec"><span>Level rewards</span><span>Recharge → Reward</span></div><div class="rows"><div class="r done" style="--tc:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a)"><div class="p" style="background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a);color:#fff">Lv.1</div><div class="g">5,000 <small>gems</small></div><div class="w">–</div></div><div class="r done" style="--tc:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a)"><div class="p" style="background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a);color:#fff">Lv.2</div><div class="g">10,000 <small>gems</small></div><div class="w">+200</div></div><div class="r done" style="--tc:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a)"><div class="p" style="background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a);color:#fff">Lv.3</div><div class="g">20,000 <small>gems</small></div><div class="w">+300</div></div><div class="r cur" style="--tc:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a)"><div class="p" style="background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a);color:#fff">Lv.4</div><div class="g">40,000 <small>gems</small></div><div class="w">+500</div></div><div class="r " style="--tc:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0)"><div class="p" style="background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0);color:#222230">Lv.5</div><div class="g">80,000 <small>gems</small></div><div class="w">+800</div></div><div class="r " style="--tc:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0)"><div class="p" style="background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0);color:#222230">Lv.6</div><div class="g">1.6 L <small>gems</small></div><div class="w">+1,000</div></div><div class="r " style="--tc:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0)"><div class="p" style="background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0);color:#222230">Lv.7</div><div class="g">3 L <small>gems</small></div><div class="w">+1,500</div></div><div class="r " style="--tc:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0)"><div class="p" style="background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0);color:#222230">Lv.8</div><div class="g">6 L <small>gems</small></div><div class="w">+2,500</div></div><div class="r " style="--tc:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0)"><div class="p" style="background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0);color:#222230">Lv.9</div><div class="g">12 L <small>gems</small></div><div class="w">+4,000</div></div></div></div></div><figcaption><b>A · Aura hero</b> · chamakta badge + rang wali list</figcaption></figure><figure><div class="phone"><div class="screen scr B"><div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div><div class="head"><div class="back"><svg class="i"><use href="#back"/></svg></div><h2>My level</h2></div><div class="top"><div class="ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8"/>
+   <circle cx="52" cy="52" r="46" fill="none" stroke="url(#rg)" stroke-width="8" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="95"/>
+   <defs><linearGradient id="rg"><stop offset="0" stop-color="#ff5f8f"/><stop offset="1" stop-color="#f6dc9b"/></linearGradient></defs></svg><div class="in"><div class="badge" style="width:70px;height:70px"><div class="d" style="width:49.0px;height:49.0px;background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a)"></div><div class="t" style="color:#fff;font-size:21px"><small>Lv.</small>4</div></div></div></div>
+   <div class="info"><b>Level 4</b><small>66,667 / 80,000 gems<br>Recharge <i>13,333</i> more → <i>+800</i> reward</small></div></div>
+  <div class="btnR">⚡ Level up now</div>
+  <div class="path"><div class="ln"><i></i></div><div class="st done"><div class="nd"><div class="badge" style="width:46px;height:46px"><div class="d" style="width:32.199999999999996px;height:32.199999999999996px;background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a)"></div><div class="t" style="color:#fff;font-size:14px"><small>Lv.</small>2</div></div></div><div class="card"><div><b>Level 2</b><small>10,000 gems recharged</small></div><div class="w"><span class="coinx">M</span> +200</div></div></div><div class="st done"><div class="nd"><div class="badge" style="width:46px;height:46px"><div class="d" style="width:32.199999999999996px;height:32.199999999999996px;background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a)"></div><div class="t" style="color:#fff;font-size:14px"><small>Lv.</small>3</div></div></div><div class="card"><div><b>Level 3</b><small>20,000 gems recharged</small></div><div class="w"><span class="coinx">M</span> +300</div></div></div><div class="st cur"><div class="nd"><div class="badge" style="width:46px;height:46px"><div class="d" style="width:32.199999999999996px;height:32.199999999999996px;background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a)"></div><div class="t" style="color:#fff;font-size:14px"><small>Lv.</small>4</div></div></div><div class="card"><div><b>Level 4</b><small>40,000 gems recharged</small></div><div class="w"><span class="coinx">M</span> +500</div></div></div><div class="st "><div class="nd"><div class="badge" style="width:46px;height:46px"><div class="d" style="width:32.199999999999996px;height:32.199999999999996px;background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0)"></div><div class="t" style="color:#222230;font-size:14px"><small>Lv.</small>5</div></div></div><div class="card"><div><b>Level 5</b><small>80,000 gems recharged</small></div><div class="w"><span class="coinx">M</span> +800</div></div></div><div class="st "><div class="nd"><div class="badge" style="width:46px;height:46px"><div class="d" style="width:32.199999999999996px;height:32.199999999999996px;background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0)"></div><div class="t" style="color:#222230;font-size:14px"><small>Lv.</small>6</div></div></div><div class="card"><div><b>Level 6</b><small>1.6 L gems recharged</small></div><div class="w"><span class="coinx">M</span> +1,000</div></div></div><div class="st "><div class="nd"><div class="badge" style="width:46px;height:46px"><div class="d" style="width:32.199999999999996px;height:32.199999999999996px;background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0)"></div><div class="t" style="color:#222230;font-size:14px"><small>Lv.</small>7</div></div></div><div class="card"><div><b>Level 7</b><small>3 L gems recharged</small></div><div class="w"><span class="coinx">M</span> +1,500</div></div></div></div></div></div><figcaption><b>B · Journey</b> · progress ring + levels ka raasta</figcaption></figure><figure><div class="phone"><div class="screen scr C"><div class="status"><span>9:41</span><span class="cam"></span><span class="icons"><i></i><i></i></span></div><div class="head"><div class="back"><svg class="i"><use href="#back"/></svg></div><h2>My level</h2></div><div class="deck"><div class="tcard" style="left:196px;background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0);color:#222230;transform:scale(0.86);z-index:1;opacity:0.55"><div class="tn">SILVER TIER</div><div class="chip"></div>
+      <div class="lv">Lv.5</div><div class="rg">from 80,000 gems recharged</div><div class="me"><span>RAM · 448708254</span><span></span></div></div><div class="tcard" style="left:39px;background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a);color:#fff;transform:scale(1);z-index:3;opacity:1"><div class="tn">ROSE TIER</div><div class="chip"></div>
+      <div class="lv">Lv.4</div><div class="rg">from 40,000 gems recharged</div><div class="me"><span>RAM · 448708254</span><span>YOU</span></div></div></div>
+  <div class="dots"><i></i><i></i><i></i><i class="on"></i><i></i><i></i></div>
+  <div class="box"><div class="h"><span>Progress to <b>Lv.5</b></span><span><b style="color:var(--gold-1)">+800</b> reward</span></div>
+   <div class="prog" style="margin-top:10px"><div class="tr"><div class="fl" style="width:67%"></div></div><div class="ends"><span>66,667</span><span>80,000 gems</span></div></div>
+   <div class="btnR" style="margin-top:12px">⚡ Level up now</div></div>
+  <div class="grid2"><div class="g done"><span class="p" style="background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a);color:#fff">Lv.1</span><b>–</b><small>5,000</small></div><div class="g done"><span class="p" style="background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a);color:#fff">Lv.2</span><b>+200</b><small>10,000</small></div><div class="g done"><span class="p" style="background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a);color:#fff">Lv.3</span><b>+300</b><small>20,000</small></div><div class="g cur"><span class="p" style="background:linear-gradient(135deg,#ffb3c9,#ff5f8f 50%,#b3245a);color:#fff">Lv.4</span><b>+500</b><small>40,000</small></div><div class="g "><span class="p" style="background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0);color:#222230">Lv.5</span><b>+800</b><small>80,000</small></div><div class="g "><span class="p" style="background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0);color:#222230">Lv.6</span><b>+1,000</b><small>1.6 L</small></div><div class="g "><span class="p" style="background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0);color:#222230">Lv.7</span><b>+1,500</b><small>3 L</small></div><div class="g "><span class="p" style="background:linear-gradient(135deg,#ffffff,#c9c9d8 50%,#8a8aa0);color:#222230">Lv.8</span><b>+2,500</b><small>6 L</small></div></div></div></div><figcaption><b>C · Tier cards</b> · credit-card jaise level cards</figcaption></figure></div></body></html>
