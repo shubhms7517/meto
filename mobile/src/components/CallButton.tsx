@@ -67,7 +67,7 @@ export default function CallButton({ rate, onPress, style }: Props) {
         </View>
         <View>
           <Text style={styles.title}>Video Call</Text>
-          <Text style={styles.rate}>{rate} gems / min</Text>
+          <Text style={styles.rate}>{rate.toLocaleString('en-IN')} gems / min</Text>
         </View>
       </LinearGradient>
     </Pressable>

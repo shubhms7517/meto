@@ -6,7 +6,7 @@ export type SupportMessage = { id: number; fromTeam: boolean; body: string | nul
 
 export const SUPPORT_TOPICS: { key: SupportTopic; label: string; emoji: string }[] = [
   { key: 'recharge', label: 'Recharge', emoji: '💎' },
-  { key: 'call', label: 'Call charge', emoji: '📹' },
+  { key: 'call', label: 'Call charge', emoji: '📞' },
   { key: 'withdraw', label: 'Withdraw', emoji: '💸' },
   { key: 'account', label: 'Account', emoji: '👤' },
   { key: 'report', label: 'Report', emoji: '🚩' },

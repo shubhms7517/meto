@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meto Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12070d; --surface: #1d1418; --card: #241c20; --line: rgba(255,255,255,.08);
+    --text: #f6e9ee; --muted: #b9a3ad; --dim: #7d6872;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d9ae55; --gold-ink: #3a2608;
+    --green: #3ee08f; --red: #ff5f7a; --blue: #7fb0ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Poppins, system-ui, sans-serif; background: #0b0408; color: var(--text); padding: 32px 28px 60px; }
+  header.page h1 { font-size: 24px; } header.page p { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+  .shot { margin-top: 30px; } .shot > figcaption { margin-top: 10px; color: var(--muted); font-size: 13px; } .shot > figcaption b { color: var(--text); }
+  .win { border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); box-shadow: 0 30px 60px -30px rgba(0,0,0,.9); background: var(--bg); }
+  .bar { height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 14px; background: #1a1015; border-bottom: 1px solid var(--line); }
+  .bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a2a31; } .bar span { margin-left: 14px; font-size: 11.5px; color: var(--dim); }
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 560px; }
+  .side { background: radial-gradient(120% 60% at 0% 0%, #3a0f24, #170a10 60%); border-right: 1px solid var(--line); padding: 18px 12px; }
+  .logo { font-size: 22px; font-weight: 800; font-style: italic; color: var(--gold-1); padding: 0 8px 4px; } .logo small { font-size: 10px; font-style: normal; color: var(--rose-1); margin-left: 6px; letter-spacing: .1em; }
+  .nav { margin-top: 18px; display: flex; flex-direction: column; gap: 2px; }
+  .nav a { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 11px; font-size: 13px; color: var(--muted); text-decoration: none; }
+  .nav a.on { color: #fff; background: linear-gradient(100deg, rgba(255,95,143,.22), rgba(255,95,143,.06)); }
+  .nav a .n { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; display: grid; place-items: center; font-size: 10.5px; font-weight: 800; color: #fff; background: var(--rose-1); }
+  .nav .sep { margin: 12px 10px 4px; font-size: 10px; letter-spacing: .1em; color: var(--dim); }
+  .main { padding: 22px 26px; }
+  .top { display: flex; align-items: center; gap: 12px; } .top h2 { font-size: 20px; } .top .sub { color: var(--muted); font-size: 12px; }
+  .top .me { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); } .top .me i { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; }
+  .kpi { padding: 14px 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+  .kpi small { font-size: 11.5px; color: var(--muted); } .kpi b { display: block; font-size: 24px; margin-top: 4px; } .kpi em { font-style: normal; font-size: 11px; color: var(--green); }
+  .kpi.gold b { color: var(--gold-1); }
+  .grid2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; margin-top: 14px; }
+  .card { border-radius: 16px; background: var(--card); border: 1px solid var(--line); padding: 14px 16px; }
+  .card h3 { font-size: 14px; display: flex; justify-content: space-between; align-items: center; } .card h3 a { font-size: 11.5px; color: var(--rose-1); font-weight: 600; text-decoration: none; }
+  .chart { height: 150px; margin-top: 12px; display: flex; align-items: flex-end; gap: 8px; }
+  .chart div { flex: 1; border-radius: 6px 6px 0 0; background: linear-gradient(180deg, var(--rose-1), rgba(216,27,92,.35)); }
+  .chart div.g { background: linear-gradient(180deg, var(--gold-1), rgba(217,174,85,.35)); }
+  .lg { display: flex; gap: 14px; margin-top: 8px; font-size: 11px; color: var(--muted); } .lg i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; }
+  .todo { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .todo div { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.04); font-size: 12.5px; }
+  .todo div b { margin-left: auto; color: var(--rose-1); }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12.5px; }
+  th { text-align: left; font-weight: 600; color: var(--dim); font-size: 11px; letter-spacing: .04em; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .who { display: flex; align-items: center; gap: 10px; } .who i { width: 34px; height: 34px; border-radius: 50%; flex: none; } .who small { display: block; color: var(--dim); font-size: 11px; }
+  .pill { display: inline-block; padding: 3px 9px; border-radius: 9px; font-size: 11px; font-weight: 700; }
+  .p-pend { color: var(--gold-1); background: rgba(246,220,155,.12); } .p-ok { color: var(--green); background: rgba(62,224,143,.12); } .p-no { color: var(--red); background: rgba(255,95,122,.12); } .p-blue { color: var(--blue); background: rgba(127,176,255,.12); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 14px; border-radius: 10px; font-size: 12px; font-weight: 700; border: 0; color: #fff; }
+  .b-rose { background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); } .b-ghost { background: rgba(255,255,255,.08); color: var(--text); } .b-green { background: linear-gradient(100deg, #3ee08f, #1aa864); color: #062615; } .b-red { background: rgba(255,95,122,.16); color: var(--red); }
+  .acts { display: flex; gap: 6px; justify-content: flex-end; }
+  .tabs { display: flex; gap: 6px; margin-top: 14px; } .tabs span { padding: 7px 12px; border-radius: 11px; font-size: 12px; color: var(--muted); background: rgba(255,255,255,.05); } .tabs span.on { color: #fff; background: rgba(255,95,143,.2); }
+  .search { margin-left: auto; width: 260px; height: 34px; border-radius: 11px; padding: 0 12px; display: flex; align-items: center; font-size: 12px; color: var(--dim); background: var(--card); border: 1px solid var(--line); }
+  .split { display: grid; grid-template-columns: 1fr 380px; gap: 14px; margin-top: 14px; }
+  .review .media { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .review .media i { height: 96px; border-radius: 12px; display: grid; place-items: center; font-style: normal; font-size: 10.5px; color: rgba(255,255,255,.7); }
+  .review .vid { margin-top: 8px; height: 130px; border-radius: 12px; background: linear-gradient(135deg, #3a1a2a, #160a10); display: grid; place-items: center; font-size: 12px; color: var(--muted); border: 1px solid var(--line); }
+  .kv { margin-top: 10px; font-size: 12px; display: grid; grid-template-columns: 110px 1fr; gap: 6px 10px; } .kv span { color: var(--dim); }
+  .reason { margin-top: 10px; height: 38px; border-radius: 10px; padding: 0 10px; display: flex; align-items: center; font-size: 12px; color: var(--dim); background: rgba(255,255,255,.05); border: 1px solid var(--line); }
+  .chat { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .m { max-width: 80%; padding: 9px 12px; border-radius: 14px; font-size: 12.5px; } .m small { display: block; font-size: 10px; opacity: .7; margin-top: 3px; }
+  .m.u { align-self: flex-start; background: #2c2227; } .m.t { align-self: flex-end; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); }
+  .compose { display: flex; gap: 8px; margin-top: 12px; } .compose div { flex: 1; height: 40px; border-radius: 12px; padding: 0 12px; display: flex; align-items: center; font-size: 12px; color: var(--dim); background: rgba(255,255,255,.05); border: 1px solid var(--line); }
+  .set { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
+  .field { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; } .field:last-child { border: 0; }
+  .field small { display: block; font-size: 10.5px; color: var(--dim); }
+  .field .in { min-width: 90px; height: 32px; border-radius: 9px; padding: 0 10px; display: flex; align-items: center; justify-content: flex-end; font-weight: 700; background: rgba(255,255,255,.06); border: 1px solid var(--line); }
+  .warn { margin-top: 12px; padding: 10px 12px; border-radius: 12px; font-size: 11.5px; color: var(--gold-1); background: rgba(246,220,155,.07); border: 1px solid rgba(246,220,155,.25); }
+  .g1{background:linear-gradient(135deg,#ff9ab8,#8e0f3c)} .g2{background:linear-gradient(135deg,#c9a6ff,#4f2fb3)} .g3{background:linear-gradient(135deg,#ffcf8a,#8a5a12)} .g4{background:linear-gradient(135deg,#7fb0ff,#1f3f8e)} .g5{background:linear-gradient(135deg,#9ad7c8,#1f6e5e)}
+  .login { min-height: 520px; display: grid; place-items: center; background: radial-gradient(70% 60% at 50% 0%, #4a1230, #12070d 70%); }
+  .lbox { width: 360px; padding: 26px; border-radius: 22px; background: var(--surface); border: 1px solid var(--line); text-align: center; }
+  .lbox .logo { font-size: 30px; padding: 0; } .lbox p { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+  .lbox .f { height: 44px; margin-top: 12px; border-radius: 12px; padding: 0 14px; display: flex; align-items: center; font-size: 13px; color: var(--dim); background: rgba(255,255,255,.05); border: 1px solid var(--line); text-align: left; }
+  .lbox .btn { width: 100%; height: 46px; margin-top: 16px; font-size: 14px; }
+  .lbox .note { margin-top: 12px; font-size: 11px; color: var(--dim); }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Meto Admin Panel</h1>
+  <p>Owner ke liye website (computer pe) · abhi jo kaam code / dev route se hote hain, wo sab yahan · app ke hi Rose Night rang me</p>
+</header>
+
+<!-- 0. Login -->
+<figure class="shot">
+  <div class="win"><div class="bar"><i></i><i></i><i></i><span>admin.meto.app</span></div>
+    <div class="login"><div class="lbox">
+      <div class="logo">Meto <small>ADMIN</small></div>
+      <p>Meto team only</p>
+      <div class="f">admin@meto.app</div>
+      <div class="f">••••••••</div>
+      <span class="btn b-rose">Sign in</span>
+      <div class="note">Only admins added by the owner · every action is logged</div>
+    </div></div>
+  </div>
+  <figcaption><b>0. Login</b> · email + password · sirf admin list wale log</figcaption>
+</figure>
+
+<!-- 1. Dashboard -->
+<figure class="shot">
+  <div class="win"><div class="bar"><i></i><i></i><i></i><span>admin.meto.app / dashboard</span></div>
+    <div class="app">
+      <aside class="side">
+        <div class="logo">Meto <small>ADMIN</small></div>
+        <nav class="nav">
+          <a class="on">📊 Dashboard</a>
+          <a>🎙️ Host applications <span class="n">3</span></a>
+          <a>💸 Withdrawals <span class="n">5</span></a>
+          <a>🎧 Support <span class="n">2</span></a>
+          <a>🚩 Reports <span class="n">4</span></a>
+          <div class="sep">MANAGE</div>
+          <a>👥 Users</a>
+          <a>💖 Hosts</a>
+          <a>⭐ Agencies</a>
+          <a>📢 Send notice</a>
+          <div class="sep">MONEY</div>
+          <a>💎 Transactions</a>
+          <a>⚙️ Settings</a>
+        </nav>
+      </aside>
+      <main class="main">
+        <div class="top"><div><h2>Dashboard</h2><div class="sub">Today · 17 Oct 2026</div></div><div class="me"><i></i>Owner</div></div>
+        <div class="kpis">
+          <div class="kpi gold"><small>Recharge today</small><b>₹18,450</b><em>▲ 12% vs yesterday</em></div>
+          <div class="kpi"><small>Owner earnings (today)</small><b>₹6,120</b><em>recharge − host payouts</em></div>
+          <div class="kpi"><small>Online now</small><b>142</b><em>38 hosts · 104 users</em></div>
+          <div class="kpi"><small>Calls today</small><b>611</b><em>3,940 min</em></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Last 7 days <a>Transactions →</a></h3>
+            <div class="chart"><div style="height:45%"></div><div class="g" style="height:30%"></div><div style="height:55%"></div><div class="g" style="height:38%"></div><div style="height:62%"></div><div class="g" style="height:41%"></div><div style="height:48%"></div><div class="g" style="height:33%"></div><div style="height:70%"></div><div class="g" style="height:47%"></div><div style="height:80%"></div><div class="g" style="height:52%"></div><div style="height:92%"></div><div class="g" style="height:60%"></div></div>
+            <div class="lg"><span><i style="background:var(--rose-1)"></i>Recharge (₹)</span><span><i style="background:var(--gold-1)"></i>Paid to hosts (₹)</span></div>
+          </div>
+          <div class="card"><h3>Needs your attention</h3>
+            <div class="todo">
+              <div>🎙️ Host applications to review<b>3</b></div>
+              <div>💸 Withdrawals to pay<b>5 · ₹9,870</b></div>
+              <div>🎧 Support replies pending<b>2</b></div>
+              <div>🚩 Reports to check<b>4</b></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <figcaption><b>1. Dashboard</b> · aaj ki kamai, online log, calls · kitna kaam baaki hai (laal ginti) · 7 din ka chart</figcaption>
+</figure>
+
+<!-- 2. Host applications -->
+<figure class="shot">
+  <div class="win"><div class="bar"><i></i><i></i><i></i><span>admin.meto.app / hosts / applications</span></div>
+    <div class="app">
+      <aside class="side"><div class="logo">Meto <small>ADMIN</small></div><nav class="nav"><a>📊 Dashboard</a><a class="on">🎙️ Host applications <span class="n">3</span></a><a>💸 Withdrawals <span class="n">5</span></a><a>🎧 Support <span class="n">2</span></a><a>🚩 Reports <span class="n">4</span></a></nav></aside>
+      <main class="main">
+        <div class="top"><div><h2>Host applications</h2><div class="sub">Match photos, selfies and the 30 sec video · approve if real</div></div></div>
+        <div class="tabs"><span class="on">Pending · 3</span><span>Approved</span><span>Rejected</span></div>
+        <div class="split">
+          <div class="card"><table>
+            <tr><th>NAME</th><th>AGENCY</th><th>AGE</th><th>APPLIED</th><th></th></tr>
+            <tr style="background:rgba(255,95,143,.06)"><td><div class="who"><i class="g1"></i><span>Priya<small>ID 482093117</small></span></div></td><td>Star Agency</td><td>24</td><td>2 h ago</td><td><span class="pill p-pend">Pending</span></td></tr>
+            <tr><td><div class="who"><i class="g2"></i><span>Neha<small>ID 517320044</small></span></div></td><td>Star Agency</td><td>27</td><td>5 h ago</td><td><span class="pill p-pend">Pending</span></td></tr>
+            <tr><td><div class="who"><i class="g3"></i><span>Kavya<small>ID 390112875</small></span></div></td><td>Rose Talent</td><td>23</td><td>1 d ago</td><td><span class="pill p-pend">Pending</span></td></tr>
+          </table></div>
+          <div class="card review"><h3>Priya · 24 · Star Agency</h3>
+            <div class="media"><i class="g1">Photo 1</i><i class="g1">Photo 2</i><i class="g1">Photo 3</i></div>
+            <div class="media"><i class="g2">Selfie · front</i><i class="g2">Selfie · left</i><i class="g2">Selfie · right</i></div>
+            <div class="vid">▶ 30 sec live video</div>
+            <div class="kv"><span>Phone</span><b>+91 98••• ••210</b><span>Languages</span><b>Hindi, English</b><span>Date of birth</span><b>12 Mar 2002 · 24 yrs ✓</b></div>
+            <div class="reason">Reason for rejection (shown to the applicant)…</div>
+            <div class="acts" style="margin-top:10px"><span class="btn b-red">Reject</span><span class="btn b-green">✓ Approve as host</span></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <figcaption><b>2. Host applications</b> · list + daayein poori jaankari · 3 photo, 3 selfie, 30 sec video ek saath · Approve / Reject (wajah ke saath) → host ko notification</figcaption>
+</figure>
+
+<!-- 3. Withdrawals -->
+<figure class="shot">
+  <div class="win"><div class="bar"><i></i><i></i><i></i><span>admin.meto.app / withdrawals</span></div>
+    <div class="app">
+      <aside class="side"><div class="logo">Meto <small>ADMIN</small></div><nav class="nav"><a>📊 Dashboard</a><a>🎙️ Host applications <span class="n">3</span></a><a class="on">💸 Withdrawals <span class="n">5</span></a><a>🎧 Support <span class="n">2</span></a></nav></aside>
+      <main class="main">
+        <div class="top"><div><h2>Withdrawals</h2><div class="sub">Send money to UPI from your bank app → enter the UTR here and mark paid</div></div><div class="search">🔍 Host name / ID / UPI</div></div>
+        <div class="tabs"><span class="on">Pending · 5 · ₹9,870</span><span>Paid</span><span>Rejected</span></div>
+        <div class="card" style="margin-top:12px"><table>
+          <tr><th>HOST</th><th>REQUESTED</th><th>TDS 1%</th><th>TO PAY</th><th>UPI</th><th>PAN</th><th>WHEN</th><th style="text-align:right">ACTION</th></tr>
+          <tr><td><div class="who"><i class="g1"></i><span>Sony<small>Star Agency</small></span></div></td><td>₹2,000</td><td>₹20</td><td><b style="color:var(--gold-1)">₹1,980</b></td><td>sony@okaxis<br><small style="color:var(--dim)">Sony Sharma</small></td><td>ABCDE••••F</td><td>3 h ago</td><td><div class="acts"><span class="btn b-red">Reject</span><span class="btn b-green">Mark paid</span></div></td></tr>
+          <tr><td><div class="who"><i class="g3"></i><span>Aisha<small>—</small></span></div></td><td>₹600</td><td>₹6</td><td><b style="color:var(--gold-1)">₹594</b></td><td>aisha@ybl<br><small style="color:var(--dim)">Aisha Khan</small></td><td>PQRSX••••K</td><td>1 d ago</td><td><div class="acts"><span class="btn b-red">Reject</span><span class="btn b-green">Mark paid</span></div></td></tr>
+        </table>
+        <div class="warn">"Mark paid" asks for the UTR number · Reject asks for a reason · rejected points go back to the host automatically</div></div>
+      </main>
+    </div>
+  </div>
+  <figcaption><b>3. Withdrawals</b> · kise kitna bhejna hai (TDS kaat ke) · UPI + PAN · Mark paid (UTR) / Reject (points wapas) → host ko notification</figcaption>
+</figure>
+
+<!-- 4. Support -->
+<figure class="shot">
+  <div class="win"><div class="bar"><i></i><i></i><i></i><span>admin.meto.app / support</span></div>
+    <div class="app">
+      <aside class="side"><div class="logo">Meto <small>ADMIN</small></div><nav class="nav"><a>📊 Dashboard</a><a>💸 Withdrawals <span class="n">5</span></a><a class="on">🎧 Support <span class="n">2</span></a><a>🚩 Reports <span class="n">4</span></a></nav></aside>
+      <main class="main">
+        <div class="top"><div><h2>Support</h2><div class="sub">Questions from users and hosts · your reply reaches the app instantly</div></div></div>
+        <div class="split" style="grid-template-columns:330px 1fr">
+          <div class="card"><table>
+            <tr style="background:rgba(255,95,143,.06)"><td><div class="who"><i class="g4"></i><span>Ram · 📞 Call charge<small>#1042 · 12 min ago</small></span></div></td><td><span class="pill p-pend">Open</span></td></tr>
+            <tr><td><div class="who"><i class="g1"></i><span>Sony · 💸 Withdraw<small>#1041 · 1 h ago</small></span></div></td><td><span class="pill p-pend">Open</span></td></tr>
+            <tr><td><div class="who"><i class="g5"></i><span>Arjun · 💎 Recharge<small>#1038 · yesterday</small></span></div></td><td><span class="pill p-ok">Solved</span></td></tr>
+          </table></div>
+          <div class="card"><h3>Ram · Call charge · #1042 <a>View profile + wallet →</a></h3>
+            <div class="chat">
+              <div class="m u">My call ended in 30 sec but 1000 gems were deducted<small>12:40</small></div>
+              <div class="m u" style="padding:4px"><span style="display:block;width:150px;height:90px;border-radius:10px;background:#3a2a30"></span></div>
+              <div class="m t">We checked — the host ended the call, 1000 gems have been refunded ✓<small>14:05 · Owner</small></div>
+            </div>
+            <div class="compose"><div>Write a reply…</div><span class="btn b-ghost">✓ Solved</span><span class="btn b-rose">Send</span></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <figcaption><b>4. Support</b> · saari baat-cheet ek jagah · screenshot dikhte · jawab bhejo → user ko push · "Solved" mark</figcaption>
+</figure>
+
+<!-- 5. Users / Hosts -->
+<figure class="shot">
+  <div class="win"><div class="bar"><i></i><i></i><i></i><span>admin.meto.app / users</span></div>
+    <div class="app">
+      <aside class="side"><div class="logo">Meto <small>ADMIN</small></div><nav class="nav"><a>📊 Dashboard</a><a>🚩 Reports <span class="n">4</span></a><a class="on">👥 Users</a><a>💖 Hosts</a><a>⭐ Agencies</a></nav></aside>
+      <main class="main">
+        <div class="top"><div><h2>Users</h2><div class="sub">Search · adjust gems · ban / unban · VIP</div></div><div class="search">🔍 Name / ID / phone</div></div>
+        <div class="split">
+          <div class="card"><table>
+            <tr><th>USER</th><th>GEMS</th><th>VIP</th><th>SPENT</th><th>STATUS</th></tr>
+            <tr style="background:rgba(255,95,143,.06)"><td><div class="who"><i class="g4"></i><span>Ram, 26<small>ID 448708254 · +91 99•••99</small></span></div></td><td>50,918</td><td><span class="pill p-pend">👑 10 Nov</span></td><td>₹1,599</td><td><span class="pill p-ok">Active</span></td></tr>
+            <tr><td><div class="who"><i class="g5"></i><span>Arjun, 30<small>ID 600112093</small></span></div></td><td>4,600</td><td>—</td><td>₹399</td><td><span class="pill p-ok">Active</span></td></tr>
+            <tr><td><div class="who"><i class="g3"></i><span>Rohan, 26<small>ID 712004551</small></span></div></td><td>0</td><td>—</td><td>₹0</td><td><span class="pill p-no">Banned</span></td></tr>
+          </table></div>
+          <div class="card"><h3>Ram · ID 448708254</h3>
+            <div class="kv"><span>Joined</span><b>9 Oct 2026</b><span>Recharge</span><b>₹1,599 · Lv.5</b><span>Calls</span><b>14 · 38 min</b><span>Reports</span><b>0</b></div>
+            <div class="field" style="margin-top:8px"><span>Add / remove gems<small>with a reason · logged</small></span><div class="in">+ 1,000</div></div>
+            <div class="acts" style="margin-top:12px;justify-content:flex-start"><span class="btn b-ghost">Gems history</span><span class="btn b-ghost">Chats (for reports)</span><span class="btn b-red">Ban user</span></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <figcaption><b>5. Users / Hosts</b> · dhoondho · poori jaankari · gems do/lo (wajah) · ban / unban · Hosts page me rate, kamai, suspend</figcaption>
+</figure>
+
+<!-- 6. Settings -->
+<figure class="shot">
+  <div class="win"><div class="bar"><i></i><i></i><i></i><span>admin.meto.app / settings</span></div>
+    <div class="app">
+      <aside class="side"><div class="logo">Meto <small>ADMIN</small></div><nav class="nav"><a>📊 Dashboard</a><a>💎 Transactions</a><a class="on">⚙️ Settings</a></nav></aside>
+      <main class="main">
+        <div class="top"><div><h2>Settings</h2><div class="sub">Changes reach the app within 30 sec</div></div><span class="btn b-rose" style="margin-left:auto">Save changes</span></div>
+        <div class="set">
+          <div class="card"><h3>📞 Calls & rate</h3>
+            <div class="field"><span>Host rate · minimum</span><div class="in">500</div></div>
+            <div class="field"><span>Host rate · maximum</span><div class="in">3,000</div></div>
+            <div class="field"><span>Rate chips</span><div class="in">1000 · 1500 · 2000 · 3000</div></div>
+            <div class="field"><span>Match call rate</span><div class="in">1,000</div></div>
+            <div class="field"><span>VIP call discount</span><div class="in">10 %</div></div>
+          </div>
+          <div class="card"><h3>💬 Chat & media</h3>
+            <div class="field"><span>Free messages / host</span><div class="in">3</div></div>
+            <div class="field"><span>Message price</span><div class="in">200</div></div>
+            <div class="field"><span>Free chat for VIP</span><div class="in">ON</div></div>
+            <div class="field"><span>Free photos · unlock</span><div class="in">3 · 200</div></div>
+            <div class="field"><span>Free videos · unlock</span><div class="in">1 · 500</div></div>
+          </div>
+          <div class="card"><h3>💸 Host money</h3>
+            <div class="field"><span>Host points / gem<small>1 = host gets 100%</small></span><div class="in">1</div></div>
+            <div class="field"><span>Points = ₹1</span><div class="in">100</div></div>
+            <div class="field"><span>Min withdraw</span><div class="in">₹500</div></div>
+            <div class="field"><span>TDS</span><div class="in">1 %</div></div>
+          </div>
+        </div>
+        <div class="warn">Money settings ask for confirmation · every change is logged: who, when, old → new</div>
+      </main>
+    </div>
+  </div>
+  <figcaption><b>6. Settings</b> · saare number jo abhi code me hain · yahin se badlo · save karte hi app me lag jaate</figcaption>
+</figure>
+</body>
+</html>

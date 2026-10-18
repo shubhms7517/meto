@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import type { RootStackParamList } from '../../navigation/types';
 import { getWithdrawInfo, requestWithdraw, rupees, type Withdrawal, type WithdrawInfo } from '../../services/host';
 import { HostHeader } from './common';
 import { success } from '../../lib/haptics';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Withdraw'>;
 
@@ -27,7 +28,7 @@ export default function WithdrawScreen({ navigation }: Props) {
           setInfo(i);
           setAmount(a => (a && a <= i.availableInr ? a : i.availableInr >= i.minInr ? i.availableInr : null));
         })
-        .catch(e => Alert.alert('Withdraw', (e as Error).message));
+        .catch(e => appAlert('Withdraw', (e as Error).message));
     }, []),
   );
 
@@ -42,7 +43,7 @@ export default function WithdrawScreen({ navigation }: Props) {
       setSent((await requestWithdraw(amount)).withdrawal);
       success();
     } catch (e) {
-      Alert.alert('Withdraw', (e as Error).message);
+      appAlert('Withdraw', (e as Error).message);
     } finally {
       setSending(false);
     }

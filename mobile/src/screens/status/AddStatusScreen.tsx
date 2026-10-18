@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Dimensions, Image, Keyboard, Platform, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dimensions, Image, Keyboard, Platform, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import Icon, { IconName } from '../../components/Icon';
 import { colors } from '../../theme';
 import { postStatus } from '../../services/status';
 import type { RootStackParamList } from '../../navigation/types';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddStatus'>;
 type Who = 'everyone' | 'followers';
@@ -42,7 +43,7 @@ export default function AddStatusScreen({ navigation, route }: Props) {
       await postStatus(uri, caption.trim(), who);
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Could not share', (e as Error).message);
+      appAlert('Could not share', (e as Error).message);
     } finally {
       setLoading(false);
     }

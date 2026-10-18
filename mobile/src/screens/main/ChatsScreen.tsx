@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
-  Dimensions,
   FlatList,
   Pressable,
   RefreshControl,
@@ -10,6 +9,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -34,10 +34,10 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'calls', label: 'Calls' },
 ];
 const NEW_FOLLOWER_MS = 24 * 60 * 60_000;
-const { width: W } = Dimensions.get('window');
-const TAB_W = (W - 28) / 4;
 
 export default function ChatsScreen() {
+  const { width } = useWindowDimensions(); // har render pe asli chaudai (lock / rotate ke baad bhi sahi)
+  const TAB_W = (width - 28) / 4;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { chats, loaded, typing, refresh } = useChat();
@@ -70,7 +70,7 @@ export default function ChatsScreen() {
 
   useEffect(() => {
     Animated.spring(slide, { toValue: TABS.findIndex(t => t.key === tab) * TAB_W, useNativeDriver: true, speed: 18, bounciness: 6 }).start();
-  }, [tab, slide]);
+  }, [tab, slide, TAB_W]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -104,7 +104,7 @@ export default function ChatsScreen() {
       <Text style={[styles.title, { paddingTop: insets.top + 6 }]}>Chats</Text>
       <View style={styles.tabs}>
         {TABS.map(t => (
-          <Pressable key={t.key} onPress={() => setTab(t.key)} style={styles.tab}>
+          <Pressable key={t.key} onPress={() => setTab(t.key)} style={[styles.tab, { width: TAB_W }]}>
             <Text style={[styles.tabText, tab === t.key && styles.tabOn]}>{t.label}</Text>
             {t.key === 'followed' && newFollowers > 0 && (
               <LinearGradient colors={gradients.rose} style={styles.n}>
@@ -113,7 +113,7 @@ export default function ChatsScreen() {
             )}
           </Pressable>
         ))}
-        <Animated.View style={[styles.lineWrap, { transform: [{ translateX: slide }] }]}>
+        <Animated.View style={[styles.lineWrap, { width: TAB_W, transform: [{ translateX: slide }] }]}>
           <LinearGradient colors={[colors.gold1, colors.rose1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.line} />
         </Animated.View>
       </View>
@@ -428,10 +428,10 @@ const styles = StyleSheet.create({
   topGlow: { position: 'absolute', top: 0, left: 0, right: 0 },
   title: { color: colors.text, fontSize: 26, fontWeight: '700', letterSpacing: -0.3, paddingHorizontal: 18, paddingBottom: 6 },
   tabs: { flexDirection: 'row', marginHorizontal: 14, marginBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
-  tab: { width: TAB_W, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingTop: 8, paddingBottom: 11 },
+  tab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingTop: 8, paddingBottom: 11 },
   tabText: { color: colors.fine, fontSize: 13, fontWeight: '600' },
   tabOn: { color: '#fff' },
-  lineWrap: { position: 'absolute', bottom: -1, left: 0, width: TAB_W, alignItems: 'center' },
+  lineWrap: { position: 'absolute', bottom: -1, left: 0, alignItems: 'center' },
   line: { width: 34, height: 3, borderRadius: 3 },
   n: { minWidth: 17, height: 17, paddingHorizontal: 5, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   nText: { color: '#fff', fontSize: 10, fontWeight: '700' },

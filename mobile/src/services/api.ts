@@ -65,16 +65,26 @@ async function authHeader(): Promise<Record<string, string>> {
   return { Authorization: `Bearer ${await getIdToken(user)}` };
 }
 
+// WiFi beech me atak jaye to request hamesha latki na rahe — itne der baad "Retry" dikhe
+const TIMEOUT_MS = 20_000;
+const UPLOAD_TIMEOUT_MS = 180_000; // photo / video (host form me 30 sec video)
+
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   let res: Response;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), init.body instanceof FormData ? UPLOAD_TIMEOUT_MS : TIMEOUT_MS);
   try {
     res = await fetch(`${API_URL}${path}`, {
       ...init,
+      signal: ctrl.signal,
       headers: { Accept: 'application/json', ...(await authHeader()), ...(init.headers ?? {}) },
     });
   } catch (e) {
     if (e instanceof ApiError) throw e;
+    if (ctrl.signal.aborted) throw new ApiError(0, 'timeout', 'Server is taking too long. Check your connection and try again');
     throw new ApiError(0, 'network_error', 'Cannot reach server. Check your connection');
+  } finally {
+    clearTimeout(timer);
   }
 
   const text = await res.text().catch(() => '');

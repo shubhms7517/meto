@@ -102,8 +102,9 @@ export default function MatchScreen({ navigation }: Props) {
 
   useEffect(() => {
     search();
+    const r = run; // chalti search purani ho jaye (screen band / naya search)
     return () => {
-      run.current++;
+      r.current++;
     };
   }, [search]);
 
@@ -146,7 +147,7 @@ export default function MatchScreen({ navigation }: Props) {
               </View>
               <View style={styles.info}>
                 <View style={styles.nameRow}>
-                  <Text style={styles.name}>
+                  <Text style={styles.name} numberOfLines={1}>
                     {user.name} <Text style={styles.age}>{user.age}</Text>
                   </Text>
                   {user.isVerified && <Icon name="verified" size={20} />}
@@ -223,7 +224,7 @@ export default function MatchScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 8 },
-  back: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  back: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   title: { color: colors.text, fontSize: 19, fontWeight: '700', flex: 1 },
   rate: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 30, paddingLeft: 5, paddingRight: 10, borderRadius: 15, backgroundColor: 'rgba(212,166,75,0.14)', borderWidth: 1, borderColor: 'rgba(212,166,75,0.32)' },
   rateText: { color: colors.gold1, fontSize: 12, fontWeight: '700' },

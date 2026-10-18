@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   topGlow: { position: 'absolute', left: 0, right: 0, top: 0, height: 460 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 10 },
-  back: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  back: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   title: { color: colors.text, fontSize: 19, fontWeight: '700' },
 
   hero: { marginHorizontal: 16, marginTop: 4, borderRadius: 26, paddingTop: 16, paddingBottom: 16, paddingHorizontal: 16, alignItems: 'center', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,95,143,0.4)' },

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StatusBar, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, StatusBar, StyleSheet, Switch, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { getWithdrawInfo } from '../../services/host';
 import { signOut } from '../../services/auth';
 import { useWallet } from '../../context/WalletContext';
 import { version as APP_VERSION } from '../../../package.json';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
@@ -48,12 +49,12 @@ export default function SettingsScreen({ navigation }: Props) {
       setPrefs((await savePrefs({ [k]: v })).prefs);
     } catch (e) {
       setPrefs(before);
-      Alert.alert('Settings', (e as Error).message);
+      appAlert('Settings', (e as Error).message);
     }
   };
 
   const onSignOut = () =>
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
+    appAlert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign out',
@@ -103,7 +104,7 @@ export default function SettingsScreen({ navigation }: Props) {
         {!amHost && (
           <Section title="Privacy & safety">
             <Row
-              icon="📹"
+              icon="📞"
               label="Hosts can call me"
               sub="You pay only if you answer"
               toggle={prefs?.hostCanCall}

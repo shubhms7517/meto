@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Screen from '../../components/Screen';
@@ -13,10 +13,10 @@ import { ApiError } from '../../services/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
 
-const { width, height } = Dimensions.get('window');
 const DURATION = 1800;
 
 export default function SplashScreen({ navigation }: Props) {
+  const { width, height } = useWindowDimensions(); // har render pe asli chaudai (lock / rotate ke baad bhi sahi)
   const fade = useRef(new Animated.Value(0)).current;
   const progress = useRef(new Animated.Value(0)).current;
 

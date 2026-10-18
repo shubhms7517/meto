@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dimensions, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Screen from '../../components/Screen';
 import AuthHeader from '../../components/AuthHeader';
@@ -12,13 +12,13 @@ import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Phone'>;
 
-const { width } = Dimensions.get('window');
 
 // "9876543210" → "98765 43210"
 const formatPhone = (digits: string) =>
   digits.length > 5 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : digits;
 
 export default function PhoneScreen({ navigation }: Props) {
+  const { width } = useWindowDimensions(); // har render pe asli chaudai (lock / rotate ke baad bhi sahi)
   const [phone, setPhone] = useState('');
   const [focused, setFocused] = useState(false);
   const [loading, setLoading] = useState(false);

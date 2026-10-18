@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
@@ -9,6 +9,7 @@ import Icon from '../../components/Icon';
 import { colors, gradients } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import { deletePhoto, getMyProfile, LANGUAGES, type Me, type MyPhoto, updateProfile, uploadAvatar, uploadPhoto } from '../../services/users';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProfile'>;
 
@@ -40,7 +41,7 @@ export default function EditProfileScreen({ navigation }: Props) {
         setCity(m.city ?? '');
         setLangs(m.languages ?? []);
       })
-      .catch(e => Alert.alert('Profile', (e as Error).message));
+      .catch(e => appAlert('Profile', (e as Error).message));
   }, []);
 
   const pick = async () => (await launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 0.9 })).assets?.[0]?.uri;
@@ -53,7 +54,7 @@ export default function EditProfileScreen({ navigation }: Props) {
       await uploadAvatar(uri);
       await load();
     } catch (e) {
-      Alert.alert('Photo', (e as Error).message);
+      appAlert('Photo', (e as Error).message);
     } finally {
       setBusy(null);
     }
@@ -67,16 +68,16 @@ export default function EditProfileScreen({ navigation }: Props) {
       await uploadPhoto(uri, false);
       await load();
     } catch (e) {
-      Alert.alert('Photo', (e as Error).message);
+      appAlert('Photo', (e as Error).message);
     } finally {
       setBusy(null);
     }
   };
 
   const removePhoto = (p: MyPhoto) =>
-    Alert.alert('Delete photo?', 'This photo will be removed from your profile.', [
+    appAlert('Delete photo?', 'This photo will be removed from your profile.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deletePhoto(p.id).then(load).catch(e => Alert.alert('Photo', (e as Error).message)) },
+      { text: 'Delete', style: 'destructive', onPress: () => deletePhoto(p.id).then(load).catch(e => appAlert('Photo', (e as Error).message)) },
     ]);
 
   const toggleLang = (l: string) =>
@@ -84,7 +85,7 @@ export default function EditProfileScreen({ navigation }: Props) {
 
   const save = async () => {
     if (name.trim().length < 2) {
-      Alert.alert('Name', 'Name must be at least 2 characters');
+      appAlert('Name', 'Name must be at least 2 characters');
       return;
     }
     setSaving(true);
@@ -92,7 +93,7 @@ export default function EditProfileScreen({ navigation }: Props) {
       await updateProfile({ name: name.trim(), bio: bio.trim(), city: city.trim(), languages: langs });
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Could not save', (e as Error).message);
+      appAlert('Could not save', (e as Error).message);
     } finally {
       setSaving(false);
     }

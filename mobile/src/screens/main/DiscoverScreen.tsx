@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   FlatList,
   Pressable,
   RefreshControl,
@@ -9,12 +8,12 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Avatar from '../../components/Avatar';
 import CoinChip from '../../components/CoinChip';
 import { useWallet } from '../../context/WalletContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -35,9 +34,9 @@ let savedFilter: DiscoverFilter = DEFAULT_FILTER;
 import type { RootStackParamList } from '../../navigation/types';
 
 type Tab = 'discover' | 'following';
-const { width } = Dimensions.get('window');
 
 export default function DiscoverScreen() {
+  const { width } = useWindowDimensions(); // har render pe asli chaudai (lock / rotate ke baad bhi sahi)
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { amHost } = useWallet();

@@ -4,11 +4,11 @@ import { AppSetting } from '../models/Host.js';
 export const SETTING_DEFAULTS = {
   hostPointsPerGem: 1, // user ke 1 gem par host ko kitne points
   pointsPerInr: 100, // 100 points = ₹1
-  hostRates: [1000, 1500, 2000, 4000], // jaldi chunne ke chips (custom bhi chalta hai) · open max se upar wala 🔒
+  hostRates: [1000, 1500, 2000, 3000], // jaldi chunne ke chips (custom bhi chalta hai)
   hostRateDefault: 1000,
   hostRateMin: 500, // custom rate kam se kam
   hostRateStep: 100, // custom rate 100-100 karke
-  hostRateOpenMax: 3000, // isse upar ka rate host level badhne par khulega
+  hostRateOpenMax: 3000, // sabse zyada rate (host level nahi — seedha limit)
   matchRate: 1000, // Random match ki call ka rate (host ka apna rate nahi)
   vipCallDiscountPct: 10, // VIP user ko call kitni % sasti
   minWithdrawInr: 500,

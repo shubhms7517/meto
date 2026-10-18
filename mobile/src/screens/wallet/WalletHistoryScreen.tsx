@@ -48,10 +48,10 @@ const FILTERS: { key: HistoryFilter; label: string }[] = [
 const KIND_ICON: Record<TxKind, { emoji: string; bg: string }> = {
   recharge: { emoji: '💳', bg: 'rgba(62,224,143,0.12)' },
   bonus: { emoji: '🎁', bg: 'rgba(212,166,75,0.14)' },
-  checkin: { emoji: '📅', bg: 'rgba(212,166,75,0.14)' },
+  checkin: { emoji: '🎁', bg: 'rgba(212,166,75,0.14)' },
   message: { emoji: '💬', bg: 'rgba(255,95,143,0.14)' },
   unlock: { emoji: '🔓', bg: 'rgba(212,166,75,0.14)' },
-  call: { emoji: '📹', bg: 'rgba(255,95,143,0.12)' },
+  call: { emoji: '📞', bg: 'rgba(255,95,143,0.12)' },
   gift: { emoji: '🌹', bg: 'rgba(255,95,143,0.12)' },
   refund: { emoji: '↩️', bg: 'rgba(62,224,143,0.12)' },
   admin: { emoji: '🛡️', bg: 'rgba(255,255,255,0.08)' },

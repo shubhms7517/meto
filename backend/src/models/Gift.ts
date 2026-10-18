@@ -5,7 +5,9 @@ import { sequelize } from '../db/sequelize.js';
 export class Gift extends Model<InferAttributes<Gift>, InferCreationAttributes<Gift>> {
   declare id: CreationOptional<number>;
   declare name: string;
-  declare icon: string; // abhi emoji, baad me image/animation URL
+  declare icon: string; // emoji (icon / animation na ho to yahi dikhta hai)
+  declare iconUrl: CreationOptional<string | null>; // PNG icon (admin upload)
+  declare svgaUrl: CreationOptional<string | null>; // SVGA animation (gift aate hi poori screen pe)
   declare price: number;
   declare isRare: CreationOptional<boolean>;
   declare isActive: CreationOptional<boolean>;
@@ -16,6 +18,8 @@ Gift.init(
     id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING(40), allowNull: false, unique: true },
     icon: { type: DataTypes.STRING(255), allowNull: false },
+    iconUrl: { type: DataTypes.STRING(255), allowNull: true, defaultValue: null },
+    svgaUrl: { type: DataTypes.STRING(255), allowNull: true, defaultValue: null },
     price: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
     isRare: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },

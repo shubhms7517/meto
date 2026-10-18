@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Easing, Modal, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Modal, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
@@ -12,13 +12,14 @@ import Coin from '../../components/Coin';
 import { useWallet } from '../../context/WalletContext';
 import type { RootStackParamList } from '../../navigation/types';
 import { PurchaseCancelled } from '../../services/billing';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Vip'>;
 
 // Vato jaise fayde
 const PERKS = [
   { icon: '💎', title: 'Gems bonus', sub: 'Get bonus gems right after activating' },
-  { icon: '📹', title: 'Video discount', sub: '10% off video calls (900 / min)' },
+  { icon: '📞', title: 'Video discount', sub: '10% off video calls (900 / min)' },
   { icon: '⚡', title: 'Match discount', sub: '10% off Match Now calls' },
   { icon: '👑', title: 'Exclusive VIP status', sub: 'Gold crown on your profile and cards' },
 ];
@@ -45,7 +46,7 @@ export default function VipScreen({ navigation }: Props) {
   const [paying, setPaying] = useState(false);
   const [welcome, setWelcome] = useState<{ until: string; bonus: number } | null>(null);
 
-  const load = useCallback(() => getVip().then(setInfo).catch(e => Alert.alert('VIP', (e as Error).message)), []);
+  const load = useCallback(() => getVip().then(setInfo).catch(e => appAlert('VIP', (e as Error).message)), []);
   useEffect(() => {
     load();
   }, [load]);
@@ -62,7 +63,7 @@ export default function VipScreen({ navigation }: Props) {
       if (r.vipUntil) setWelcome({ until: r.vipUntil, bonus: plan.bonusGems });
     } catch (e) {
       if (e instanceof PurchaseCancelled) return; // user ne Play pe khud band kiya
-      Alert.alert('VIP', (e as Error).message);
+      appAlert('VIP', (e as Error).message);
     } finally {
       setPaying(false);
     }
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   topGlow: { position: 'absolute', left: 0, right: 0, top: 0, height: 360 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 10 },
-  back: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  back: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   title: { color: colors.text, fontSize: 19, fontWeight: '700' },
 
   hero: { marginHorizontal: 16, marginTop: 4, borderRadius: 24, paddingVertical: 20, alignItems: 'center', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(246,220,155,0.5)' },

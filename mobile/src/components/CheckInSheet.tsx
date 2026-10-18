@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
@@ -7,6 +7,7 @@ import Coin from './Coin';
 import { colors, gradients } from '../theme';
 import { claimCheckIn, getCheckIn, type CheckIn } from '../services/rewards';
 import { useWallet } from '../context/WalletContext';
+import { appAlert } from '../lib/dialog';
 
 const GOLD = ['#fff4d6', '#f3d488', '#d9ae55'];
 
@@ -58,7 +59,7 @@ export default function CheckInSheet({ onClose, onClaimed }: { onClose: () => vo
     getCheckIn()
       .then(setSt)
       .catch(e => {
-        Alert.alert('Check-in', (e as Error).message);
+        appAlert('Check-in', (e as Error).message);
         onClose();
       });
     const loop = Animated.loop(
@@ -82,7 +83,7 @@ export default function CheckInSheet({ onClose, onClaimed }: { onClose: () => vo
       pop.setValue(0.6);
       Animated.spring(pop, { toValue: 1, friction: 3, tension: 90, useNativeDriver: true }).start();
     } catch (e) {
-      Alert.alert('Check-in', (e as Error).message);
+      appAlert('Check-in', (e as Error).message);
     } finally {
       setClaiming(false);
     }

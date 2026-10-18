@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Dimensions,
   Image,
   Platform,
   Pressable,
@@ -9,6 +8,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
@@ -25,7 +25,6 @@ import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ProfileSetup'>;
 
-const { width } = Dimensions.get('window');
 const MIN_AGE = 18;
 
 const GENDERS: { value: Gender; label: string; icon?: IconName }[] = [
@@ -52,6 +51,7 @@ const maxBirthday = () => {
 };
 
 export default function ProfileSetupScreen({ navigation }: Props) {
+  const { width } = useWindowDimensions(); // har render pe asli chaudai (lock / rotate ke baad bhi sahi)
   const [avatar, setAvatar] = useState<string>();
   const [name, setName] = useState('');
   const [gender, setGender] = useState<Gender>();

@@ -134,7 +134,7 @@ export async function updateHostSettings(user: User, p: { rate?: number; availab
   if (p.rate != null) {
     const s = await getSettings();
     // Chip ya apna amount: min se open max tak, step ke hisaab se (sab admin settings se)
-    if (p.rate > s.hostRateOpenMax) throw forbidden('rate_locked', `Rates above ${s.hostRateOpenMax} unlock at a higher host level`);
+    if (p.rate > s.hostRateOpenMax) throw badRequest(`Maximum rate is ${s.hostRateOpenMax} gems/min`);
     if (p.rate < s.hostRateMin) throw badRequest(`Minimum rate is ${s.hostRateMin} gems/min`);
     if (p.rate % s.hostRateStep !== 0) throw badRequest(`Rate must be in steps of ${s.hostRateStep}`);
     hp.rate = p.rate;

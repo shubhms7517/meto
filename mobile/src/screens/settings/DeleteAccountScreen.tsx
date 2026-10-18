@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
@@ -9,6 +9,7 @@ import type { RootStackParamList } from '../../navigation/types';
 import { deleteMyAccount } from '../../services/users';
 import { signOut } from '../../services/auth';
 import { useWallet } from '../../context/WalletContext';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DeleteAccount'>;
 
@@ -21,7 +22,7 @@ export default function DeleteAccountScreen({ navigation }: Props) {
   const ok = text.trim() === 'DELETE';
 
   const del = () =>
-    Alert.alert('Delete account?', 'This is permanent and cannot be undone.', [
+    appAlert('Delete account?', 'This is permanent and cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete forever',
@@ -34,7 +35,7 @@ export default function DeleteAccountScreen({ navigation }: Props) {
             navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
           } catch (e) {
             setBusy(false);
-            Alert.alert('Delete account', (e as Error).message);
+            appAlert('Delete account', (e as Error).message);
           }
         },
       },

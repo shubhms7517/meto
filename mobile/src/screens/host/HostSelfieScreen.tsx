@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera, CommonResolutions, useCameraDevice, usePhotoOutput } from 'react-native-vision-camera';
@@ -9,6 +9,7 @@ import type { RootStackParamList } from '../../navigation/types';
 import { applyForHost } from '../../services/host';
 import { ensureCallPermissions } from '../../services/calls';
 import { BigButton, HostHeader, s } from './common';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HostSelfie'>;
 
@@ -95,7 +96,7 @@ export default function HostSelfieScreen({ navigation, route }: Props) {
       await applyForHost({ ...route.params, selfies: shots });
       navigation.reset({ index: 1, routes: [{ name: 'Main' }, { name: 'HostStatus' }] });
     } catch (e) {
-      Alert.alert('Could not submit', (e as Error).message);
+      appAlert('Could not submit', (e as Error).message);
     } finally {
       setSending(false);
     }

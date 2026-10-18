@@ -9,22 +9,31 @@ import type { RootStackParamList } from '../../navigation/types';
 import { useFocusEffect } from '@react-navigation/native';
 import { getSupportSummary, type SupportMessage, type SupportTicket } from '../../services/support';
 import { timeAgo } from '../../services/users';
+import { useWallet } from '../../context/WalletContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CustomerService'>;
 
 // Aam sawaal + Meto team se chat (pichhli baat-cheet upar, naye jawab ki ginti)
-const FAQ = [
+// User aur host ke sawal alag (user ko host / withdraw wali baatein nahi)
+const HOST_FAQ = [
   { q: 'How do I earn as a host?', a: 'You earn points for every call minute, gifts and paid messages. If the user ends the call you get every started minute; if you end it, only full minutes count. 100 points = ₹1.' },
   { q: 'When can I withdraw?', a: 'Once you have at least ₹500, you can withdraw to your UPI. Payouts usually reach within 48 hours.' },
+  { q: 'Someone is rude to me. What do I do?', a: 'Tap the 🛡️ shield during the call or the ⋯ menu in chat to report or block them. Blocking ends the call at once.' },
+  { q: 'How do I change my photos?', a: 'Go to Me → Edit profile & photos. Your intro video can be changed from Me too.' },
+];
+const USER_FAQ = [
   { q: 'Why was I charged for a call?', a: 'Calls are charged per started minute. If the host ends the call, only full minutes are charged and the rest comes back to you automatically. Still wrong? Chat with us.' },
   { q: 'How do I recharge gems?', a: 'Open Me → Recharge and pick a pack. Gems are added right after payment.' },
+  { q: 'What does VIP give me?', a: '10% off every video call, free chat messages, bonus gems and a gold crown on your profile. Open Me → Meto VIP.' },
   { q: 'Someone is rude to me. What do I do?', a: 'Tap the 🛡️ shield during the call or the ⋯ menu in chat to report or block them. Blocking ends the call at once.' },
   { q: 'How do I change my photos?', a: 'Go to Me → Edit profile & photos. Your intro video can be changed from Me too.' },
 ];
 
 export default function CustomerServiceScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const [open, setOpen] = useState<number | null>(0);
+  const { amHost } = useWallet();
+  const FAQ = amHost ? HOST_FAQ : USER_FAQ;
+  const [open, setOpen] = useState<number | null>(null);
   const [conv, setConv] = useState<{ ticket: SupportTicket | null; last: SupportMessage | null } | null>(null);
   useFocusEffect(
     useCallback(() => {

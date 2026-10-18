@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Dimensions,
   Easing,
@@ -16,6 +15,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -40,12 +40,12 @@ import {
   statusAge,
 } from '../../services/status';
 import type { RootStackParamList } from '../../navigation/types';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StatusViewer'>;
 type Group = { userId: number; name: string; avatarUrl: string | null; online: boolean; isVerified: boolean; isMe: boolean; statuses: StatusItem[] };
 
 const DURATION = 5000;
-const { width: W } = Dimensions.get('window');
 
 function buildGroups(feed: StatusFeed, start: number | 'me'): { groups: Group[]; index: number } {
   if (start === 'me') {
@@ -61,6 +61,7 @@ function buildGroups(feed: StatusFeed, start: number | 'me'): { groups: Group[];
 }
 
 export default function StatusViewerScreen({ navigation, route }: Props) {
+  const { width: W } = useWindowDimensions(); // tap: baayan 1/3 = pichhla
   const insets = useSafeAreaInsets();
   const { placeCall } = useCall();
   const start = route.params.userId;
@@ -184,7 +185,7 @@ export default function StatusViewerScreen({ navigation, route }: Props) {
       await sendChatMessage(group.userId, `↩️ Replied to your status: ${text}`, newClientId());
       flash('Reply sent 💬');
     } catch (e) {
-      Alert.alert('Not sent', (e as Error).message);
+      appAlert('Not sent', (e as Error).message);
     }
   };
 
@@ -202,7 +203,7 @@ export default function StatusViewerScreen({ navigation, route }: Props) {
 
   const removeMine = () => {
     if (!status || !groups) return;
-    Alert.alert('Delete status?', 'It will be removed for everyone.', [
+    appAlert('Delete status?', 'It will be removed for everyone.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -216,7 +217,7 @@ export default function StatusViewerScreen({ navigation, route }: Props) {
             setGroups(gs => gs!.map((g, i) => (i === gi ? { ...g, statuses: left } : g)));
             setSi(Math.min(si, left.length - 1));
           } catch (e) {
-            Alert.alert('Could not delete', (e as Error).message);
+            appAlert('Could not delete', (e as Error).message);
           }
         },
       },
@@ -390,7 +391,9 @@ function ViewersSheet({ visible, status, onClose, onDelete }: { visible: boolean
               <View style={styles.vrow}>
                 <Avatar uri={item.avatarUrl} seed={item.id} style={styles.vav} iconScale={0.9} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.vname}>{item.name}</Text>
+                  <Text style={styles.vname} numberOfLines={1}>
+                    {item.name}
+                  </Text>
                   <Text style={styles.vtime}>{statusAge(item.viewedAt)}</Text>
                 </View>
                 {item.liked && <Text style={styles.vheart}>❤️</Text>}

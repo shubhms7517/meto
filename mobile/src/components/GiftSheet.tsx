@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import Coin from './Coin';
@@ -11,6 +11,7 @@ import { fmt } from '../services/wallet';
 import { useWallet } from '../context/WalletContext';
 import type { ChatMessage } from '../services/chat';
 import { success } from '../lib/haptics';
+import { appAlert } from '../lib/dialog';
 
 type Props = {
   to: { id: number; name?: string | null };
@@ -37,7 +38,7 @@ export default function GiftSheet({ to, callId, onClose, onSent, onWallet }: Pro
         setSel(g.find(x => x.name === 'Love Heart')?.id ?? g[0]?.id ?? null);
       })
       .catch(e => {
-        Alert.alert('Gifts', (e as Error).message);
+        appAlert('Gifts', (e as Error).message);
         onClose();
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -64,7 +65,7 @@ export default function GiftSheet({ to, callId, onClose, onSent, onWallet }: Pro
     } catch (e) {
       if (before != null) setBalance(before);
       if (e instanceof ApiError && e.code === 'insufficient_gems') recharge();
-      else Alert.alert('Gift not sent', (e as Error).message);
+      else appAlert('Gift not sent', (e as Error).message);
     } finally {
       setSending(false);
     }
@@ -108,7 +109,7 @@ export default function GiftSheet({ to, callId, onClose, onSent, onWallet }: Pro
                       <Text style={styles.rareText}>RARE</Text>
                     </LinearGradient>
                   )}
-                  <Text style={styles.emoji}>{g.icon}</Text>
+                  {g.iconUrl ? <Image source={{ uri: g.iconUrl }} style={styles.iconImg} /> : <Text style={styles.emoji}>{g.icon}</Text>}
                   <Text style={styles.name} numberOfLines={1}>
                     {g.name}
                   </Text>
@@ -174,6 +175,7 @@ const styles = StyleSheet.create({
   rare: { position: 'absolute', top: 3, right: 5, paddingHorizontal: 4, borderRadius: 5 },
   rareText: { color: colors.goldText, fontSize: 8, fontWeight: '800' },
   emoji: { fontSize: 32, lineHeight: 40 },
+  iconImg: { width: 40, height: 40, resizeMode: 'contain' },
   name: { color: colors.muted, fontSize: 11, marginTop: 1, maxWidth: '90%' },
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
   price: { color: colors.gold1, fontSize: 11, fontWeight: '700' },

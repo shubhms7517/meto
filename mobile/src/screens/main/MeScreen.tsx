@@ -1,8 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
-  Dimensions,
   Image,
   Pressable,
   RefreshControl,
@@ -11,6 +9,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -35,8 +34,8 @@ import { getCheckIn, type CheckIn } from '../../services/rewards';
 
 const MAX_PHOTOS = 9;
 import type { RootStackParamList } from '../../navigation/types';
+import { appAlert } from '../../lib/dialog';
 
-const { width } = Dimensions.get('window');
 
 type Row = { icon: IconName; label: string; tint: string; bg: string; end?: string; endTint?: string; to?: 'BlockedUsers' | 'WalletHistory' | 'Level' | 'CustomerService' | 'Settings'; action?: 'checkin' };
 const MENU: Row[] = [
@@ -49,6 +48,7 @@ const MENU: Row[] = [
 ];
 
 export default function MeScreen() {
+  const { width } = useWindowDimensions(); // har render pe asli chaudai (lock / rotate ke baad bhi sahi)
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { balance, isVip, refresh: refreshWallet } = useWallet();
@@ -78,7 +78,7 @@ export default function MeScreen() {
       await uploadPhoto(uri, locked);
       await load();
     } catch (e) {
-      Alert.alert('Upload failed', (e as Error).message);
+      appAlert('Upload failed', (e as Error).message);
     } finally {
       setUploading(false);
     }
@@ -94,7 +94,7 @@ export default function MeScreen() {
     const res = await launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, quality: 0.9 });
     const uri = res.assets?.[0]?.uri;
     if (!uri) return;
-    Alert.alert('Who can see this photo?', 'Private photos are blurred until unlocked.', [
+    appAlert('Who can see this photo?', 'Private photos are blurred until unlocked.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Private 🔒', onPress: () => upload(uri, true) },
       { text: 'Everyone', onPress: () => upload(uri, false) },
@@ -102,7 +102,7 @@ export default function MeScreen() {
   };
 
   const removePhoto = (p: MyPhoto) =>
-    Alert.alert('Delete photo?', 'This photo will be removed from your profile.', [
+    appAlert('Delete photo?', 'This photo will be removed from your profile.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -112,14 +112,14 @@ export default function MeScreen() {
             await deletePhoto(p.id);
             await load();
           } catch (e) {
-            Alert.alert('Could not delete', (e as Error).message);
+            appAlert('Could not delete', (e as Error).message);
           }
         },
       },
     ]);
 
   const onSignOut = () =>
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
+    appAlert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign out',
@@ -181,8 +181,8 @@ export default function MeScreen() {
           <Text style={styles.id}>ID: {me?.id ?? '—'}</Text>
 
           <View style={styles.stats}>
-            <Stat value={me?.followingCount} label="Following" />
-            <Stat value={me?.followersCount} label="Followers" />
+            <StatCount value={me?.followingCount} label="Following" />
+            <StatCount value={me?.followersCount} label="Followers" />
             <StatCount value={me?.visitorsCount} label="Visitors" badge={me?.visitorsNew} gold onPress={() => navigation.navigate('Visitors')} />
           </View>
         </View>
@@ -332,15 +332,6 @@ export default function MeScreen() {
   );
 }
 
-function Stat({ value, label }: { value: number | undefined; label: string }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statNum}>{value ?? '—'}</Text>
-      <Text style={styles.statLbl}>{label}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg, overflow: 'hidden' },
   head: { alignItems: 'center', paddingHorizontal: 20 },
@@ -378,9 +369,6 @@ const styles = StyleSheet.create({
   genderF: { backgroundColor: 'rgba(255,95,143,0.18)' },
   id: { color: colors.fine, fontSize: 12, marginTop: 3 },
   stats: { flexDirection: 'row', width: '100%', marginTop: 14 },
-  stat: { flex: 1, alignItems: 'center' },
-  statNum: { color: colors.text, fontSize: 17, fontWeight: '700' },
-  statLbl: { color: colors.fine, fontSize: 11 },
 
   photosHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 18, marginTop: 20, marginBottom: 10 },
   photosTitle: { color: colors.text, fontSize: 14, fontWeight: '600' },

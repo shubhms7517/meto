@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+
 import ActionSheet, { SheetAction } from '../components/ActionSheet';
 import ReportSheet from '../components/ReportSheet';
 import { blockUser, reportUser, unblockUser } from '../services/users';
+import { appAlert } from '../lib/dialog';
 
 type Options = {
   userId: number;
@@ -19,7 +20,7 @@ export function useSafetyMenu({ userId, name, blocked, conversationId, onBlocked
   const [reportOpen, setReportOpen] = useState(false);
 
   const doBlock = () =>
-    Alert.alert(`Block ${name}?`, `${name} won't be able to message you or see your profile. They won't be notified.`, [
+    appAlert(`Block ${name}?`, `${name} won't be able to message you or see your profile. They won't be notified.`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Block',
@@ -29,7 +30,7 @@ export function useSafetyMenu({ userId, name, blocked, conversationId, onBlocked
             await blockUser(userId);
             onBlockedChange(true);
           } catch (e) {
-            Alert.alert('Could not block', (e as Error).message);
+            appAlert('Could not block', (e as Error).message);
           }
         },
       },
@@ -40,7 +41,7 @@ export function useSafetyMenu({ userId, name, blocked, conversationId, onBlocked
       await unblockUser(userId);
       onBlockedChange(false);
     } catch (e) {
-      Alert.alert('Could not unblock', (e as Error).message);
+      appAlert('Could not unblock', (e as Error).message);
     }
   };
 
@@ -63,7 +64,7 @@ export function useSafetyMenu({ userId, name, blocked, conversationId, onBlocked
           const res = await reportUser(userId, { reason, details: details || undefined, conversationId: conversationId ?? undefined, block: block && !blocked });
           setReportOpen(false);
           if (res.blocked) onBlockedChange(true);
-          Alert.alert('Thanks for reporting', 'Our team will review this. You help keep Meto safe 💖');
+          appAlert('Thanks for reporting', 'Our team will review this. You help keep Meto safe 💖');
         }}
       />
     </>

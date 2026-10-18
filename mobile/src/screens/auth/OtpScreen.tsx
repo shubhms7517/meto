@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Dimensions, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Screen from '../../components/Screen';
 import AuthHeader from '../../components/AuthHeader';
@@ -11,11 +11,11 @@ import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Otp'>;
 
-const { width } = Dimensions.get('window');
 const LENGTH = 6;
 const RESEND_SECONDS = 30;
 
 export default function OtpScreen({ navigation, route }: Props) {
+  const { width } = useWindowDimensions(); // har render pe asli chaudai (lock / rotate ke baad bhi sahi)
   const { phone } = route.params;
   const inputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const [code, setCode] = useState('');

@@ -7,7 +7,7 @@ export type ChatMessage = {
   conversationId: number;
   from: number;
   to: number;
-  type: 'text' | 'image' | 'gift' | 'system';
+  type: 'text' | 'image' | 'gift' | 'system' | 'call'; // call = body JSON { s, d }
   body: string;
   clientId: string | null;
   createdAt: string;
@@ -22,6 +22,9 @@ export type ChatSummary = { id: number; user: UserCard; lastMessage: ChatMessage
 export type FollowerCard = UserCard & { followedAt: string; isFollowingBack: boolean };
 
 export const getChats = () => api<{ chats: ChatSummary[]; unreadTotal: number }>('/api/chats');
+
+// Chat header: sathi online hai ya kab dikha (halka, har 30 sec)
+export const getPresence = (publicId: number) => api<{ online: boolean; lastSeenAt: string | null }>(`/api/users/${publicId}/presence`);
 
 export const openChatWith = (publicId: number) =>
   api<{
@@ -49,7 +52,32 @@ export async function sendChatPhoto(to: number, uri: string, clientId: string): 
 }
 
 // Chat list me aakhri message ka chhota roop
-export const previewText = (m: ChatMessage) => (m.type === 'image' ? '📷 Photo' : m.type === 'gift' ? '🎁 Gift' : m.body);
+// Chat me call ka record: s = ended / missed / declined / cancelled, d = seconds
+export type CallRecord = { s: 'ended' | 'missed' | 'declined' | 'cancelled'; d: number };
+export const parseCallRecord = (body: string): CallRecord | null => {
+  try {
+    return JSON.parse(body) as CallRecord;
+  } catch {
+    return null;
+  }
+};
+export const callDuration = (sec: number) => (sec >= 60 ? `${Math.floor(sec / 60)} min${sec % 60 ? ` ${sec % 60} s` : ''}` : `${sec} s`);
+// mine = maine call lagayi thi
+export function callRecordTitle(r: CallRecord, mine: boolean) {
+  if (r.s === 'ended') return 'Video call';
+  if (r.s === 'declined') return mine ? 'Call declined' : 'You declined';
+  return mine ? 'No answer' : 'Missed call';
+}
+
+export const previewText = (m: ChatMessage) => {
+  if (m.type === 'image') return '📷 Photo';
+  if (m.type === 'gift') return '🎁 Gift';
+  if (m.type === 'call') {
+    const r = parseCallRecord(m.body);
+    return r?.s === 'ended' ? `📞 Video call · ${callDuration(r.d)}` : '📞 Call';
+  }
+  return m.body;
+};
 
 export const getOlderMessages = (conversationId: number, before: number) =>
   api<{ messages: ChatMessage[]; hasMore: boolean }>(`/api/chats/${conversationId}/messages?before=${before}`);

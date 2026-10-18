@@ -3,7 +3,7 @@ import { env } from '../config/env.js';
 import { firebaseAuth } from '../lib/firebase.js';
 import { emitToUser } from '../lib/realtime.js';
 import { deleteUploadByUrl } from '../lib/upload.js';
-import { Call, Message, Status, User, UserPhoto } from '../models/index.js';
+import { Call, DeletedAccount, Message, Status, User, UserPhoto } from '../models/index.js';
 import { endCall } from './calls.js';
 
 /**
@@ -21,6 +21,7 @@ export async function deleteAccount(user: User) {
   ]);
   const urls = [user.avatarUrl, ...photos.map(p => p.url), ...statuses.map(s => s.imageUrl), ...chatImages.map(m => m.body)];
 
+  await DeletedAccount.create({ publicId: user.publicId, role: user.role, joinedAt: user.createdAt, reason: 'self' }).catch(e => console.error('deleted record', e));
   await user.destroy();
   for (const u of urls) await deleteUploadByUrl(u, env.PUBLIC_BASE_URL);
 

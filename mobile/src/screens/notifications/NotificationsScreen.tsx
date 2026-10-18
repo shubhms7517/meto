@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, SectionList, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, SectionList, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { useCall } from '../../context/CallContext';
 import { openNotification, useNotifications } from '../../context/NotificationContext';
 import type { RootStackParamList } from '../../navigation/types';
 import { EmptyState, ErrorState, refreshControl, SkeletonList } from '../../components/States';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
 
@@ -48,7 +49,7 @@ const BADGE: Record<string, { e: string; bg: string; ring: string[] }> = {
   follow: { e: '❤', bg: '#ff5f8f', ring: [colors.rose1, colors.rose2] },
 };
 
-const ICON: Record<string, string> = { recharge: '💳', vip: '👑', vip_ending: '⏳', checkin: '📅', notice: '🛡️', report: '🛡️' };
+const ICON: Record<string, string> = { recharge: '💳', vip: '👑', vip_ending: '⏳', checkin: '🎁', notice: '🛡️', report: '🛡️' };
 
 function dayKey(iso: string) {
   const d = new Date(iso);
@@ -96,7 +97,9 @@ function text(n: AppNotification): { l1: string; l2: React.ReactNode } {
     case 'vip_ending':
       return { l1: 'Your VIP ends soon', l2: `Active till ${d.until ? vipDate(d.until) : ''} · extend to keep 900/min calls` };
     case 'checkin':
-      return { l1: 'Your daily check-in is ready', l2: 'Claim today’s free gems' };
+      return new Date(n.createdAt).toDateString() === new Date().toDateString()
+        ? { l1: 'Your daily check-in is ready', l2: 'Claim today’s free gems' }
+        : { l1: 'Daily check-in', l2: 'Come back every day for free gems' };
     case 'report':
       return { l1: 'Report reviewed', l2: 'Thanks — we have taken action' };
     case 'notice':
@@ -164,7 +167,7 @@ export default function NotificationsScreen({ navigation }: Props) {
     if (!n.actor) return;
     markOne(n);
     setItems(l => l?.map(x => (x.actor?.id === n.actor!.id && x.type === 'follow' ? { ...x, iFollow: true } : x)) ?? l);
-    await setFollow(n.actor.id, true).catch(e => Alert.alert('Follow', (e as Error).message));
+    await setFollow(n.actor.id, true).catch(e => appAlert('Follow', (e as Error).message));
   };
 
   const press = (n: AppNotification) => {
@@ -268,7 +271,8 @@ export default function NotificationsScreen({ navigation }: Props) {
               <Text style={styles.lineText}>+ Follow</Text>
             </Pressable>
           )}
-          {n.type === 'checkin' && (
+          {/* Claim sirf aaj wali pe — purani check-in notification pe button nahi */}
+          {n.type === 'checkin' && new Date(n.createdAt).toDateString() === new Date().toDateString() && (
             <Pressable onPress={() => press(n)} hitSlop={6}>
               <LinearGradient colors={['#fff4d6', '#e6bf6a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.btn}>
                 <Text style={[styles.btnText, { color: colors.goldText }]}>Claim</Text>
@@ -377,7 +381,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   topGlow: { position: 'absolute', left: 0, right: 0, top: 0, height: 320 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 6 },
-  back: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  back: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   title: { color: colors.text, fontSize: 19, fontWeight: '700', flex: 1 },
   mark: { color: colors.rose1, fontSize: 12.5, fontWeight: '700' },
   tabs: { gap: 7, paddingHorizontal: 16, paddingVertical: 8 },

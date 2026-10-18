@@ -95,7 +95,7 @@ export default function HostIntroScreen({ navigation, route }: Props) {
         </View>
 
         <View style={s.card}>
-          <Step n={1} title="3 photos + 10 sec video" sub="Your own, real, clear face" />
+          <Step n={1} title="3 photos + 30 sec live video" sub="Your own, real, clear face" />
           <Step n={2} title="Live selfie" sub="Must match your photos" />
           <Step n={3} title="Meto team review" sub="Usually within 24 hours" />
         </View>

@@ -13,7 +13,7 @@ export type HostSummary = {
   rate: number | null;
   rates: number[]; // jaldi chunne ke chips
   rateMin: number; // custom rate (admin settings se)
-  rateMax: number; // isse upar 🔒
+  rateMax: number; // sabse zyada rate
   rateStep: number;
   available: boolean;
   points: number;

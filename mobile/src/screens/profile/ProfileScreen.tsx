@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
-  Dimensions,
   FlatList,
   Image,
   Pressable,
@@ -11,7 +10,7 @@ import {
   StyleSheet,
   Text,
   View,
-  Alert,
+  useWindowDimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -41,15 +40,16 @@ import { ApiError } from '../../services/api';
 import type { RootStackParamList } from '../../navigation/types';
 import { refreshControl } from '../../components/States';
 import { tap } from '../../lib/haptics';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
-const { width: W } = Dimensions.get('window');
-const HERO_H = Math.round(W * 1.22);
 
 const COUNTRIES: Record<string, string> = { IN: '🇮🇳 India' };
 
 export default function ProfileScreen({ navigation, route }: Props) {
+  const { width: W } = useWindowDimensions(); // har render pe asli chaudai (lock / rotate ke baad bhi sahi)
+  const HERO_H = Math.round(W * 1.22);
   const { id, name: initialName } = route.params;
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
@@ -77,7 +77,7 @@ export default function ProfileScreen({ navigation, route }: Props) {
       setStickyOn(value > HERO_H - 120),
     );
     return () => scrollY.removeListener(sub);
-  }, [scrollY]);
+  }, [scrollY, HERO_H]);
   const beat = useRef(new Animated.Value(1)).current;
 
   const [refreshing, setRefreshing] = useState(false);
@@ -193,7 +193,7 @@ export default function ProfileScreen({ navigation, route }: Props) {
   // Lock wali photo / video: gems dekar kholo (host ko kamai). Ek baar khuli = hamesha
   const askUnlock = (kind: 'photo' | 'video', m: MediaItem) => {
     if (!user || !m.price) return;
-    Alert.alert(
+    appAlert(
       kind === 'photo' ? 'Unlock photo?' : 'Unlock video?',
       `Unlock for ${m.price} gems. It stays unlocked for you.`,
       [
@@ -218,7 +218,7 @@ export default function ProfileScreen({ navigation, route }: Props) {
                   needed: m.price!,
                   peerName: user.name ?? undefined,
                 });
-              else Alert.alert('Unlock', (e as Error).message);
+              else appAlert('Unlock', (e as Error).message);
             }
           },
         },
@@ -231,7 +231,7 @@ export default function ProfileScreen({ navigation, route }: Props) {
       if (p.price) askUnlock('photo', p);
       // Aam user ki private photo: chat ya call ke baad khulti hai (paisa nahi)
       else
-        Alert.alert(
+        appAlert(
           'Private photo 🔒',
           `${
             user?.name ?? 'This user'
@@ -532,7 +532,7 @@ export default function ProfileScreen({ navigation, route }: Props) {
                 {user.gifts.map(g => (
                   <View
                     key={g.id}
-                    style={[styles.gift, g.isRare && styles.giftRare]}
+                    style={[styles.gift, { width: (W - 36 - 24) / 4 }, g.isRare && styles.giftRare]}
                   >
                     <Text style={styles.giftEmoji}>{g.icon}</Text>
                     <Text
@@ -606,7 +606,9 @@ export default function ProfileScreen({ navigation, route }: Props) {
         <View
           style={[styles.blockedBar, { paddingBottom: insets.bottom + 14 }]}
         >
-          <Text style={styles.blockedText}>You blocked {user.name}</Text>
+          <Text style={styles.blockedText} numberOfLines={2}>
+            You blocked {user.name}
+          </Text>
           <Pressable onPress={safety.unblock} style={styles.unblockBtn}>
             <Text style={styles.unblockText}>Unblock</Text>
           </Pressable>
@@ -863,7 +865,6 @@ const styles = StyleSheet.create({
   sendText: { color: colors.goldText, fontSize: 12, fontWeight: '600' },
   gifts: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   gift: {
-    width: (W - 36 - 24) / 4,
     paddingTop: 10,
     paddingBottom: 7,
     borderRadius: 16,

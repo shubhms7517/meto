@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
@@ -8,7 +8,9 @@ import Icon from '../../components/Icon';
 import { colors, gradients } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import { getSocket } from '../../services/socket';
+import { useWallet } from '../../context/WalletContext';
 import { getSupportThread, sendSupport, SUPPORT_TOPICS, topicLabel, type SupportMessage, type SupportTicket, type SupportTopic } from '../../services/support';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SupportChat'>;
 
@@ -23,6 +25,7 @@ export default function SupportChatScreen({ navigation }: Props) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const list = useRef<FlatList<SupportMessage>>(null);
+  const { amHost } = useWallet(); // Withdraw topic sirf host ke liye
 
   const load = useCallback(() => {
     getSupportThread()
@@ -51,7 +54,7 @@ export default function SupportChatScreen({ navigation }: Props) {
     const body = text.trim();
     if ((!body && !photo) || sending) return;
     if (needTopic && !topic) {
-      Alert.alert('Choose a topic', 'Pick what your question is about first.');
+      appAlert('Choose a topic', 'Pick what your question is about first.');
       return;
     }
     setSending(true);
@@ -62,7 +65,7 @@ export default function SupportChatScreen({ navigation }: Props) {
       if (!photo) setText('');
       setTopic(null);
     } catch (e) {
-      Alert.alert('Not sent', (e as Error).message);
+      appAlert('Not sent', (e as Error).message);
     } finally {
       setSending(false);
     }
@@ -95,7 +98,7 @@ export default function SupportChatScreen({ navigation }: Props) {
 
       {needTopic && (
         <View style={st.topics}>
-          {SUPPORT_TOPICS.map(t => (
+          {SUPPORT_TOPICS.filter(t => amHost || t.key !== 'withdraw').map(t => (
             <Pressable key={t.key} onPress={() => setTopic(t.key)} style={[st.topic, topic === t.key && st.topicOn]}>
               <Text style={st.topicText}>
                 {t.emoji} {t.label}

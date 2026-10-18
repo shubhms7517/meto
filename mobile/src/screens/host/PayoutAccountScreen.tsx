@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
@@ -7,6 +7,7 @@ import { colors, gradients } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import { getWithdrawInfo, savePayoutAccount } from '../../services/host';
 import { HostHeader } from './common';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PayoutAccount'>;
 
@@ -45,7 +46,7 @@ export default function PayoutAccountScreen({ navigation }: Props) {
       await savePayoutAccount({ upiId: upiId.trim(), upiName: upiName.trim(), pan: pan.trim().toUpperCase(), panName: panName.trim() });
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Payout details', (e as Error).message);
+      appAlert('Payout details', (e as Error).message);
     } finally {
       setSaving(false);
     }

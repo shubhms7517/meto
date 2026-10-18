@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meto Admin Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12070d; --surface: #1d1418; --card: #241c20; --card2: #2b2126; --line: rgba(255,255,255,.08);
+    --text: #f6e9ee; --muted: #b9a3ad; --dim: #7d6872;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d9ae55; --gold-ink: #3a2608;
+    --green: #3ee08f; --red: #ff5f7a; --blue: #7fb0ff; --amber: #ffb547;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: Poppins, system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+  a { color: inherit; text-decoration: none; }
+  .app { display: grid; grid-template-columns: 236px 1fr; min-height: 100vh; }
+  /* sidebar */
+  .side { position: sticky; top: 0; height: 100vh; overflow-y: auto; background: radial-gradient(120% 50% at 0% 0%, #3a0f24, #170a10 65%); border-right: 1px solid var(--line); padding: 18px 12px 30px; }
+  .logo { font-size: 22px; font-weight: 800; font-style: italic; color: var(--gold-1); padding: 0 8px; }
+  .logo small { font-size: 10px; font-style: normal; color: var(--rose-1); margin-left: 6px; letter-spacing: .12em; }
+  .role { margin: 10px 8px 0; display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); }
+  .role i { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); }
+  .role b { color: var(--text); display: block; font-size: 12px; }
+  .nav { margin-top: 14px; display: flex; flex-direction: column; gap: 1px; }
+  .nav .sep { margin: 14px 10px 5px; font-size: 10px; letter-spacing: .12em; color: var(--dim); }
+  .nav a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; font-size: 12.8px; color: var(--muted); cursor: pointer; }
+  .nav a:hover { background: rgba(255,255,255,.04); color: var(--text); }
+  .nav a.on { color: #fff; background: linear-gradient(100deg, rgba(255,95,143,.24), rgba(255,95,143,.05)); }
+  .nav a .n { margin-left: auto; min-width: 20px; height: 19px; padding: 0 6px; border-radius: 10px; display: grid; place-items: center; font-size: 10.5px; font-weight: 800; color: #fff; background: var(--rose-1); }
+  .nav a .n.w { background: var(--amber); color: #2a1600; }
+  /* main */
+  .main { padding: 22px 28px 60px; min-width: 0; }
+  .top { display: flex; align-items: center; gap: 12px; }
+  .top h2 { font-size: 21px; } .top .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .top .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .search { width: 270px; height: 36px; border-radius: 11px; padding: 0 12px; display: flex; align-items: center; color: var(--dim); background: var(--card); border: 1px solid var(--line); }
+  .page { display: none; } .page.on { display: block; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+  .kpi { padding: 14px 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+  .kpi small { font-size: 11.5px; color: var(--muted); } .kpi b { display: block; font-size: 23px; margin-top: 4px; }
+  .kpi em { font-style: normal; font-size: 11px; color: var(--green); } .kpi em.bad { color: var(--red); }
+  .kpi.gold b { color: var(--gold-1); }
+  .g2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; margin-top: 14px; }
+  .g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
+  .split { display: grid; grid-template-columns: 1fr 400px; gap: 14px; margin-top: 14px; align-items: start; }
+  .card { border-radius: 16px; background: var(--card); border: 1px solid var(--line); padding: 14px 16px; }
+  .card h3 { font-size: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .card h3 a, .link { font-size: 11.5px; color: var(--rose-1); font-weight: 600; }
+  .card h4 { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 14px; }
+  .chart { height: 160px; margin-top: 12px; display: flex; align-items: flex-end; gap: 7px; }
+  .chart div { flex: 1; border-radius: 6px 6px 0 0; background: linear-gradient(180deg, var(--rose-1), rgba(216,27,92,.3)); }
+  .chart div.g { background: linear-gradient(180deg, var(--gold-1), rgba(217,174,85,.3)); }
+  .lg { display: flex; gap: 14px; margin-top: 8px; font-size: 11px; color: var(--muted); } .lg i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; }
+  .todo { margin-top: 10px; display: flex; flex-direction: column; gap: 7px; }
+  .todo a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.04); cursor: pointer; }
+  .todo a:hover { background: rgba(255,95,143,.08); } .todo a b { margin-left: auto; color: var(--rose-1); } .todo a b.late { color: var(--red); }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th { text-align: left; font-weight: 600; color: var(--dim); font-size: 10.5px; letter-spacing: .05em; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr.sel td { background: rgba(255,95,143,.07); }
+  tbody tr:hover td { background: rgba(255,255,255,.025); cursor: pointer; }
+  .who { display: flex; align-items: center; gap: 10px; } .who i { width: 32px; height: 32px; border-radius: 50%; flex: none; } .who small { display: block; color: var(--dim); font-size: 11px; }
+  .pill { display: inline-block; padding: 3px 9px; border-radius: 9px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+  .p-pend { color: var(--gold-1); background: rgba(246,220,155,.12); } .p-ok { color: var(--green); background: rgba(62,224,143,.12); }
+  .p-no { color: var(--red); background: rgba(255,95,122,.12); } .p-blue { color: var(--blue); background: rgba(127,176,255,.12); } .p-amb { color: var(--amber); background: rgba(255,181,71,.12); } .p-gray { color: var(--muted); background: rgba(255,255,255,.07); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 13px; border-radius: 10px; font-size: 12px; font-weight: 700; border: 0; color: #fff; cursor: pointer; white-space: nowrap; font-family: inherit; }
+  .b-rose { background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); } .b-ghost { background: rgba(255,255,255,.08); color: var(--text); }
+  .b-green { background: linear-gradient(100deg, #3ee08f, #1aa864); color: #062615; } .b-red { background: rgba(255,95,122,.16); color: var(--red); }
+  .b-gold { background: linear-gradient(100deg, #fff4d6, #e6bf6a); color: var(--gold-ink); } .b-amb { background: rgba(255,181,71,.15); color: var(--amber); }
+  .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+  .tabs span { padding: 7px 12px; border-radius: 11px; font-size: 12px; color: var(--muted); background: rgba(255,255,255,.05); cursor: pointer; }
+  .tabs span.on { color: #fff; background: rgba(255,95,143,.2); }
+  .filters { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .filters span { height: 32px; padding: 0 12px; border-radius: 10px; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); background: var(--card); border: 1px solid var(--line); }
+  .media { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .media i { height: 92px; border-radius: 12px; display: grid; place-items: center; font-style: normal; font-size: 10.5px; color: rgba(255,255,255,.75); }
+  .vid { margin-top: 8px; height: 120px; border-radius: 12px; background: linear-gradient(135deg, #3a1a2a, #160a10); display: grid; place-items: center; color: var(--muted); border: 1px solid var(--line); }
+  .kv { margin-top: 10px; display: grid; grid-template-columns: 130px 1fr; gap: 7px 10px; font-size: 12.3px; } .kv span { color: var(--dim); }
+  .input { height: 38px; border-radius: 10px; padding: 0 11px; display: flex; align-items: center; color: var(--dim); background: rgba(255,255,255,.05); border: 1px solid var(--line); margin-top: 10px; }
+  .input.area { height: 70px; align-items: flex-start; padding-top: 10px; }
+  .alert { margin-top: 10px; padding: 9px 12px; border-radius: 11px; font-size: 11.5px; display: flex; gap: 8px; align-items: flex-start; }
+  .a-red { color: #ffb3c0; background: rgba(255,95,122,.09); border: 1px solid rgba(255,95,122,.3); }
+  .a-gold { color: var(--gold-1); background: rgba(246,220,155,.07); border: 1px solid rgba(246,220,155,.25); }
+  .a-blue { color: #bcd5ff; background: rgba(127,176,255,.08); border: 1px solid rgba(127,176,255,.25); }
+  .metric { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .metric div { padding: 9px 10px; border-radius: 11px; background: rgba(255,255,255,.04); }
+  .metric small { font-size: 10.5px; color: var(--dim); display: block; } .metric b { font-size: 15px; } .metric b.bad { color: var(--red); } .metric b.good { color: var(--green); }
+  .chat { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 300px; }
+  .m { max-width: 78%; padding: 9px 12px; border-radius: 14px; font-size: 12.5px; line-height: 1.45; } .m small { display: block; font-size: 10px; opacity: .7; margin-top: 3px; }
+  .m.u { align-self: flex-start; background: var(--card2); } .m.t { align-self: flex-end; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); }
+  .m.sys { align-self: center; background: rgba(255,255,255,.05); font-size: 11px; color: var(--muted); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; } .chips span { padding: 6px 10px; border-radius: 10px; font-size: 11.5px; background: rgba(255,255,255,.06); color: var(--muted); cursor: pointer; }
+  .field { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); } .field:last-child { border: 0; }
+  .field small { display: block; font-size: 10.5px; color: var(--dim); }
+  .field .in { min-width: 96px; height: 32px; border-radius: 9px; padding: 0 10px; display: flex; align-items: center; justify-content: flex-end; font-weight: 700; background: rgba(255,255,255,.06); border: 1px solid var(--line); white-space: nowrap; }
+  .tog { width: 40px; height: 22px; border-radius: 11px; background: var(--green); position: relative; flex: none; } .tog::after { content: ""; position: absolute; right: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+  .tog.off { background: rgba(255,255,255,.18); } .tog.off::after { right: auto; left: 3px; }
+  .giftgrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 12px; }
+  .gift { padding: 12px 8px; border-radius: 14px; background: rgba(255,255,255,.04); text-align: center; border: 1px solid var(--line); }
+  .gift .e { font-size: 28px; } .gift b { display: block; font-size: 12px; margin-top: 4px; } .gift small { color: var(--gold-1); font-size: 11px; }
+  .timeline { margin-top: 10px; display: flex; flex-direction: column; gap: 0; }
+  .timeline div { display: grid; grid-template-columns: 120px 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 12px; } .timeline span { color: var(--dim); }
+  .code { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; padding: 2px 6px; border-radius: 6px; background: rgba(255,255,255,.07); }
+  .diff { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; } .diff s { color: var(--red); } .diff ins { color: var(--green); text-decoration: none; }
+  .c1{background:linear-gradient(135deg,#ff9ab8,#8e0f3c)} .c2{background:linear-gradient(135deg,#c9a6ff,#4f2fb3)} .c3{background:linear-gradient(135deg,#ffcf8a,#8a5a12)} .c4{background:linear-gradient(135deg,#7fb0ff,#1f3f8e)} .c5{background:linear-gradient(135deg,#9ad7c8,#1f6e5e)} .c6{background:linear-gradient(135deg,#ff9f7a,#c2402a)}
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 6px; } .dot.off { background: var(--dim); }
+  .bar2 { height: 6px; border-radius: 3px; background: rgba(255,255,255,.08); overflow: hidden; margin-top: 4px; } .bar2 i { display: block; height: 100%; background: linear-gradient(90deg, var(--rose-1), var(--gold-1)); }
+  /* login */
+  .login { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: radial-gradient(70% 60% at 50% 0%, #4a1230, #12070d 70%); }
+  .login.hide { display: none; }
+  .lbox { width: 380px; padding: 28px; border-radius: 24px; background: var(--surface); border: 1px solid var(--line); text-align: center; }
+  .lbox .logo { font-size: 32px; padding: 0; } .lbox p { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+  .lbox .input { text-align: left; height: 44px; } .lbox .btn { width: 100%; height: 46px; margin-top: 16px; font-size: 14px; }
+  .otp { display: flex; gap: 8px; justify-content: center; margin-top: 12px; } .otp span { width: 42px; height: 48px; border-radius: 11px; display: grid; place-items: center; font-size: 18px; font-weight: 700; background: rgba(255,255,255,.06); border: 1px solid var(--line); }
+  .lbox .note { margin-top: 12px; font-size: 11px; color: var(--dim); }
+  .modal { margin-top: 14px; max-width: 420px; padding: 18px; border-radius: 20px; background: #1f1418; border: 1px solid rgba(255,255,255,.12); }
+  .proto { position: fixed; right: 16px; bottom: 14px; z-index: 60; padding: 6px 12px; border-radius: 10px; font-size: 11px; color: var(--muted); background: rgba(0,0,0,.6); border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div class="login" id="login">
+  <div class="lbox">
+    <div class="logo">Meto <small>ADMIN</small></div>
+    <p>Meto team only</p>
+    <div class="input">owner@meto.app</div>
+    <div class="input">••••••••••</div>
+    <button class="btn b-rose" onclick="document.getElementById('login').classList.add('hide')">Sign in</button>
+    <div class="note">Each admin has their own login · 5 wrong tries = locked 15 min · every action is logged</div>
+  </div>
+</div>
+
+<div class="app">
+<aside class="side">
+  <div class="logo">Meto <small>ADMIN</small></div>
+  <div class="role"><i></i><span><b>Shubham</b>Owner · full access</span></div>
+  <nav class="nav" id="nav">
+    <a data-p="dash" class="on">📊 Dashboard</a>
+    <div class="sep">QUEUES</div>
+    <a data-p="apps">🎙️ Host applications <span class="n">3</span></a>
+    <a data-p="reports">🚩 Reports <span class="n">4</span></a>
+    <a data-p="wd">💸 Withdrawals <span class="n">5</span></a>
+    <a data-p="support">🎧 Support <span class="n">2</span></a>
+    <div class="sep">PEOPLE</div>
+    <a data-p="users">👥 Users</a>
+    <a data-p="hosts">💖 Hosts</a>
+    <a data-p="agencies">⭐ Agencies</a>
+    <div class="sep">MONEY</div>
+    <a data-p="tx">💎 Transactions & refunds</a>
+    <a data-p="store">🛍️ Store (gifts, packs, VIP)</a>
+    <div class="sep">PLATFORM</div>
+    <a data-p="notice">📢 Notices & push</a>
+    <a data-p="settings">⚙️ Settings</a>
+    <a data-p="legal">🧾 Compliance <span class="n w">1</span></a>
+    <a data-p="audit">📜 Audit log</a>
+    <a data-p="admins">🔐 Admin team</a>
+    <div class="sep"></div>
+    <a onclick="document.getElementById('login').classList.remove('hide')">↩ Sign out</a>
+  </nav>
+</aside>
+
+<main class="main">
+
+<!-- ================= 2. DASHBOARD ================= -->
+<section class="page on" id="dash">
+  <div class="top"><div><h2>Dashboard</h2><div class="sub">Sunday, 18 Oct 2026 · live</div></div>
+    <div class="right"><div class="tabs" style="margin:0"><span class="on">Today</span><span>7 days</span><span>30 days</span></div></div></div>
+  <div class="kpis">
+    <div class="kpi gold"><small>Recharge</small><b>₹18,450</b><em>▲ 12% vs yesterday</em></div>
+    <div class="kpi"><small>Paid to hosts</small><b>₹11,980</b><em>65% of recharge</em></div>
+    <div class="kpi"><small>Owner earnings</small><b>₹6,470</b><em>▲ 9%</em></div>
+    <div class="kpi"><small>New users · new hosts</small><b>214 · 6</b><em>VIP bought: 11</em></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><small><span class="dot"></span>Online now</small><b>142</b><em>38 hosts · 104 users</em></div>
+    <div class="kpi"><small>📞 Live calls now</small><b>17</b><em>avg 6 min 40 s</em></div>
+    <div class="kpi"><small>Calls today</small><b>611</b><em>3,940 min</em></div>
+    <div class="kpi"><small>Short calls (&lt;1 min)</small><b>9.2%</b><em class="bad">▲ 2.1% · watch hosts</em></div>
+  </div>
+  <div class="g2">
+    <div class="card"><h3>Recharge vs paid to hosts · last 7 days <a onclick="go('tx')">Transactions →</a></h3>
+      <div class="chart"><div style="height:45%"></div><div class="g" style="height:30%"></div><div style="height:55%"></div><div class="g" style="height:38%"></div><div style="height:62%"></div><div class="g" style="height:41%"></div><div style="height:48%"></div><div class="g" style="height:33%"></div><div style="height:70%"></div><div class="g" style="height:47%"></div><div style="height:80%"></div><div class="g" style="height:52%"></div><div style="height:92%"></div><div class="g" style="height:60%"></div></div>
+      <div class="lg"><span><i style="background:var(--rose-1)"></i>Recharge (₹)</span><span><i style="background:var(--gold-1)"></i>Paid to hosts (₹)</span></div>
+    </div>
+    <div class="card"><h3>Needs your attention</h3>
+      <div class="todo">
+        <a onclick="go('apps')">🎙️ Host applications<b>3</b></a>
+        <a onclick="go('reports')">🚩 Reports · 1 privacy (24 h rule)<b class="late">4</b></a>
+        <a onclick="go('wd')">💸 Withdrawals to pay<b>5 · ₹9,870</b></a>
+        <a onclick="go('support')">🎧 Support · 1 older than 24 h<b class="late">2</b></a>
+        <a onclick="go('legal')">🧾 Data deletion request<b>1</b></a>
+      </div>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="card"><h3>Top hosts today</h3><table><tbody>
+      <tr><td><div class="who"><i class="c1"></i><span>Sony<small>Star Agency</small></span></div></td><td style="text-align:right"><b style="color:var(--gold-1)">₹1,240</b></td></tr>
+      <tr><td><div class="who"><i class="c2"></i><span>Riya<small>Rose Talent</small></span></div></td><td style="text-align:right"><b style="color:var(--gold-1)">₹980</b></td></tr>
+      <tr><td><div class="who"><i class="c6"></i><span>Zoya<small>—</small></span></div></td><td style="text-align:right"><b style="color:var(--gold-1)">₹760</b></td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>Top spenders today</h3><table><tbody>
+      <tr><td><div class="who"><i class="c4"></i><span>Ram<small>👑 VIP · Lv.5</small></span></div></td><td style="text-align:right"><b>₹1,599</b></td></tr>
+      <tr><td><div class="who"><i class="c5"></i><span>Arjun<small>Lv.3</small></span></div></td><td style="text-align:right"><b>₹799</b></td></tr>
+      <tr><td><div class="who"><i class="c3"></i><span>Kabir<small>Lv.1</small></span></div></td><td style="text-align:right"><b>₹399</b></td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>Top agencies (this month)</h3><table><tbody>
+      <tr><td>⭐ Star Agency<small style="display:block;color:var(--dim)">24 hosts</small></td><td style="text-align:right"><b style="color:var(--gold-1)">₹62,300</b></td></tr>
+      <tr><td>🌹 Rose Talent<small style="display:block;color:var(--dim)">17 hosts</small></td><td style="text-align:right"><b style="color:var(--gold-1)">₹41,900</b></td></tr>
+      <tr><td>💫 Glow Media<small style="display:block;color:var(--dim)">9 hosts</small></td><td style="text-align:right"><b style="color:var(--gold-1)">₹18,200</b></td></tr>
+    </tbody></table></div>
+  </div>
+</section>
+
+<!-- ================= 3. HOST APPLICATIONS ================= -->
+<section class="page" id="apps">
+  <div class="top"><div><h2>Host applications</h2><div class="sub">Match photos, selfies and the 30 sec live video · approve only real women 18+</div></div></div>
+  <div class="tabs"><span class="on">Pending · 3</span><span>Approved</span><span>Rejected</span><span>Blocked</span></div>
+  <div class="split">
+    <div class="card"><table><thead><tr><th>APPLICANT</th><th>AGENCY</th><th>AGE</th><th>CHECKS</th><th>APPLIED</th></tr></thead><tbody>
+      <tr class="sel"><td><div class="who"><i class="c1"></i><span>Priya<small>ID 482093117</small></span></div></td><td>Star Agency</td><td>24</td><td><span class="pill p-ok">✓ clean</span></td><td>2 h ago</td></tr>
+      <tr><td><div class="who"><i class="c2"></i><span>Neha<small>ID 517320044</small></span></div></td><td>Star Agency</td><td>27</td><td><span class="pill p-amb">⚠ phone used before</span></td><td>5 h ago</td></tr>
+      <tr><td><div class="who"><i class="c3"></i><span>Kavya<small>ID 390112875</small></span></div></td><td>Rose Talent</td><td>19</td><td><span class="pill p-ok">✓ clean</span></td><td>1 d ago</td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>Priya · 24 · Star Agency <span class="pill p-pend">Pending</span></h3>
+      <h4>Profile photos</h4><div class="media"><i class="c1">Photo 1</i><i class="c1">Photo 2</i><i class="c1">Photo 3</i></div>
+      <h4>Live selfies</h4><div class="media"><i class="c2">Front</i><i class="c2">Left</i><i class="c2">Right</i></div>
+      <h4>30 sec live video</h4><div class="vid">▶ 0:30 · front camera</div>
+      <div class="kv"><span>Phone</span><b>+91 98••• ••210</b><span>Date of birth</span><b>12 Mar 2002 · 24 yrs ✓</b><span>Languages</span><b>Hindi, English</b><span>Invite link</span><b>meto.app/join?agency=AG1045</b><span>Duplicate check</span><b style="color:var(--green)">No other account with this phone / device</b></div>
+      <div class="chips"><span>Face doesn't match</span><span>Video unclear</span><span>Under 18</span><span>Not her own photos</span><span>Other…</span></div>
+      <div class="input">Reason (shown to applicant)…</div>
+      <div class="acts" style="margin-top:12px"><span class="btn b-red">Reject</span><span class="btn b-ghost">Reject &amp; block</span><span class="btn b-green" style="margin-left:auto">✓ Approve as host</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 4. HOSTS ================= -->
+<section class="page" id="hosts">
+  <div class="top"><div><h2>Hosts</h2><div class="sub">38 online · 112 approved · 3 suspended</div></div><div class="right"><div class="search">🔍 Name / ID / phone</div></div></div>
+  <div class="filters"><span>Status: All ▾</span><span>Agency: All ▾</span><span><span class="dot"></span>Online only</span><span>Sort: Earnings today ▾</span><span>⚠ Short-call % high</span></div>
+  <div class="split">
+    <div class="card"><table><thead><tr><th>HOST</th><th>RATE</th><th>TODAY</th><th>TOTAL</th><th>PICKUP</th><th>SHORT CALLS</th><th>STATUS</th></tr></thead><tbody>
+      <tr class="sel"><td><div class="who"><i class="c1"></i><span><span class="dot"></span>Sony<small>Star Agency</small></span></div></td><td>3,000</td><td>₹1,240</td><td>₹28,400</td><td>86%</td><td>4%</td><td><span class="pill p-ok">Active</span></td></tr>
+      <tr><td><div class="who"><i class="c2"></i><span><span class="dot"></span>Riya<small>Rose Talent</small></span></div></td><td>1,500</td><td>₹980</td><td>₹19,100</td><td>91%</td><td>3%</td><td><span class="pill p-ok">Active</span></td></tr>
+      <tr><td><div class="who"><i class="c6"></i><span><span class="dot off"></span>Meera<small>Star Agency</small></span></div></td><td>2,000</td><td>₹120</td><td>₹6,800</td><td>42%</td><td style="color:var(--red);font-weight:700">31%</td><td><span class="pill p-amb">Watch</span></td></tr>
+      <tr><td><div class="who"><i class="c3"></i><span><span class="dot off"></span>Tanvi<small>—</small></span></div></td><td>1,000</td><td>₹0</td><td>₹1,200</td><td>—</td><td>—</td><td><span class="pill p-no">Suspended 7 d</span></td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>Sony · ID 578538310 <span class="pill p-ok">Active</span></h3>
+      <div class="metric"><div><small>Pickup rate</small><b class="good">86%</b></div><div><small>Avg call</small><b>7m 12s</b></div><div><small>Short calls</small><b class="good">4%</b></div><div><small>Reports</small><b>0</b></div></div>
+      <div class="kv"><span>Agency</span><b>Star Agency · AG1045</b><span>Rate</span><b>3,000 gems/min</b><span>Points balance</span><b style="color:var(--gold-1)">2,800 pts · ₹28</b><span>Withdrawn</span><b>₹1,980 (1 payout)</b><span>Host since</span><b>11 Oct 2026</b></div>
+      <h4>Photos &amp; videos</h4><div class="media"><i class="c1">Photo ✕</i><i class="c1">Photo ✕</i><i class="c2">Video ✕</i></div>
+      <div class="acts" style="margin-top:12px"><span class="btn b-ghost">Change rate</span><span class="btn b-ghost">± Points</span><span class="btn b-ghost">Call history</span><span class="btn b-amb">Suspend…</span><span class="btn b-red">Ban</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 5. USERS ================= -->
+<section class="page" id="users">
+  <div class="top"><div><h2>Users</h2><div class="sub">8,412 users · 214 new today · 96 VIP</div></div><div class="right"><div class="search">🔍 Name / ID / phone / email</div></div></div>
+  <div class="filters"><span>Status: All ▾</span><span>👑 VIP</span><span>New (7 days)</span><span>Reported</span><span>Banned</span></div>
+  <div class="split">
+    <div class="card"><table><thead><tr><th>USER</th><th>GEMS</th><th>VIP</th><th>RECHARGED</th><th>LEVEL</th><th>REPORTS</th><th>STATUS</th></tr></thead><tbody>
+      <tr class="sel"><td><div class="who"><i class="c4"></i><span>Ram, 26<small>ID 448708254 · +91 99•••99</small></span></div></td><td>58,318</td><td><span class="pill p-pend">👑 10 Nov</span></td><td>₹1,599</td><td>Lv.5</td><td>0</td><td><span class="pill p-ok">Active</span></td></tr>
+      <tr><td><div class="who"><i class="c5"></i><span>Arjun, 30<small>ID 600112093</small></span></div></td><td>4,600</td><td>—</td><td>₹399</td><td>Lv.3</td><td>1</td><td><span class="pill p-ok">Active</span></td></tr>
+      <tr><td><div class="who"><i class="c3"></i><span>Kabir, 27<small>ID 712004551</small></span></div></td><td>0</td><td>—</td><td>₹0</td><td>Lv.0</td><td style="color:var(--red);font-weight:700">3</td><td><span class="pill p-amb">Warned 2/3</span></td></tr>
+      <tr><td><div class="who"><i class="c6"></i><span>Rohan, 26<small>ID 380441902</small></span></div></td><td>0</td><td>—</td><td>₹0</td><td>Lv.0</td><td>5</td><td><span class="pill p-no">Banned</span></td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>Ram · ID 448708254 <span class="pill p-ok">Active</span></h3>
+      <div class="metric"><div><small>Recharged</small><b>₹1,599</b></div><div><small>Calls</small><b>14 · 38m</b></div><div><small>Gifts sent</small><b>6</b></div><div><small>Reports</small><b>0</b></div></div>
+      <div class="kv"><span>Joined</span><b>9 Oct 2026 · Phone OTP</b><span>Device</span><b>Motorola Edge 50 Pro</b><span>VIP</span><b>till 10 Nov 2026</b><span>Blocked</span><b>0 people</b></div>
+      <h4>Recent gems</h4>
+      <div class="timeline"><div><span>12 Oct 01:14</span><b style="color:var(--green)">+50,000 · Recharge ₹1,599</b></div><div><span>15 Oct 00:23</span><b>−2,070 · Video call · Sony</b></div><div><span>15 Oct 00:23</span><b style="color:var(--green)">+2,070 · Call refund</b></div></div>
+      <div class="acts" style="margin-top:12px"><span class="btn b-ghost">± Gems</span><span class="btn b-ghost">Give VIP</span><span class="btn b-amb">Warn</span><span class="btn b-amb">Suspend…</span><span class="btn b-red">Ban</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 6. REPORTS ================= -->
+<section class="page" id="reports">
+  <div class="top"><div><h2>Reports</h2><div class="sub">Act quickly — Google Play &amp; IT Rules · privacy / nudity within 24 h</div></div></div>
+  <div class="tabs"><span class="on">New · 4</span><span>Action taken</span><span>Ignored</span><span>Appeals · 1</span><span>Auto-hidden · 2</span></div>
+  <div class="split">
+    <div class="card"><table><thead><tr><th>REPORTED</th><th>REASON</th><th>BY</th><th>COUNT</th><th>WHEN</th></tr></thead><tbody>
+      <tr class="sel"><td><div class="who"><i class="c3"></i><span>Kabir<small>user · ID 712004551</small></span></div></td><td><span class="pill p-no">Asked for money</span></td><td>Riya (host)</td><td style="color:var(--red);font-weight:700">3</td><td>40 min</td></tr>
+      <tr><td><div class="who"><i class="c6"></i><span>Meera<small>host · ID 230998441</small></span></div></td><td><span class="pill p-no">🔞 Nudity · 24 h</span></td><td>Arjun</td><td>1</td><td style="color:var(--red)">20 h</td></tr>
+      <tr><td><div class="who"><i class="c2"></i><span>Neha<small>host</small></span></div></td><td><span class="pill p-amb">Fake photos</span></td><td>Ram</td><td>2</td><td>3 h</td></tr>
+      <tr><td><div class="who"><i class="c5"></i><span>Arjun<small>user</small></span></div></td><td><span class="pill p-gray">Rude</span></td><td>Zoya (host)</td><td>1</td><td>1 d</td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>Kabir · 3 reports · strikes 2/3</h3>
+      <div class="kv"><span>Latest reason</span><b>Asked for money / UPI outside Meto</b><span>Reported by</span><b>Riya (host) · 40 min ago</b><span>Note</span><b>"Bola UPI pe 500 bhejo to number dungi"</b></div>
+      <h4>Chat around the report</h4>
+      <div class="chat">
+        <div class="m u">hi kaisi ho<small>Kabir · 21:02</small></div>
+        <div class="m t" style="background:#3a2a30">theek, aap?<small>Riya · 21:02</small></div>
+        <div class="m u" style="border:1px solid rgba(255,95,122,.5)">apna UPI do na, bahar baat karte hain<small>Kabir · 21:04 · reported</small></div>
+      </div>
+      <div class="acts" style="margin-top:12px"><span class="btn b-ghost">Ignore</span><span class="btn b-amb">Warn (strike 3/3 → suspend)</span><span class="btn b-ghost">Remove photo</span><span class="btn b-red">Ban</span></div>
+      <div class="alert a-blue">ℹ The reporter is told "Thanks, we took action" — never who was banned or why</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 7. WITHDRAWALS ================= -->
+<section class="page" id="wd">
+  <div class="top"><div><h2>Withdrawals</h2><div class="sub">Pay from your bank app to the UPI below → enter the UTR → Mark paid</div></div><div class="right"><span class="btn b-ghost">⬇ TDS report (Excel)</span><div class="search">🔍 Host / ID / UPI</div></div></div>
+  <div class="tabs"><span class="on">Pending · 5 · ₹9,870</span><span>Paid</span><span>Rejected</span></div>
+  <div class="card" style="margin-top:12px"><table><thead><tr><th>HOST</th><th>REQUESTED</th><th>TDS 1%</th><th>TO PAY</th><th>UPI</th><th>PAN</th><th>CHECKS</th><th>WHEN</th><th></th></tr></thead><tbody>
+    <tr><td><div class="who"><i class="c1"></i><span>Sony<small>Star Agency</small></span></div></td><td>₹2,000</td><td>₹20</td><td><b style="color:var(--gold-1)">₹1,980</b></td><td>sony@okaxis<small style="display:block;color:var(--dim)">Sony Sharma</small></td><td>ABCDE••••F</td><td><span class="pill p-ok">✓ name matches</span></td><td>3 h</td><td><div class="acts"><span class="btn b-red">Reject</span><span class="btn b-green">Mark paid</span></div></td></tr>
+    <tr><td><div class="who"><i class="c6"></i><span>Meera<small>Star Agency</small></span></div></td><td>₹5,000</td><td>₹50</td><td><b style="color:var(--gold-1)">₹4,950</b></td><td>rk.traders@ybl<small style="display:block;color:var(--dim)">R K Traders</small></td><td>PQRSX••••K</td><td><span class="pill p-no">⚠ UPI name ≠ PAN</span><span class="pill p-amb" style="margin-left:4px">new UPI</span></td><td>6 h</td><td><div class="acts"><span class="btn b-red">Reject</span><span class="btn b-green">Mark paid</span></div></td></tr>
+    <tr><td><div class="who"><i class="c2"></i><span>Riya<small>Rose Talent</small></span></div></td><td>₹1,500</td><td>₹15</td><td><b style="color:var(--gold-1)">₹1,485</b></td><td>riya.s@paytm<small style="display:block;color:var(--dim)">Riya Singh</small></td><td>LMNOP••••Q</td><td><span class="pill p-amb">⚠ UPI used by 2 hosts</span></td><td>1 d</td><td><div class="acts"><span class="btn b-red">Reject</span><span class="btn b-green">Mark paid</span></div></td></tr>
+  </tbody></table></div>
+  <div class="modal"><h3 style="font-size:15px">Mark paid · Sony · ₹1,980</h3><div class="input">UTR / reference number (12 digits)</div><div class="acts" style="margin-top:12px;justify-content:flex-end"><span class="btn b-ghost">Cancel</span><span class="btn b-green">Confirm paid</span></div><div class="alert a-gold">Host gets a notification · "Paid · UTR …" shows in her app</div></div>
+</section>
+
+<!-- ================= 8. TRANSACTIONS ================= -->
+<section class="page" id="tx">
+  <div class="top"><div><h2>Transactions &amp; refunds</h2><div class="sub">Every gem and point movement · calls · Google Play orders</div></div><div class="right"><span class="btn b-ghost">⬇ Export CSV</span></div></div>
+  <div class="tabs"><span class="on">All</span><span>Recharges</span><span>Calls</span><span>Gifts</span><span>Messages</span><span>Unlocks</span><span>Refunds</span><span>Admin changes</span></div>
+  <div class="filters"><span>📅 1 Oct – 18 Oct ▾</span><span>User / host…</span><span>Min ₹…</span></div>
+  <div class="card" style="margin-top:12px"><table><thead><tr><th>WHEN</th><th>TYPE</th><th>USER</th><th>HOST</th><th>GEMS</th><th>HOST PTS</th><th>DETAIL</th><th></th></tr></thead><tbody>
+    <tr><td>18 Oct 14:02</td><td><span class="pill p-pend">Recharge</span></td><td>Arjun</td><td>—</td><td style="color:var(--green)">+10,000</td><td>—</td><td>₹399 · GPA.3391-2201-8847</td><td></td></tr>
+    <tr><td>18 Oct 13:40</td><td><span class="pill p-blue">Call</span></td><td>Ram</td><td>Sony</td><td>−6,000</td><td style="color:var(--gold-1)">+5,000</td><td>5m 10s · host ended · 1,000 refunded</td><td><span class="link">Call details</span></td></tr>
+    <tr><td>18 Oct 13:12</td><td><span class="pill p-gray">Gift</span></td><td>Kabir</td><td>Riya</td><td>−999</td><td style="color:var(--gold-1)">+999</td><td>💘 Love Heart</td><td></td></tr>
+    <tr><td>18 Oct 12:55</td><td><span class="pill p-ok">Refund</span></td><td>Ram</td><td>—</td><td style="color:var(--green)">+1,000</td><td>—</td><td>Admin · ticket #1042 · "host cut early"</td><td></td></tr>
+    <tr><td>17 Oct 22:10</td><td><span class="pill p-no">Chargeback</span></td><td>Vihaan</td><td>—</td><td>−4,500</td><td>—</td><td>Google Play refunded ₹199 · gems removed</td><td></td></tr>
+  </tbody></table></div>
+  <div class="modal"><h3 style="font-size:15px">Refund gems · Ram</h3><div class="input">Gems: 1,000</div><div class="input">Support ticket #1042</div><div class="input">Reason…</div><div class="acts" style="margin-top:12px;justify-content:flex-end"><span class="btn b-ghost">Cancel</span><span class="btn b-rose">Refund</span></div></div>
+</section>
+
+<!-- ================= 9. SUPPORT ================= -->
+<section class="page" id="support">
+  <div class="top"><div><h2>Support</h2><div class="sub">Replies reach the app instantly + push · aim: reply within 24 h</div></div></div>
+  <div class="tabs"><span class="on">Open · 2</span><span>Solved</span><span>All</span></div>
+  <div class="split" style="grid-template-columns:340px 1fr">
+    <div class="card"><table><tbody>
+      <tr class="sel"><td><div class="who"><i class="c4"></i><span>Ram · 📞 Call charge<small>#1042 · 12 min</small></span></div></td><td><span class="pill p-pend">Open</span></td></tr>
+      <tr><td><div class="who"><i class="c1"></i><span>Sony · 💸 Withdraw<small>#1041 · <b style="color:var(--red)">26 h</b></small></span></div></td><td><span class="pill p-no">Late</span></td></tr>
+      <tr><td><div class="who"><i class="c5"></i><span>Arjun · 💎 Recharge<small>#1038 · yesterday</small></span></div></td><td><span class="pill p-ok">Solved</span></td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>Ram · Call charge · #1042 <span class="acts"><span class="link" onclick="go('users')">Profile</span><span class="link" onclick="go('tx')">Wallet</span><span class="link">Recent calls</span></span></h3>
+      <div class="chat">
+        <div class="m sys">Topic: Call charge · opened 12:40</div>
+        <div class="m u">My call ended in 30 sec but 1000 gems were deducted<small>12:40</small></div>
+        <div class="m u" style="padding:4px"><span style="display:block;width:160px;height:96px;border-radius:10px;background:#3a2a30"></span></div>
+      </div>
+      <div class="chips"><span>✓ Refunded</span><span>We're checking</span><span>Payout sent (UTR)</span><span>How rates work</span></div>
+      <div class="input area">Write a reply…</div>
+      <div class="acts" style="margin-top:10px"><span class="btn b-ghost">Refund gems…</span><span class="btn b-ghost" style="margin-left:auto">✓ Mark solved</span><span class="btn b-rose">Send</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 10. AGENCIES ================= -->
+<section class="page" id="agencies">
+  <div class="top"><div><h2>Agencies</h2><div class="sub">Each agency gets an invite link · only women who join through it can apply as host</div></div><div class="right"><span class="btn b-rose">+ New agency</span></div></div>
+  <div class="split">
+    <div class="card"><table><thead><tr><th>AGENCY</th><th>CODE</th><th>HOSTS</th><th>ACTIVE</th><th>THIS MONTH</th><th>COMMISSION</th><th>STATUS</th></tr></thead><tbody>
+      <tr class="sel"><td>⭐ Star Agency<small style="display:block;color:var(--dim)">Mumbai · Vikas</small></td><td><span class="code">AG1045</span></td><td>24</td><td>18</td><td style="color:var(--gold-1)">₹62,300</td><td>10%</td><td><span class="pill p-ok">Active</span></td></tr>
+      <tr><td>🌹 Rose Talent<small style="display:block;color:var(--dim)">Delhi · Neelam</small></td><td><span class="code">AG2210</span></td><td>17</td><td>12</td><td style="color:var(--gold-1)">₹41,900</td><td>10%</td><td><span class="pill p-ok">Active</span></td></tr>
+      <tr><td>💫 Glow Media</td><td><span class="code">AG3302</span></td><td>9</td><td>3</td><td style="color:var(--gold-1)">₹18,200</td><td>8%</td><td><span class="pill p-gray">Paused</span></td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>⭐ Star Agency <span class="pill p-ok">Active</span></h3>
+      <div class="kv"><span>Invite link</span><b>meto.app/join?agency=AG1045 <span class="link">Copy</span></b><span>Contact</span><b>Vikas · +91 97••• ••001</b><span>Commission</span><b>10% of hosts' earnings</b><span>Link opens</span><b>132 · 41 applied · 24 approved</b></div>
+      <div class="metric"><div><small>Hosts</small><b>24</b></div><div><small>Active today</small><b>18</b></div><div><small>Month</small><b>₹62.3k</b></div><div><small>Commission</small><b style="color:var(--gold-1)">₹6,230</b></div></div>
+      <div class="acts" style="margin-top:12px"><span class="btn b-ghost">Edit</span><span class="btn b-ghost">Hosts list</span><span class="btn b-ghost">Agency panel login</span><span class="btn b-amb">Pause new hosts</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 11. NOTICES ================= -->
+<section class="page" id="notice">
+  <div class="top"><div><h2>Notices &amp; push</h2><div class="sub">Shows as "Official Notice" in Chats + a push notification</div></div></div>
+  <div class="g2">
+    <div class="card"><h3>New notice</h3>
+      <div class="tabs"><span class="on">Everyone</span><span>Users</span><span>Hosts</span><span>VIP</span><span>One person…</span></div>
+      <div class="input">Title · e.g. Diwali bonus 🎉</div>
+      <div class="input area">Message…</div>
+      <div class="field"><span>Also send push notification</span><span class="tog"></span></div>
+      <div class="field"><span>When</span><div class="in">Now ▾</div></div>
+      <div class="acts" style="margin-top:12px;justify-content:flex-end"><span class="btn b-ghost">Preview</span><span class="btn b-rose">Send to 8,412 people</span></div>
+    </div>
+    <div class="card"><h3>Sent</h3><table><tbody>
+      <tr><td>Welcome to Meto 💖<small style="display:block;color:var(--dim)">Everyone · 9 Oct</small></td><td style="text-align:right">8,190 · 71% opened</td></tr>
+      <tr><td>New: set your own rate<small style="display:block;color:var(--dim)">Hosts · 14 Oct</small></td><td style="text-align:right">112 · 88% opened</td></tr>
+      <tr><td>Diwali bonus 🎉<small style="display:block;color:var(--dim)">Everyone · scheduled 20 Oct 18:00</small></td><td style="text-align:right"><span class="pill p-blue">Scheduled</span></td></tr>
+    </tbody></table></div>
+  </div>
+</section>
+
+<!-- ================= 12. STORE ================= -->
+<section class="page" id="store">
+  <div class="top"><div><h2>Store</h2><div class="sub">Gifts, gem packs and VIP plans · pack IDs must match Google Play products</div></div><div class="right"><div class="tabs" style="margin:0"><span class="on">Gifts</span><span>Gem packs</span><span>VIP plans</span></div></div></div>
+  <div class="card" style="margin-top:14px"><h3>Gifts <a>+ Add gift</a></h3>
+    <div class="giftgrid">
+      <div class="gift"><div class="e">🌹</div><b>Rose</b><small>100</small></div>
+      <div class="gift"><div class="e">💘</div><b>Love Heart</b><small>999</small></div>
+      <div class="gift"><div class="e">👠</div><b>Heels</b><small>1,999</small></div>
+      <div class="gift"><div class="e">👑</div><b>Crown</b><small>4,999</small></div>
+      <div class="gift"><div class="e">🏎️</div><b>Sports car</b><small>29,999</small></div>
+      <div class="gift" style="opacity:.45"><div class="e">🛥️</div><b>Yacht · off</b><small>99,999</small></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card"><h3>Gem packs</h3><table><thead><tr><th>PLAY PRODUCT ID</th><th>GEMS</th><th>PRICE</th><th>TAG</th><th>ON</th></tr></thead><tbody>
+      <tr><td><span class="code">gems_5000_once</span></td><td>5,000</td><td>₹100</td><td><span class="pill p-pend">New user once</span></td><td><span class="tog"></span></td></tr>
+      <tr><td><span class="code">gems_10000</span></td><td>10,000</td><td>₹399</td><td><span class="pill p-blue">Popular</span></td><td><span class="tog"></span></td></tr>
+      <tr><td><span class="code">gems_150000</span></td><td>1,50,000</td><td>₹3,999</td><td><span class="pill p-ok">Best</span></td><td><span class="tog"></span></td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>VIP plans</h3><table><thead><tr><th>ID</th><th>MONTHS</th><th>PRICE</th><th>BONUS</th></tr></thead><tbody>
+      <tr><td><span class="code">vip_1m</span></td><td>1</td><td>₹899</td><td>25,000</td></tr>
+      <tr><td><span class="code">vip_3m</span></td><td>3</td><td>₹1,699</td><td>5,200</td></tr>
+      <tr><td><span class="code">vip_12m</span></td><td>12</td><td>₹4,599</td><td>1,80,000</td></tr>
+    </tbody></table><div class="alert a-gold">Price change here must also be changed in Google Play Console</div></div>
+  </div>
+</section>
+
+<!-- ================= 13. SETTINGS ================= -->
+<section class="page" id="settings">
+  <div class="top"><div><h2>Settings</h2><div class="sub">Changes reach the app within 30 sec</div></div><div class="right"><span class="btn b-ghost">History</span><span class="btn b-rose">Save changes</span></div></div>
+  <div class="g3">
+    <div class="card"><h3>📞 Calls &amp; rate</h3>
+      <div class="field"><span>Host rate · minimum</span><div class="in">500</div></div>
+      <div class="field"><span>Host rate · maximum</span><div class="in">3,000</div></div>
+      <div class="field"><span>Custom rate step</span><div class="in">100</div></div>
+      <div class="field"><span>Rate chips</span><div class="in">1000·1500·2000·3000</div></div>
+      <div class="field"><span>Default rate (new host)</span><div class="in">1,000</div></div>
+      <div class="field"><span>Match call rate</span><div class="in">1,000</div></div>
+      <div class="field"><span>VIP call discount</span><div class="in">10 %</div></div>
+    </div>
+    <div class="card"><h3>💬 Chat &amp; media</h3>
+      <div class="field"><span>Free messages per host</span><div class="in">3</div></div>
+      <div class="field"><span>Message price</span><div class="in">200</div></div>
+      <div class="field"><span>Free chat for VIP</span><span class="tog"></span></div>
+      <div class="field"><span>Free photos · unlock price</span><div class="in">3 · 200</div></div>
+      <div class="field"><span>Free videos · unlock price</span><div class="in">1 · 500</div></div>
+      <div class="field"><span>Max videos per host</span><div class="in">5</div></div>
+    </div>
+    <div class="card"><h3>💸 Money &amp; 🛡️ Safety</h3>
+      <div class="field"><span>Host points per gem<small>1 = host gets 100%</small></span><div class="in">1</div></div>
+      <div class="field"><span>Points per ₹1</span><div class="in">100</div></div>
+      <div class="field"><span>Minimum withdrawal</span><div class="in">₹500</div></div>
+      <div class="field"><span>TDS</span><div class="in">1 %</div></div>
+      <div class="field"><span>Auto-hide after reports<small>hidden until reviewed</small></span><div class="in">3</div></div>
+      <div class="field"><span>Strikes before suspend</span><div class="in">3</div></div>
+    </div>
+  </div>
+  <div class="modal"><h3 style="font-size:15px">Change money settings?</h3><p style="color:var(--muted);margin-top:6px;font-size:12.5px">Host points per gem: <span class="diff"><s>1</s> → <ins>0.7</ins></span><br>Hosts will earn 30% less on every call from now on.</p><div class="input">Enter your password to confirm</div><div class="acts" style="margin-top:12px;justify-content:flex-end"><span class="btn b-ghost">Cancel</span><span class="btn b-red">Yes, change</span></div></div>
+</section>
+
+<!-- ================= 14. COMPLIANCE ================= -->
+<section class="page" id="legal">
+  <div class="top"><div><h2>Compliance</h2><div class="sub">IT Rules 2021 grievances · DPDP data requests · legal holds</div></div></div>
+  <div class="kpis">
+    <div class="kpi"><small>Grievances open</small><b>1</b><em>ack ≤ 24 h · resolve ≤ 15 days</em></div>
+    <div class="kpi"><small>Privacy takedowns</small><b>0</b><em>must act ≤ 24 h</em></div>
+    <div class="kpi"><small>Data deletion requests</small><b>1</b><em>pending</em></div>
+    <div class="kpi"><small>Legal holds</small><b>0</b><em>data kept for police / court</em></div>
+  </div>
+  <div class="g2">
+    <div class="card"><h3>Requests</h3><table><thead><tr><th>TYPE</th><th>WHO</th><th>RECEIVED</th><th>DEADLINE</th><th>STATUS</th></tr></thead><tbody>
+      <tr><td><span class="pill p-blue">Delete my data</span></td><td>Vihaan</td><td>17 Oct</td><td>—</td><td><span class="pill p-pend">Pending</span></td></tr>
+      <tr><td><span class="pill p-amb">Grievance</span></td><td>Neha (host)</td><td>16 Oct 11:00</td><td>Ack ✓ · resolve by 31 Oct</td><td><span class="pill p-pend">In progress</span></td></tr>
+      <tr><td><span class="pill p-gray">Grievance</span></td><td>Arjun</td><td>10 Oct</td><td>—</td><td><span class="pill p-ok">Resolved</span></td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>Delete my data · Vihaan</h3>
+      <div class="kv"><span>Will delete</span><b>Profile, photos, videos, chats, visits</b><span>Will keep</span><b>Payments &amp; payouts (tax law), call records (90 days)</b><span>Account</span><b>Deleted from app on 17 Oct</b></div>
+      <div class="acts" style="margin-top:12px"><span class="btn b-ghost">Put on legal hold</span><span class="btn b-red" style="margin-left:auto">Delete data now</span></div>
+      <div class="alert a-gold">Grievance officer name &amp; email must be shown in the app's Privacy policy</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 15. AUDIT LOG ================= -->
+<section class="page" id="audit">
+  <div class="top"><div><h2>Audit log</h2><div class="sub">Every admin action · cannot be edited or deleted</div></div><div class="right"><span class="btn b-ghost">⬇ Export</span></div></div>
+  <div class="filters"><span>Admin: All ▾</span><span>Action: All ▾</span><span>📅 Last 7 days ▾</span><span>Target user / ID…</span></div>
+  <div class="card" style="margin-top:12px"><table><thead><tr><th>WHEN</th><th>ADMIN</th><th>ACTION</th><th>TARGET</th><th>CHANGE</th><th>IP</th></tr></thead><tbody>
+    <tr><td>18 Oct 13:58</td><td>Shubham <span class="pill p-pend">Owner</span></td><td>setting.update</td><td>hostRateOpenMax</td><td class="diff"><s>4000</s> → <ins>3000</ins></td><td>192.168.1.13</td></tr>
+    <tr><td>18 Oct 12:55</td><td>Pooja <span class="pill p-blue">Support</span></td><td>wallet.refund</td><td>Ram · 448708254</td><td class="diff"><ins>+1,000 gems</ins> · #1042</td><td>49.36.x.x</td></tr>
+    <tr><td>18 Oct 11:20</td><td>Amit <span class="pill p-gray">Moderator</span></td><td>host.approve</td><td>Priya · 482093117</td><td class="diff">pending → <ins>approved</ins></td><td>103.21.x.x</td></tr>
+    <tr><td>17 Oct 19:02</td><td>Rahul <span class="pill p-ok">Finance</span></td><td>withdrawal.paid</td><td>Sony · ₹1,980</td><td>UTR 4291 8830 1127</td><td>49.36.x.x</td></tr>
+    <tr><td>17 Oct 09:15</td><td>Amit <span class="pill p-gray">Moderator</span></td><td>user.ban</td><td>Rohan · 380441902</td><td>"5 reports · abuse"</td><td>103.21.x.x</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ================= 16. ADMINS ================= -->
+<section class="page" id="admins">
+  <div class="top"><div><h2>Admin team</h2><div class="sub">Give each person only what they need</div></div><div class="right"><span class="btn b-rose">+ Invite admin</span></div></div>
+  <div class="g2">
+    <div class="card"><table><thead><tr><th>ADMIN</th><th>ROLE</th><th>LAST LOGIN</th><th></th></tr></thead><tbody>
+      <tr><td><div class="who"><i class="c3"></i><span>Shubham<small>shubhms7517@gmail.com</small></span></div></td><td><span class="pill p-pend">Owner</span></td><td>now</td><td></td></tr>
+      <tr><td><div class="who"><i class="c2"></i><span>Amit<small>amit@meto.app</small></span></div></td><td><span class="pill p-gray">Moderator</span></td><td>2 h ago</td><td><span class="link">Edit</span></td></tr>
+      <tr><td><div class="who"><i class="c1"></i><span>Pooja<small>pooja@meto.app</small></span></div></td><td><span class="pill p-blue">Support</span></td><td>today</td><td><span class="link">Edit</span></td></tr>
+      <tr><td><div class="who"><i class="c5"></i><span>Rahul<small>rahul@meto.app</small></span></div></td><td><span class="pill p-ok">Finance</span></td><td>yesterday</td><td><span class="link">Edit</span></td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>What each role can do</h3><table><thead><tr><th></th><th>OWNER</th><th>MOD</th><th>SUPPORT</th><th>FINANCE</th></tr></thead><tbody>
+      <tr><td>Approve hosts</td><td>✓</td><td>✓</td><td>—</td><td>—</td></tr>
+      <tr><td>Reports · ban</td><td>✓</td><td>✓</td><td>—</td><td>—</td></tr>
+      <tr><td>Support replies</td><td>✓</td><td>—</td><td>✓</td><td>—</td></tr>
+      <tr><td>Refund gems</td><td>✓</td><td>—</td><td>≤ 2,000</td><td>✓</td></tr>
+      <tr><td>Pay withdrawals</td><td>✓</td><td>—</td><td>—</td><td>✓</td></tr>
+      <tr><td>Settings · Store</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Admin team · audit</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+    </tbody></table></div>
+  </div>
+</section>
+
+</main>
+</div>
+<div class="proto">Prototype · sample data · click the menu</div>
+
+<script>
+  const nav = document.getElementById('nav');
+  function go(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === id));
+    nav.querySelectorAll('a[data-p]').forEach(a => a.classList.toggle('on', a.dataset.p === id));
+    history.replaceState(null, '', '#' + id);
+    window.scrollTo(0, 0);
+  }
+  nav.addEventListener('click', e => { const a = e.target.closest('a[data-p]'); if (a) go(a.dataset.p); });
+  document.querySelectorAll('.tabs').forEach(t => t.addEventListener('click', e => {
+    const s = e.target.closest('span'); if (!s) return;
+    t.querySelectorAll('span').forEach(x => x.classList.toggle('on', x === s));
+  }));
+  const want = new URLSearchParams(location.search).get('p') || location.hash.slice(1);
+  if (want && document.getElementById(want)) {
+    document.getElementById('login').classList.add('hide');
+    go(want);
+  }
+</script>
+</body>
+</html>

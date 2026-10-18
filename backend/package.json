@@ -9,7 +9,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "seed": "tsx src/scripts/seed.ts"
+    "seed": "tsx src/scripts/seed.ts",
+    "admin:create": "tsx src/scripts/createAdmin.ts",
+    "test:admin": "tsx src/scripts/adminE2E.ts"
   },
   "dependencies": {
     "agora-token": "^2.0.6",

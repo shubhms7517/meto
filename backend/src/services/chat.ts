@@ -181,3 +181,39 @@ export async function markDeliveredOnConnect(me: User): Promise<void> {
     for (const conversationId of convs) emitToUser(senderId, 'message:delivered', { conversationId, deliveredAt: now });
   }
 }
+
+/**
+ * Call khatam → chat me ek chhota record ("Video call · 5 min", "Missed call", "No answer").
+ * body = JSON { s: status, d: seconds }. Caller ki taraf se; missed / no answer callee ke liye unread.
+ */
+export async function postCallRecord(call: { id: number; callerId: number; calleeId: number; status: string; durationSec: number; answeredAt: Date | null }) {
+  if (!['ended', 'missed', 'declined', 'cancelled'].includes(call.status)) return;
+  const [caller, callee] = await Promise.all([User.findByPk(call.callerId), User.findByPk(call.calleeId)]);
+  if (!caller || !callee) return;
+  const blocks = await blockState(caller.id, callee.id);
+  if (blocks.blockedByMe || blocks.blockedMe) return;
+  const status = call.status === 'ended' && !call.answeredAt ? 'cancelled' : call.status;
+  const now = new Date();
+  const msg = await sequelize.transaction(async transaction => {
+    const [conv] = await Conversation.findOrCreate({ where: pair(caller.id, callee.id), transaction });
+    const m = await Message.create(
+      {
+        conversationId: conv.id,
+        senderId: caller.id,
+        receiverId: callee.id,
+        type: 'call',
+        body: JSON.stringify({ s: status, d: call.durationSec }),
+        clientId: `call:${call.id}`,
+        deliveredAt: now,
+        // Baat hui / mana kiya → dono ko pata hai. Missed / no answer → callee ke liye naya
+        readAt: status === 'ended' || status === 'declined' ? now : null,
+      },
+      { transaction },
+    );
+    await conv.update({ lastMessageId: m.id, lastMessageAt: m.createdAt }, { transaction });
+    return m;
+  });
+  const json = messageJSON(msg, new Map([[caller.id, caller.publicId], [callee.id, callee.publicId]]));
+  emitToUser(callee.id, 'message:new', json);
+  emitToUser(caller.id, 'message:new', json);
+}

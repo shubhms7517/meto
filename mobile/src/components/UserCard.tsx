@@ -1,12 +1,12 @@
 import React, { memo, useEffect } from 'react';
 import {
   Animated,
-  Dimensions,
   Easing,
   Pressable,
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import LinearGradient from 'react-native-linear-gradient';
@@ -51,6 +51,7 @@ const rippleOpacity = beat.interpolate({
 });
 
 function UserCard({ user, onPress, onCall }: Props) {
+  const { width } = useWindowDimensions(); // odd count pe aakhri card poori width na le
   const reduced = useReducedMotion();
   const { rateFor } = useWallet();
   useEffect(() => {
@@ -59,7 +60,7 @@ function UserCard({ user, onPress, onCall }: Props) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]}
+      style={({ pressed }) => [styles.card, { maxWidth: (width - 44) / 2 }, pressed && { opacity: 0.9 }]}
     >
       <Avatar
         uri={user.avatarUrl}
@@ -171,7 +172,6 @@ export default memo(UserCard);
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    maxWidth: (Dimensions.get('window').width - 44) / 2, // odd count pe aakhri card poori width na le
     height: 230,
     borderRadius: 24,
     overflow: 'hidden',

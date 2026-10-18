@@ -13,9 +13,9 @@ import { BigButton, HostHeader, s } from './common';
 type Props = NativeStackScreenProps<RootStackParamList, 'HostApply'>;
 
 const PHOTOS = 3;
-const VIDEO_SEC = 10;
+const VIDEO_SEC = 30; // live video (HostVideoScreen ka APPLY_SECONDS)
 
-// Form: 3 photo, 10 sec video, umar (profile se), agency (invite link se, locked) → selfie
+// Form: 3 photo, 30 sec live video, umar (profile se), agency (invite link se, locked) → selfie
 export default function HostApplyScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const [photos, setPhotos] = useState<(string | null)[]>([null, null, null]);
@@ -41,7 +41,7 @@ export default function HostApplyScreen({ navigation, route }: Props) {
     if (uri) setPhotos(p => p.map((x, j) => (j === i ? uri : x)));
   };
 
-  // Video apne camera screen pe (front camera, 10 sec apne aap) — wahan se params me wapas aata hai
+  // Video apne camera screen pe (front camera, 30 sec apne aap) — wahan se params me wapas aata hai
   const recordVideo = () => navigation.navigate('HostVideo');
   useEffect(() => {
     if (route.params?.video) setVideo(route.params.video);

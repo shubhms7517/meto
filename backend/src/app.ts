@@ -1,3 +1,4 @@
+import { join, resolve } from 'node:path';
 import cors from 'cors';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
@@ -19,14 +20,33 @@ import { notificationsRouter } from './routes/notifications.routes.js';
 import { hostRouter } from './routes/host.routes.js';
 import { supportRouter } from './routes/support.routes.js';
 import { devicesRouter } from './routes/devices.routes.js';
+import { adminRouter } from './routes/admin.routes.js';
 
 export const app = express();
 
 app.disable('x-powered-by');
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    // Admin panel (same server) ke liye: Google fonts, gift preview (blob), LAN pe http (upgrade nahi)
+    contentSecurityPolicy: {
+      directives: {
+        'img-src': ["'self'", 'data:', 'blob:'],
+        'media-src': ["'self'", 'blob:'],
+        'connect-src': ["'self'", 'blob:'],
+        'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
+        'style-src': ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
+        'upgrade-insecure-requests': isProd ? [] : null,
+      },
+    },
+  }),
+);
 // Mobile app browser nahi hai, isliye CORS ki zaroorat sirf future admin panel ke liye
 app.use(cors({ origin: isProd ? false : true }));
 app.use(express.json({ limit: '100kb' }));
+
+// Admin panel: apna rate limit (panel me bahut requests hoti hain), app ke limit se pehle
+app.use('/api/admin', adminRouter);
 
 // Rate limiting — ek IP se bahut zyada requests block
 const json429 = { error: { code: 'rate_limited', message: 'Too many requests. Please try again later' } };
@@ -38,6 +58,11 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/uploads', express.static(UPLOAD_ROOT, { index: false, dotfiles: 'deny', maxAge: '7d' }));
+
+// Admin panel website (admin/ ka build) — http://<server>:4000/admin
+const ADMIN_DIST = resolve('../admin/dist');
+app.use('/admin', express.static(ADMIN_DIST, { index: 'index.html', maxAge: '1h' }));
+app.get(/^\/admin(\/.*)?$/, (_req, res) => res.sendFile(join(ADMIN_DIST, 'index.html'), err => err && res.status(404).end('Admin panel not built — run: npm --prefix admin run build')));
 app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/chats', chatsRouter);

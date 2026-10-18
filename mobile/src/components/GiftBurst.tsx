@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { RNSvgaPlayer } from 'rn-newarch-svga-player';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Coin from './Coin';
 import { colors } from '../theme';
@@ -8,8 +9,35 @@ export type Burst = { key: number; gift: GiftBody; text: string };
 
 const SPARKS = Array.from({ length: 8 }, (_, i) => (i / 8) * Math.PI * 2);
 
-// Bada gift beech screen pe: pop → halka hilna → upar uthke gayab (dono taraf dikhta hai)
+// Gift ki SVGA animation poori screen pe (admin panel se upload). Khatam / error → band
+function SvgaBurst({ burst, onDone, onFail }: { burst: Burst; onDone: () => void; onFail: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 15_000); // animation kabhi khatam na bole to bhi band
+    return () => clearTimeout(t);
+  }, [burst.key]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <View pointerEvents="none" style={styles.wrap}>
+      <RNSvgaPlayer key={burst.key} source={burst.gift.svgaUrl!} loops={1} clearsAfterStop onFinished={onDone} onError={onFail} style={styles.svga} />
+      <View style={[styles.label, styles.svgaLabel]}>
+        <Text style={styles.labelText}>{burst.text} </Text>
+        <Text style={[styles.labelText, styles.giftName]}>{burst.gift.name}</Text>
+        {burst.gift.qty > 1 && <Text style={[styles.labelText, styles.giftName]}> ×{burst.gift.qty}</Text>}
+        <Text style={styles.dot}> · </Text>
+        <Coin size={14} />
+        <Text style={[styles.labelText, styles.gold]}> {burst.gift.total.toLocaleString('en-IN')}</Text>
+      </View>
+    </View>
+  );
+}
+
+// Bada gift beech screen pe. SVGA ho to wahi, warna emoji: pop → halka hilna → upar uthke gayab (dono taraf dikhta hai)
 export default function GiftBurst({ burst, onDone }: { burst: Burst | null; onDone: () => void }) {
+  const [svgaFailed, setSvgaFailed] = useState<number | null>(null);
+  if (burst?.gift.svgaUrl && svgaFailed !== burst.key) return <SvgaBurst burst={burst} onDone={onDone} onFail={() => setSvgaFailed(burst.key)} />;
+  return <EmojiBurst burst={burst} onDone={onDone} />;
+}
+
+function EmojiBurst({ burst, onDone }: { burst: Burst | null; onDone: () => void }) {
   const t = useRef(new Animated.Value(0)).current; // 0 → 1 poori zindagi
   const pop = useRef(new Animated.Value(0)).current;
   const spark = useRef(new Animated.Value(0)).current;
@@ -79,4 +107,8 @@ const styles = StyleSheet.create({
   label: { flexDirection: 'row', alignItems: 'center', marginTop: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.55)', borderWidth: 1, borderColor: 'rgba(246,220,155,0.5)' },
   labelText: { color: '#fff', fontSize: 13 },
   dot: { color: 'rgba(255,255,255,0.6)', fontSize: 13 },
+  svga: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  svgaLabel: { position: 'absolute', bottom: '18%' },
+  giftName: { color: colors.gold1, fontWeight: '700' },
+  gold: { color: colors.gold1 },
 });

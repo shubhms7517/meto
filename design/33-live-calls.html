@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meto Admin · Live Calls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12070d; --surface: #1d1418; --card: #241c20; --card2: #2b2126; --line: rgba(255,255,255,.08);
+    --text: #f6e9ee; --muted: #b9a3ad; --dim: #7d6872;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d9ae55;
+    --green: #3ee08f; --red: #ff5f7a; --blue: #7fb0ff; --amber: #ffb547;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Poppins, system-ui, sans-serif; background: #0b0408; color: var(--text); padding: 32px 28px 60px; font-size: 13px; }
+  header.page h1 { font-size: 24px; } header.page p { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+  .note { margin-top: 10px; font-size: 12.5px; color: var(--gold-1); background: rgba(246,220,155,.08); border: 1px solid rgba(246,220,155,.25); padding: 8px 12px; border-radius: 10px; display: inline-block; }
+  .shot { margin-top: 26px; }
+  .win { border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); box-shadow: 0 30px 60px -30px rgba(0,0,0,.9); background: var(--bg); }
+  .bar { height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 14px; background: #1a1015; border-bottom: 1px solid var(--line); }
+  .bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a2a31; } .bar span { margin-left: 14px; font-size: 11.5px; color: var(--dim); }
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 640px; }
+  .side { background: radial-gradient(120% 60% at 0% 0%, #3a0f24, #170a10 60%); border-right: 1px solid var(--line); padding: 18px 12px; }
+  .logo { font-size: 22px; font-weight: 800; font-style: italic; color: var(--gold-1); padding: 0 8px 4px; } .logo small { font-size: 10px; font-style: normal; color: var(--rose-1); margin-left: 6px; letter-spacing: .1em; }
+  .role { margin: 10px 8px 0; display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); }
+  .role i { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); flex: none; } .role b { color: var(--text); display: block; font-size: 12px; }
+  .nav { margin-top: 16px; display: flex; flex-direction: column; gap: 2px; }
+  .nav a { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 11px; font-size: 12.8px; color: var(--muted); text-decoration: none; }
+  .nav a.on { color: #fff; background: linear-gradient(100deg, rgba(255,95,143,.22), rgba(255,95,143,.06)); }
+  .nav a .n { margin-left: auto; min-width: 20px; height: 19px; padding: 0 6px; border-radius: 10px; display: grid; place-items: center; font-size: 10.5px; font-weight: 800; color: #fff; background: var(--rose-1); }
+  .nav .sep { margin: 13px 10px 4px; font-size: 10px; letter-spacing: .12em; color: var(--dim); }
+  .main { padding: 24px 26px; overflow: hidden; }
+  .top { display: flex; align-items: flex-start; gap: 16px; }
+  .top h2 { font-size: 20px; } .top .sub { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+  .live { margin-left: auto; display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+  .live .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(62,224,143,.7); animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(62,224,143,.6);} 70% { box-shadow: 0 0 0 7px rgba(62,224,143,0);} 100% { box-shadow: 0 0 0 0 rgba(62,224,143,0);} }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .kpi small { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi b { display: block; font-size: 26px; margin-top: 6px; font-weight: 700; }
+  .kpi.active b { color: var(--green); } .kpi.ring b { color: var(--amber); } .kpi.conn b { color: var(--blue); }
+  .kpi em { font-style: normal; color: var(--muted); font-size: 11px; }
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-top: 18px; }
+  .search { flex: 1; max-width: 300px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; color: var(--text); font-size: 12.5px; }
+  .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .tabs button { border: 0; background: none; color: var(--muted); font-size: 12px; padding: 6px 13px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+  .tabs button.on { background: var(--card2); color: var(--text); }
+  .card { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--dim); font-size: 10.5px; letter-spacing: .06em; font-weight: 600; padding: 11px 16px; border-bottom: 1px solid var(--line); text-transform: uppercase; }
+  td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  tr.click:hover td { background: rgba(255,255,255,.025); cursor: pointer; }
+  .who { display: flex; align-items: center; gap: 9px; }
+  .av { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex: none; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; }
+  .who b { font-size: 12.5px; font-weight: 600; } .who span { display: block; color: var(--dim); font-size: 10.5px; }
+  .cid { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+  .pill .d { width: 6px; height: 6px; border-radius: 50%; }
+  .pill.conn { color: var(--green); background: rgba(62,224,143,.12); } .pill.conn .d { background: var(--green); }
+  .pill.ring { color: var(--amber); background: rgba(255,181,71,.12); } .pill.ring .d { background: var(--amber); animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .dur { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .conn-good { color: var(--green); font-size: 11.5px; } .conn-bad { color: var(--amber); font-size: 11.5px; }
+  .foot { padding: 12px 16px; display: flex; align-items: center; gap: 8px; color: var(--dim); font-size: 11.5px; }
+  .foot .btn { margin-left: auto; background: var(--surface); border: 1px solid var(--line); color: var(--muted); border-radius: 9px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  /* state cards */
+  .states { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 26px; }
+  .state { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 34px 20px; text-align: center; }
+  .state .ico { font-size: 26px; } .state b { display: block; margin-top: 8px; font-size: 13px; } .state p { color: var(--dim); font-size: 11.5px; margin-top: 3px; }
+  .skel { height: 14px; border-radius: 6px; background: linear-gradient(90deg, #241c20, #2e2429, #241c20); background-size: 200% 100%; animation: sh 1.3s infinite; }
+  @keyframes sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  figcaption { margin-top: 12px; color: var(--muted); font-size: 12.5px; } figcaption b { color: var(--text); }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Live Calls — admin dashboard</h1>
+  <p>All calls happening right now, with live counts. Real-time, auto-refreshing.</p>
+  <div class="note">🔒 This page has <b>no video</b> — information only. Viewing a call is a separate feature (with consent + an on-screen banner).</div>
+</header>
+
+<figure class="shot">
+  <div class="win">
+    <div class="bar"><i></i><i></i><i></i><span>admin.meto.app / live-calls</span></div>
+    <div class="app">
+      <!-- sidebar -->
+      <aside class="side">
+        <div class="logo">Meto<small>ADMIN</small></div>
+        <div class="role"><i></i><div><b>Priya S.</b>Moderator</div></div>
+        <nav class="nav">
+          <a>📊 Dashboard</a>
+          <div class="sep">QUEUES</div>
+          <a>🎙️ Host applications</a>
+          <a>🚩 Reports <span class="n">2</span></a>
+          <a class="on">🔴 Live calls <span class="n">3</span></a>
+          <a>💸 Withdrawals</a>
+          <a>🎧 Support</a>
+          <div class="sep">PEOPLE</div>
+          <a>👥 Users</a>
+          <a>💖 Hosts</a>
+          <div class="sep">PLATFORM</div>
+          <a>📜 Audit log</a>
+        </nav>
+      </aside>
+
+      <!-- main -->
+      <section class="main">
+        <div class="top">
+          <div>
+            <h2>Live calls</h2>
+            <div class="sub">Calls in progress · refreshes every 3 seconds</div>
+          </div>
+          <div class="live"><span class="dot"></span> Live · updated 2s ago</div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi active"><small>Active now</small><b>3</b><em>ringing + connected</em></div>
+          <div class="kpi ring"><small>Ringing</small><b>1</b><em>phone is ringing</em></div>
+          <div class="kpi conn"><small>Connected</small><b>2</b><em>talking now</em></div>
+          <div class="kpi"><small>Ended · 15 min</small><b>7</b><em>just ended</em></div>
+        </div>
+
+        <div class="toolbar">
+          <input class="search" placeholder="🔍 Search by Meto ID">
+          <div class="tabs">
+            <button class="on">All</button>
+            <button>Connected</button>
+            <button>Ringing</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <table>
+            <thead>
+              <tr><th>Call</th><th>Caller</th><th>Host</th><th>Status</th><th>Started</th><th>Duration</th><th>Rate</th><th>Connection</th></tr>
+            </thead>
+            <tbody>
+              <tr class="click">
+                <td class="cid">#4821</td>
+                <td><div class="who"><span class="av">R</span><div><b>Ram</b><span>448708254</span></div></div></td>
+                <td><div class="who"><span class="av">S</span><div><b>Sony</b><span>578538310</span></div></div></td>
+                <td><span class="pill conn"><span class="d"></span> Connected</span></td>
+                <td>11:42:08 pm</td>
+                <td class="dur">04:17</td>
+                <td>3,000/min</td>
+                <td class="conn-good">● Good</td>
+              </tr>
+              <tr class="click">
+                <td class="cid">#4820</td>
+                <td><div class="who"><span class="av">A</span><div><b>Arjun</b><span>100000012</span></div></div></td>
+                <td><div class="who"><span class="av">A</span><div><b>Aisha</b><span>100000002</span></div></div></td>
+                <td><span class="pill conn"><span class="d"></span> Connected</span></td>
+                <td>11:45:51 pm</td>
+                <td class="dur">00:34</td>
+                <td>1,000/min</td>
+                <td class="conn-bad">● Weak (host)</td>
+              </tr>
+              <tr class="click">
+                <td class="cid">#4822</td>
+                <td><div class="who"><span class="av">V</span><div><b>Vihaan</b><span>100000015</span></div></div></td>
+                <td><div class="who"><span class="av">Z</span><div><b>Zoya</b><span>100000011</span></div></div></td>
+                <td><span class="pill ring"><span class="d"></span> Ringing</span></td>
+                <td>11:46:20 pm</td>
+                <td class="dur">00:06</td>
+                <td>2,000/min</td>
+                <td style="color:var(--dim)">—</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="foot">3 active calls <button class="btn">↻ Refresh now</button></div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <figcaption><b>Live Calls dashboard.</b> Four counters on top, the live-calls table below (duration keeps ticking). Search + status filter + auto-refresh. Click a row → user/host profile.</figcaption>
+</figure>
+
+<!-- states -->
+<div class="states">
+  <div class="state">
+    <div style="display:flex;flex-direction:column;gap:9px;max-width:260px;margin:0 auto">
+      <div class="skel" style="width:100%"></div><div class="skel" style="width:85%"></div><div class="skel" style="width:70%"></div>
+    </div>
+    <b style="margin-top:14px">Loading…</b><p>Fetching live calls</p>
+  </div>
+  <div class="state"><div class="ico">🌙</div><b>No calls right now</b><p>Calls will appear here as they start</p></div>
+  <div class="state"><div class="ico">⚠️</div><b>Couldn't load</b><p>Lost connection to the server · ↻ Retry</p></div>
+  <div class="state"><div class="ico">🔒</div><b>No permission</b><p>Only Moderator / Owner can see this page</p></div>
+</div>
+</body>
+</html>

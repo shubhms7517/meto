@@ -3,7 +3,7 @@ import { Modal, PanResponder, Pressable, StyleSheet, Text, View, type LayoutChan
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import { colors, gradients } from '../theme';
-import { AGE_MAX, AGE_MIN, DEFAULT_FILTER, type DiscoverFilter } from '../services/users';
+import { AGE_MAX, AGE_MIN, DEFAULT_FILTER, LANGUAGES, type DiscoverFilter } from '../services/users';
 
 const THUMB = 26;
 
@@ -58,7 +58,7 @@ function AgeRange({ min, max, onChange }: { min: number; max: number; onChange: 
 
 type Props = { value: DiscoverFilter; onApply: (f: DiscoverFilter) => void; onClose: () => void };
 
-// Discover filter: umar, sirf online (Discover me sirf hosts — gender ki zaroorat nahi)
+// Discover filter: umar, bhasha (koi bhi ek bole), sirf online (Discover me sirf hosts — gender ki zaroorat nahi)
 export default function FilterSheet({ value, onApply, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const [f, setF] = useState<DiscoverFilter>(value);
@@ -82,6 +82,21 @@ export default function FilterSheet({ value, onApply, onClose }: Props) {
           </Text>
         </View>
         <AgeRange min={f.minAge} max={f.maxAge} onChange={(minAge, maxAge) => setF(x => ({ ...x, minAge, maxAge }))} />
+
+        <Text style={[styles.lbl, styles.langLbl]}>Speaks</Text>
+        <View style={styles.langs}>
+          {LANGUAGES.map(l => {
+            const on = f.langs.includes(l);
+            return (
+              <Pressable
+                key={l}
+                onPress={() => setF(x => ({ ...x, langs: on ? x.langs.filter(y => y !== l) : [...x.langs, l] }))}
+                style={[styles.lang, on && styles.langOn]}>
+                <Text style={[styles.langText, on && styles.langTextOn]}>{l}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
         <Pressable onPress={() => setF(x => ({ ...x, online: !x.online }))} style={styles.toggleRow}>
           <View style={{ flex: 1 }}>
@@ -115,6 +130,12 @@ export default function FilterSheet({ value, onApply, onClose }: Props) {
 
 const styles = StyleSheet.create({
   dim: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
+  langLbl: { marginTop: 18 },
+  langs: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 9 },
+  lang: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 13, backgroundColor: '#241c20', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  langOn: { borderColor: colors.rose1, backgroundColor: 'rgba(255,95,143,0.15)' },
+  langText: { color: colors.muted, fontSize: 12.5 },
+  langTextOn: { color: colors.text, fontWeight: '700' },
   sheet: { backgroundColor: '#1a0b13', borderTopLeftRadius: 26, borderTopRightRadius: 26, borderTopWidth: 1, borderColor: colors.border, paddingHorizontal: 16, paddingTop: 10 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'center', marginBottom: 12 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },

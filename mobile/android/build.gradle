@@ -20,3 +20,10 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// SVGA player (gift animation) ki Android library JitPack pe hai
+allprojects {
+    repositories {
+        maven { url "https://www.jitpack.io" }
+    }
+}

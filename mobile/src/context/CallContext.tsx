@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef } from 'react';
-import { Alert } from 'react-native';
+
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 import { connectSocket } from '../services/socket';
 import { CallInfo, ensureCallPermissions } from '../services/calls';
@@ -13,6 +13,7 @@ import { cancelCallNotif, handleRemoteMessage, registerPush } from '../services/
 import { useWallet } from './WalletContext';
 import { getWallet } from '../services/wallet';
 import type { RootStackParamList } from '../navigation/types';
+import { appAlert } from '../lib/dialog';
 
 type CallCtx = {
   placeCall: (peer: UserCard, source?: 'direct' | 'match') => Promise<void>;
@@ -81,7 +82,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
 
   const placeCallInner = useCallback(async (peer: UserCard, source: 'direct' | 'match') => {
     if (!(await ensureCallPermissions())) {
-      Alert.alert('Permission needed', 'Allow camera and microphone to make video calls.');
+      appAlert('Permission needed', 'Allow camera and microphone to make video calls.');
       return;
     }
     // Pehle gems check — kam hon to seedha recharge sheet, recharge ke baad call

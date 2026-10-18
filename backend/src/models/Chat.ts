@@ -37,7 +37,7 @@ Conversation.init(
   },
 );
 
-export const MESSAGE_TYPES = ['text', 'image', 'gift', 'system'] as const;
+export const MESSAGE_TYPES = ['text', 'image', 'gift', 'system', 'call'] as const; // call = chat me call ka record
 export type MessageType = (typeof MESSAGE_TYPES)[number];
 
 export class Message extends Model<InferAttributes<Message>, InferCreationAttributes<Message>> {

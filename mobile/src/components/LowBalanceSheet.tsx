@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import Coin from './Coin';
 import { colors, gradients } from '../theme';
 import { buyPack, fmt, getWallet, IS_TEST_PAYMENTS, type WalletSummary } from '../services/wallet';
 import { PurchaseCancelled } from '../services/billing';
+import { appAlert } from '../lib/dialog';
 
 export type RechargeRequest = {
   needed: number; // kitne gems chahiye (call ke liye 1 minute ka rate)
@@ -31,7 +32,7 @@ export default function LowBalanceSheet(p: Props) {
         setSel(w.packs.find(x => x.tag === 'popular')?.id ?? w.packs[0]?.id ?? null);
       })
       .catch(e => {
-        Alert.alert('Wallet', (e as Error).message);
+        appAlert('Wallet', (e as Error).message);
         p.onClose();
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -46,7 +47,7 @@ export default function LowBalanceSheet(p: Props) {
       p.onRecharged?.(r.balance);
     } catch (e) {
       if (e instanceof PurchaseCancelled) return; // user ne Play pe khud band kiya
-      Alert.alert('Recharge failed', (e as Error).message);
+      appAlert('Recharge failed', (e as Error).message);
     } finally {
       setPaying(false);
     }

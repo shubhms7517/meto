@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme';
 import { inr, type HostTx } from '../../services/host';
 
-const ICON: Record<string, string> = { call: '📹', gift: '🎁', message: '💬', withdraw: '🏦', refund: '↩️', admin: '⭐', unlock: '🔓' };
+const ICON: Record<string, string> = { call: '📞', gift: '🎁', message: '💬', withdraw: '🏦', refund: '↩️', admin: '⭐', unlock: '🔓' };
 
 export default function TxRow({ t, perInr }: { t: HostTx; perInr: number }) {
   const zero = t.points === 0;

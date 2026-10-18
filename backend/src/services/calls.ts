@@ -6,7 +6,7 @@ import { badRequest, forbidden, HttpError, notFound } from '../lib/errors.js';
 import { emitToUser } from '../lib/realtime.js';
 import { Call, HostTx, User } from '../models/index.js';
 import type { CallStatus } from '../models/Call.js';
-import { findChatPartner } from './chat.js';
+import { findChatPartner, postCallRecord } from './chat.js';
 import { blockState } from './safety.js';
 import { CALL_RATE } from '../lib/pricing.js';
 import { getSettings, userRateFor } from '../lib/settings.js';
@@ -123,6 +123,7 @@ async function finish(call: Call, status: CallStatus, endedBy: number | null, re
   const durationSec = call.answeredAt ? Math.max(0, Math.round((now.getTime() - call.answeredAt.getTime()) / 1000)) : 0;
   await call.update({ status, endedAt: now, durationSec, endedBy });
   await settleCall(call, reason).catch(e => console.error('call settle', e));
+  postCallRecord(call).catch(e => console.error('call record', e)); // chat me "Video call · 5 min"
   const json = { ...(await callJSON(call)), reason: reason ?? null };
   // Host ko uski kamai (points) — sirf usi ko, user ko nahi dikhti
   const hostJson = await withHostPoints(call, json);

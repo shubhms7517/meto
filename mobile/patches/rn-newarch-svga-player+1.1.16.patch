@@ -1,0 +1,81 @@
+diff --git a/node_modules/rn-newarch-svga-player/SvgaPlayer.tsx b/node_modules/rn-newarch-svga-player/SvgaPlayer.tsx
+index 7d1022b..3b060a5 100644
+--- a/node_modules/rn-newarch-svga-player/SvgaPlayer.tsx
++++ b/node_modules/rn-newarch-svga-player/SvgaPlayer.tsx
+@@ -123,10 +123,10 @@ const RNSvgaPlayer = forwardRef<SvgaPlayerRef, SvgaPlayerProps>(
+         autoPlay={autoPlay}
+         loops={loops}
+         clearsAfterStop={clearsAfterStop}
+-        onError={(event) => onError?.(event.nativeEvent)}
++        onError={(event: { nativeEvent: SvgaErrorEvent }) => onError?.(event.nativeEvent)}
+         onFinished={onFinished}
+-        onFrameChanged={(event) => onFrame?.(event.nativeEvent)}
+-        onPercentageChanged={(event) => onPercentage?.(event.nativeEvent)}
++        onFrameChanged={(event: { nativeEvent: { value: number } }) => onFrame?.(event.nativeEvent)}
++        onPercentageChanged={(event: { nativeEvent: { value: number } }) => onPercentage?.(event.nativeEvent)}
+         onLoaded={onLoaded}
+         {...restProps}
+       />
+diff --git a/node_modules/rn-newarch-svga-player/src/specs/SvgaPlayerNativeComponent.ts b/node_modules/rn-newarch-svga-player/src/specs/SvgaPlayerNativeComponent.ts
+index c50849b..1998ee5 100644
+--- a/node_modules/rn-newarch-svga-player/src/specs/SvgaPlayerNativeComponent.ts
++++ b/node_modules/rn-newarch-svga-player/src/specs/SvgaPlayerNativeComponent.ts
+@@ -1,25 +1,19 @@
+-import type { HostComponent, ViewProps } from 'react-native';
+-import type {
+-  BubblingEventHandler,
+-  Double,
+-  Int32,
+-  WithDefault,
+-} from 'react-native/Libraries/Types/CodegenTypes';
+-import codegenNativeCommands from 'react-native/Libraries/Utilities/codegenNativeCommands';
+-import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';
++import type { HostComponent, ViewProps, CodegenTypes } from 'react-native';
++import { codegenNativeCommands, codegenNativeComponent } from 'react-native';
++
+ 
+ interface SvgaPlayerProps extends ViewProps {
+   source: string;
+   autoPlay?: boolean;
+-  loops?: Int32;
++  loops?: CodegenTypes.Int32;
+   clearsAfterStop?: boolean;
+-  align?: WithDefault<'top' | 'bottom' | 'center', 'center'>;
++  align?: CodegenTypes.WithDefault<'top' | 'bottom' | 'center', 'center'>;
+   // 事件回调
+-  onError?: BubblingEventHandler<{ error: string }>;
+-  onFinished?: BubblingEventHandler<{ finished: boolean }>;
+-  onLoaded?: BubblingEventHandler<{}>;
+-  onFrameChanged?: BubblingEventHandler<{ value: Double }>;
+-  onPercentageChanged?: BubblingEventHandler<{ value: Double }>;
++  onError?: CodegenTypes.BubblingEventHandler<{ error: string }>;
++  onFinished?: CodegenTypes.BubblingEventHandler<{ finished: boolean }>;
++  onLoaded?: CodegenTypes.BubblingEventHandler<{}>;
++  onFrameChanged?: CodegenTypes.BubblingEventHandler<{ value: CodegenTypes.Double }>;
++  onPercentageChanged?: CodegenTypes.BubblingEventHandler<{ value: CodegenTypes.Double }>;
+ }
+ 
+ export type ComponentType = HostComponent<SvgaPlayerProps>;
+@@ -30,18 +24,18 @@ interface NativeCommands {
+   pauseAnimation: (viewRef: React.ElementRef<ComponentType>) => void;
+   stepToFrame: (
+     viewRef: React.ElementRef<ComponentType>,
+-    frame: Int32,
++    frame: CodegenTypes.Int32,
+     andPlay: boolean
+   ) => void;
+   stepToPercentage: (
+     viewRef: React.ElementRef<ComponentType>,
+-    percentage: Int32,
++    percentage: CodegenTypes.Int32,
+     andPlay: boolean
+   ) => void;
+   startAnimationWithRange: (
+     viewRef: React.ElementRef<ComponentType>,
+-    location: Int32,
+-    length: Int32,
++    location: CodegenTypes.Int32,
++    length: CodegenTypes.Int32,
+     reverse: boolean
+   ) => void;
+ }

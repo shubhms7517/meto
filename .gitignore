@@ -31,3 +31,11 @@ Thumbs.db
 .idea/
 .vscode/
 *.log
+tools/logs/
+
+# Local dev / editor config
+.claude/
+
+# Stray assets (test images / svga rakhe the repo root me)
+/*.png
+/*.svga

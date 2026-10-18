@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dimensions, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, ViewStyle, useWindowDimensions } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Screen from '../../components/Screen';
@@ -12,12 +12,11 @@ import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Welcome'>;
 
-const { width: W, height: H } = Dimensions.get('window');
 
 type Tile = { colors: string[]; ink: string; online?: boolean; style: ViewStyle };
 
 // Placeholder profile cards (baad me real users ki photos aayengi)
-const TILES: Tile[] = [
+const tilesFor = (W: number, H: number): Tile[] => [
   { colors: ['#ff8fb1', '#a3164a'], ink: '#5c0c2c', online: true,
     style: { width: W * 0.42, height: H * 0.26, top: H * 0.05, left: -W * 0.05, transform: [{ rotate: '-8deg' }] } },
   { colors: ['#f6dc9b', '#b0802d'], ink: '#6b4a14',
@@ -35,6 +34,8 @@ const FEATURES: { icon: IconName; label: string }[] = [
 ];
 
 export default function WelcomeScreen({ navigation }: Props) {
+  const { width: W, height: H } = useWindowDimensions(); // har render pe asli chaudai
+  const TILES = tilesFor(W, H);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
 

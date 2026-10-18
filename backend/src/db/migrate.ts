@@ -9,12 +9,15 @@ const COLUMNS: { table: string; column: string; ddl: string }[] = [
   { table: 'users', column: 'prefs', ddl: 'JSON NULL DEFAULT NULL' },
   { table: 'users', column: 'visitors_seen_at', ddl: 'DATETIME NULL DEFAULT NULL' },
   { table: 'users', column: 'invite_agency_id', ddl: 'BIGINT UNSIGNED NULL DEFAULT NULL' },
+  { table: 'gifts', column: 'icon_url', ddl: 'VARCHAR(255) NULL DEFAULT NULL' },
+  { table: 'gifts', column: 'svga_url', ddl: 'VARCHAR(255) NULL DEFAULT NULL' },
   { table: 'calls', column: 'host_id', ddl: 'BIGINT UNSIGNED NULL DEFAULT NULL AFTER callee_id' },
 ];
 
 // ENUM me naya value (sync() purana column nahi badalta). need = jo value honi chahiye.
 const ENUMS: { table: string; column: string; need: string; ddl: string }[] = [
   { table: 'wallet_transactions', column: 'kind', need: 'unlock', ddl: "ENUM('recharge','bonus','call','gift','checkin','refund','admin','message','unlock') NOT NULL" },
+  { table: 'messages', column: 'type', need: 'call', ddl: "ENUM('text','image','gift','system','call') NOT NULL DEFAULT 'text'" },
   { table: 'host_transactions', column: 'kind', need: 'unlock', ddl: "ENUM('call','gift','withdraw','refund','admin','message','unlock') NOT NULL" },
 ];
 

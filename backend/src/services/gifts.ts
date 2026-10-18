@@ -1,3 +1,4 @@
+import { env } from '../config/env.js';
 import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import { emitToUser } from '../lib/realtime.js';
 import { Gift, GiftTransaction, User } from '../models/index.js';
@@ -9,7 +10,9 @@ import { assertUserHostPair, creditGift, requireHost } from './host.js';
 
 export const GIFT_QTYS = [1, 5, 10] as const;
 
-export const giftJSON = (g: Gift) => ({ id: g.id, name: g.name, icon: g.icon, price: g.price, isRare: g.isRare });
+// Upload ka poora link (app purane IP wale link khud theek karta hai)
+const fullUrl = (u: string | null | undefined) => (u ? (u.startsWith('/') ? env.PUBLIC_BASE_URL + u : u) : null);
+export const giftJSON = (g: Gift) => ({ id: g.id, name: g.name, icon: g.icon, iconUrl: fullUrl(g.iconUrl), svgaUrl: fullUrl(g.svgaUrl), price: g.price, isRare: g.isRare });
 
 export async function giftCatalog() {
   const gifts = await Gift.findAll({ where: { isActive: true }, order: [['price', 'ASC']] });
@@ -17,7 +20,7 @@ export async function giftCatalog() {
 }
 
 // Chat body me gift ki details (app isi se gift bubble banata hai)
-export type GiftBody = { giftId: number; name: string; icon: string; price: number; qty: number; total: number };
+export type GiftBody = { giftId: number; name: string; icon: string; iconUrl?: string | null; svgaUrl?: string | null; price: number; qty: number; total: number };
 
 /**
  * Gift bhejo: gems kato → record → chat me gift message → saamne wale ko animation event.
@@ -48,7 +51,7 @@ export async function sendGift(sender: User, toPublicId: number, giftId: number,
   // Host ke points (wallet tx ke key se — retry pe dobara nahi)
   await creditGift(receiver.id, total, `${sender.id}:${clientId}`, `${gift.name}${qty > 1 ? ` ×${qty}` : ''}`, sender.name ?? 'User');
 
-  const body: GiftBody = { giftId: gift.id, name: gift.name, icon: gift.icon, price: gift.price, qty, total };
+  const body: GiftBody = { giftId: gift.id, name: gift.name, icon: gift.icon, iconUrl: fullUrl(gift.iconUrl), svgaUrl: fullUrl(gift.svgaUrl), price: gift.price, qty, total };
   const message = await sendMessage(sender, toPublicId, JSON.stringify(body), clientId, 'gift');
 
   if (!duplicate) {

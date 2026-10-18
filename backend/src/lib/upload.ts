@@ -59,7 +59,7 @@ export const PRIVATE_ROOT = resolve('private_uploads');
 const VIDEO_MIME = new Set(['video/mp4', 'video/quicktime', 'video/3gpp']);
 export const hostApplyUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 40 * 1024 * 1024, files: 7 },
+  limits: { fileSize: 120 * 1024 * 1024, files: 7 }, // 30 sec live video bada hota hai
   fileFilter: (_req, file, cb) => {
     if (file.fieldname === 'video' ? VIDEO_MIME.has(file.mimetype) : ALLOWED_MIME.has(file.mimetype)) cb(null, true);
     else cb(badRequest(file.fieldname === 'video' ? 'Video must be MP4' : 'Only JPG, PNG or WEBP images are allowed'));
@@ -108,4 +108,37 @@ export async function savePublicVideo(buffer: Buffer): Promise<string> {
   const name = `${randomUUID()}.mp4`;
   await writeFile(join(dir, name), buffer);
   return `/uploads/videos/${name}`;
+}
+
+/* ---------------- Gift files (admin): PNG icon + SVGA animation ---------------- */
+export const giftUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 2 },
+});
+
+// SVGA 2.x = zlib (0x78 ..), SVGA 1.x = zip ("PK"). Aur kuch nahi chalega
+export async function saveGiftSvga(buffer: Buffer): Promise<string> {
+  const zlib = buffer.length > 2 && buffer[0] === 0x78 && [0x01, 0x5e, 0x9c, 0xda].includes(buffer[1]);
+  const zip = buffer.length > 4 && buffer[0] === 0x50 && buffer[1] === 0x4b;
+  if (!zlib && !zip) throw badRequest('File is not a valid SVGA animation');
+  const dir = join(UPLOAD_ROOT, 'gifts');
+  await mkdir(dir, { recursive: true });
+  const name = `${randomUUID()}.svga`;
+  await writeFile(join(dir, name), buffer);
+  return `/uploads/gifts/${name}`;
+}
+
+// Icon: PNG (transparent rakhta hai), max 512px
+export async function saveGiftIcon(buffer: Buffer): Promise<string> {
+  let output: Buffer;
+  try {
+    output = await sharp(buffer, { failOn: 'error' }).resize(512, 512, { fit: 'inside', withoutEnlargement: true }).png().toBuffer();
+  } catch {
+    throw badRequest('Icon must be a PNG / JPG / WEBP image');
+  }
+  const dir = join(UPLOAD_ROOT, 'gifts');
+  await mkdir(dir, { recursive: true });
+  const name = `${randomUUID()}.png`;
+  await writeFile(join(dir, name), output);
+  return `/uploads/gifts/${name}`;
 }

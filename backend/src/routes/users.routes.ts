@@ -53,7 +53,17 @@ const filterSchema = z.object({
   gender: z.enum(['female', 'male']).optional(),
   minAge: z.coerce.number().int().min(18).max(100).optional(),
   maxAge: z.coerce.number().int().min(18).max(100).optional(),
+  // "Hindi,English" — inme se koi bhi bhasha bole
+  langs: z
+    .string()
+    .max(200)
+    .optional()
+    .transform(v => (v ? [...new Set(v.split(',').map(x => x.trim()).filter(x => /^[A-Za-z ]{2,20}$/.test(x)))].slice(0, 10) : [])),
 });
+
+// users.languages "Hindi,English" string hai → har bhasha ke liye FIND_IN_SET
+const langWhere = (langs: string[]): WhereOptions =>
+  langs.length ? { [Op.or]: langs.map(l => sequelize.where(fn('FIND_IN_SET', l, col('User.languages')), { [Op.gt]: 0 })) } : {};
 
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 // Umar → birthday ki range (minAge = itne saal ka ho chuka, maxAge = abhi maxAge+1 ka nahi hua)
@@ -285,7 +295,7 @@ usersRouter.get('/discover', async (req, res) => {
   }
 
   const rows = await User.findAll({
-    where,
+    where: f.langs.length ? { [Op.and]: [where, langWhere(f.langs)] } : where,
     include: forHost ? [] : [approvedHosts()],
     order: [[onlineFirst(), 'DESC'], ['lastSeenAt', 'DESC'], ['id', 'DESC']],
     limit: limit + 1, // ek extra — pata chale aage aur hain ya nahi
@@ -358,6 +368,18 @@ usersRouter.get('/followers', async (req, res) => {
 /* ------------------------------ Profile detail ----------------------------- */
 
 // GET /api/users/:publicId
+// GET /api/users/:publicId/presence — chat header ke liye halka (sirf online / last seen; block ho to chhupa)
+usersRouter.get('/:publicId/presence', async (req, res) => {
+  const user = await findVisibleUser(req.params.publicId);
+  const blocks = await blockState(req.user!.id, user.id);
+  if (blocks.blockedMe || blocks.blockedByMe) {
+    res.json({ online: false, lastSeenAt: null });
+    return;
+  }
+  const card = user.toCardJSON() as { online: boolean; lastSeenAt: Date | null };
+  res.json({ online: card.online, lastSeenAt: card.lastSeenAt });
+});
+
 usersRouter.get('/:publicId', async (req, res) => {
   const me = req.user!;
   const user = await findVisibleUser(req.params.publicId);

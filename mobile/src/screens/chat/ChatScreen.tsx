@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -36,7 +35,11 @@ import type { ChatPricing } from '../../services/chat';
 import { getSocket } from '../../services/socket';
 import {
   ChatMessage,
+  callDuration,
+  callRecordTitle,
+  parseCallRecord,
   getOlderMessages,
+  getPresence,
   markChatRead,
   newClientId,
   openChatWith,
@@ -45,6 +48,7 @@ import {
 } from '../../services/chat';
 import { timeAgo, UserCard } from '../../services/users';
 import type { RootStackParamList } from '../../navigation/types';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 type Partner = UserCard & { languages: string[] };
@@ -137,6 +141,16 @@ export default function ChatScreen({ navigation, route }: Props) {
     },
     [markLocalRead],
   );
+
+  // Header ka "Online / Active 2h ago" chat khuli rahe tab bhi taaza
+  useEffect(() => {
+    const t = setInterval(() => {
+      getPresence(partnerId)
+        .then(pr => setPartner(p => (p ? { ...p, online: pr.online, lastSeenAt: pr.lastSeenAt } : p)))
+        .catch(() => {});
+    }, 30_000);
+    return () => clearInterval(t);
+  }, [partnerId]);
 
   // Pehli load
   useEffect(() => {
@@ -290,7 +304,7 @@ export default function ChatScreen({ navigation, route }: Props) {
       if (noGems(e)) return;
       const msg = (e as Error).message;
       if (msg !== 'offline' && msg !== 'timeout')
-        Alert.alert('Message not sent', msg);
+        appAlert('Message not sent', msg);
     }
   };
 
@@ -393,7 +407,7 @@ export default function ChatScreen({ navigation, route }: Props) {
         ),
       );
       if (noGems(e)) return;
-      Alert.alert('Photo not sent', (e as Error).message);
+      appAlert('Photo not sent', (e as Error).message);
     }
   };
 
@@ -473,6 +487,34 @@ export default function ChatScreen({ navigation, route }: Props) {
     const showDay =
       !older || dayKey(older.createdAt) !== dayKey(item.createdAt);
     const mine = item.to === partnerId;
+    if (item.type === 'call') {
+      const r = parseCallRecord(item.body);
+      if (!r) return null;
+      const missed = r.s !== 'ended' && !mine; // mujhe aayi aur nahi uthayi
+      const canCall = !!partner && partner.isHost !== amHost && !blockedByMe && !blockedMe;
+      return (
+        <View>
+          {showDay && <Text style={styles.day}>{dayLabel(item.createdAt)}</Text>}
+          <View style={[styles.callRec, mine ? styles.callRecMine : styles.callRecTheirs]}>
+            <View style={[styles.callRecIc, missed && styles.callRecIcMissed]}>
+              <Icon name="videoFill" size={17} color={missed ? '#ff7b7b' : colors.rose1} />
+            </View>
+            <View style={styles.flexShrink}>
+              <Text style={[styles.callRecTitle, missed && styles.callRecMissed]}>{callRecordTitle(r, mine)}</Text>
+              <Text style={styles.callRecSub}>
+                {r.s === 'ended' ? `${callDuration(r.d)} · ` : ''}
+                {hhmm(item.createdAt)}
+              </Text>
+            </View>
+            {canCall && (
+              <Pressable onPress={() => placeCall(partner!)} hitSlop={8} style={styles.callRecBtn}>
+                <Text style={styles.callRecBtnText}>{mine ? 'Call' : 'Call back'}</Text>
+              </Pressable>
+            )}
+          </View>
+        </View>
+      );
+    }
     if (item.type === 'gift') {
       const g = parseGift(item.body);
       if (g)
@@ -498,7 +540,9 @@ export default function ChatScreen({ navigation, route }: Props) {
                     <Text style={styles.giftSubText}> {g.total.toLocaleString('en-IN')}</Text>
                   </>
                 ) : (
-                  <Text style={styles.giftSubText}>{partner?.name ?? 'They'} sent you</Text>
+                  <Text style={styles.giftSubText} numberOfLines={1}>
+                    {partner?.name ?? 'They'} sent you
+                  </Text>
                 )}
               </View>
               <View style={styles.giftMeta}>
@@ -706,6 +750,7 @@ export default function ChatScreen({ navigation, route }: Props) {
           </View>
           <SafetyTip />
           {showPricing && <FreeNote n={pricing!.freeLimit} price={pricing!.price} />}
+          {pricing?.vipFree && <VipFreeNote />}
         </View>
       ) : (
         <FlatList
@@ -728,6 +773,7 @@ export default function ChatScreen({ navigation, route }: Props) {
               <View>
                 <SafetyTip />
                 {showPricing && <FreeNote n={pricing!.freeLimit} price={pricing!.price} />}
+                {pricing?.vipFree && <VipFreeNote />}
               </View>
             )
           }
@@ -840,6 +886,15 @@ function FreeNote({ n, price }: { n: number; price: number }) {
   );
 }
 
+// VIP ki chat free — upar ek baar bata do (warna pata hi nahi chalta)
+function VipFreeNote() {
+  return (
+    <View style={[styles.note, styles.vipNote]}>
+      <Text style={[styles.noteText, styles.vipNoteText]}>👑 VIP · your messages are free</Text>
+    </View>
+  );
+}
+
 // Free khatam hone par chat ke beech (screenshot jaisa)
 function PaidNotice({ price, vip, onVip }: { price: number; vip: boolean; onVip: () => void }) {
   return (
@@ -866,6 +921,19 @@ function TypingBubble() {
 }
 
 const styles = StyleSheet.create({
+  flexShrink: { flexShrink: 1 },
+  callRec: { flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 200, maxWidth: '80%', marginVertical: 3, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 16, backgroundColor: '#2a2025', borderWidth: 1, borderColor: colors.border },
+  callRecMine: { alignSelf: 'flex-end' },
+  callRecTheirs: { alignSelf: 'flex-start' },
+  callRecIc: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,95,143,0.15)' },
+  callRecIcMissed: { backgroundColor: 'rgba(255,80,80,0.15)' },
+  callRecTitle: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  callRecMissed: { color: '#ff7b7b' },
+  callRecSub: { color: colors.muted, fontSize: 11, marginTop: 1 },
+  callRecBtn: { marginLeft: 'auto', paddingLeft: 10 },
+  callRecBtnText: { color: colors.rose1, fontSize: 12, fontWeight: '800' },
+  vipNote: { backgroundColor: 'rgba(246,220,155,0.08)', borderColor: 'rgba(246,220,155,0.3)', borderWidth: 1 },
+  vipNoteText: { color: colors.gold1 },
   root: { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   err: { color: colors.muted },

@@ -15,6 +15,7 @@ import { DeviceToken } from './Device.js';
 import { MediaUnlock, UserVideo } from './Media.js';
 import { PayoutAccount, Withdrawal } from './Payout.js';
 import { ProfileVisit } from './Visit.js';
+import { Admin, AdminSession, AuditLog, ADMIN_ROLES, DeletedAccount, type AdminRole } from './Admin.js';
 import { SupportMessage, SupportTicket, SUPPORT_TOPICS, type SupportTopic } from './Support.js';
 
 const cascade = { onDelete: 'CASCADE' as const };
@@ -75,5 +76,6 @@ ProfileVisit.belongsTo(User, { as: 'viewer', foreignKey: 'viewerId', ...cascade 
 SupportTicket.belongsTo(User, { as: 'user', foreignKey: 'userId', ...cascade });
 SupportMessage.belongsTo(SupportTicket, { as: 'ticket', foreignKey: 'ticketId', ...cascade });
 
+export { Admin, AdminSession, AuditLog, ADMIN_ROLES, DeletedAccount, type AdminRole };
 export { SupportMessage, SupportTicket, SUPPORT_TOPICS, type SupportTopic };
 export { ProfileVisit, PayoutAccount, Withdrawal, MediaUnlock, UserVideo, DeviceToken, Agency, AppSetting, HostProfile, HostTx, HostWallet, Block, CheckIn, Notification, VipOrder, Call, Conversation, Follow, Gift, GiftTransaction, Message, Report, Status, StatusView, User, UserPhoto, Wallet, WalletTx };

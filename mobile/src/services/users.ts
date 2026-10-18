@@ -81,15 +81,17 @@ type Page = { users: UserCard[]; hasMore: boolean; page: number };
 export const AGE_MIN = 18;
 export const AGE_MAX = 60; // 60 = "60+"
 // Discover me sirf hosts aati hain — isliye gender filter nahi
-export type DiscoverFilter = { minAge: number; maxAge: number; online: boolean };
-export const DEFAULT_FILTER: DiscoverFilter = { minAge: AGE_MIN, maxAge: AGE_MAX, online: false };
-export const filterCount = (f: DiscoverFilter) => (f.minAge !== AGE_MIN || f.maxAge !== AGE_MAX ? 1 : 0) + (f.online ? 1 : 0);
+export type DiscoverFilter = { minAge: number; maxAge: number; online: boolean; langs: string[] };
+export const DEFAULT_FILTER: DiscoverFilter = { minAge: AGE_MIN, maxAge: AGE_MAX, online: false, langs: [] };
+export const filterCount = (f: DiscoverFilter) =>
+  (f.minAge !== AGE_MIN || f.maxAge !== AGE_MAX ? 1 : 0) + (f.online ? 1 : 0) + (f.langs.length ? 1 : 0);
 
 export const getDiscover = (page = 1, f: DiscoverFilter = DEFAULT_FILTER) => {
   const q = [`page=${page}`, 'limit=20'];
   if (f.online) q.push('online=1');
   if (f.minAge !== AGE_MIN) q.push(`minAge=${f.minAge}`);
   if (f.maxAge < AGE_MAX) q.push(`maxAge=${f.maxAge}`);
+  if (f.langs.length) q.push(`langs=${encodeURIComponent(f.langs.join(','))}`);
   return api<Page>(`/api/users/discover?${q.join('&')}`);
 };
 

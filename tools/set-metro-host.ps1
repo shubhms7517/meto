@@ -1,4 +1,4 @@
-param([string]$HostPort = '192.168.1.11:8081')
+param([string]$HostPort = '192.168.1.13:8081')
 $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $devices = & $adb devices | Select-Object -Skip 1 | Where-Object { $_ -match "`tdevice$" } | ForEach-Object { ($_ -split "`t")[0] }

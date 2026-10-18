@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Dimensions, FlatList, Image, Modal, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Modal, Pressable, StatusBar, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from './Icon';
 
@@ -9,10 +9,10 @@ type Props = {
   onClose: () => void;
 };
 
-const { width: W, height: H } = Dimensions.get('window');
 
 // Full-screen photo dekhna, left/right swipe
 export default function PhotoViewer({ photos, index, onClose }: Props) {
+  const { width: W, height: H } = useWindowDimensions(); // har render pe asli chaudai
   const insets = useSafeAreaInsets();
   const [current, setCurrent] = useState(index ?? 0);
   const list = useRef<FlatList<string>>(null);
@@ -36,7 +36,7 @@ export default function PhotoViewer({ photos, index, onClose }: Props) {
             showsHorizontalScrollIndicator={false}
             keyExtractor={(u, i) => `${i}-${u}`}
             onMomentumScrollEnd={e => setCurrent(Math.round(e.nativeEvent.contentOffset.x / W))}
-            renderItem={({ item }) => <Image source={{ uri: item }} style={styles.photo} resizeMode="contain" />}
+            renderItem={({ item }) => <Image source={{ uri: item }} style={{ width: W, height: H }} resizeMode="contain" />}
           />
         )}
         <View style={[styles.top, { top: insets.top + 8 }]}>
@@ -54,7 +54,6 @@ export default function PhotoViewer({ photos, index, onClose }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
-  photo: { width: W, height: H },
   top: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   counter: { color: '#fff', fontSize: 14, fontWeight: '600', backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, overflow: 'hidden' },
   // "+" ko 45° ghuma ke "×"

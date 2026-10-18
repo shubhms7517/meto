@@ -11,11 +11,14 @@ import { BigButton, HostHeader, s } from './common';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HostVideo'>;
 
-const SECONDS = 10;
+// Host form ki live video 30 sec; Me ka intro video 10 sec
+const APPLY_SECONDS = 30;
+const PROFILE_SECONDS = 10;
 
-// Intro video (KYC jaisa): sirf front camera, 3-2-1 ke baad 10 sec apne aap record, khud ruk jaata hai
+// Live video (KYC jaisa): sirf front camera, 3-2-1 ke baad apne aap record (form 30 sec, profile 10 sec), khud ruk jaata hai
 export default function HostVideoScreen({ navigation, route }: Props) {
   const profileMode = route.params?.mode === 'profile';
+  const SECONDS = profileMode ? PROFILE_SECONDS : APPLY_SECONDS;
   const [uploading, setUploading] = useState(false);
   const insets = useSafeAreaInsets();
   const device = useCameraDevice('front');
@@ -31,7 +34,8 @@ export default function HostVideoScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     ensureCallPermissions().then(setAllowed);
-    return () => timers.current.forEach(clearTimeout);
+    const list = timers.current; // wahi array jisme timers judte hain
+    return () => list.forEach(clearTimeout);
   }, []);
 
   const start = () => {

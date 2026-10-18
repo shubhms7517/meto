@@ -1,10 +1,11 @@
 import { api, jsonBody } from './api';
 import type { ChatMessage } from './chat';
 
-export type Gift = { id: number; name: string; icon: string; price: number; isRare: boolean };
+// iconUrl = admin ka PNG icon, svgaUrl = poori screen ki animation (na ho to emoji)
+export type Gift = { id: number; name: string; icon: string; iconUrl?: string | null; svgaUrl?: string | null; price: number; isRare: boolean };
 
 // Chat ke gift message ki body (server JSON bhejta hai)
-export type GiftBody = { giftId: number; name: string; icon: string; price: number; qty: number; total: number };
+export type GiftBody = { giftId: number; name: string; icon: string; iconUrl?: string | null; svgaUrl?: string | null; price: number; qty: number; total: number };
 
 export type GiftReceived = { gift: GiftBody; from: { id: number; name: string }; callId: number | null; messageId: number };
 

@@ -29,7 +29,7 @@ export type RootStackParamList = {
   Match: undefined;
   HostIntro: { invite?: string } | undefined; // "Become a host" (invite = agency link ka code)
   HostApply: { video?: string } | undefined; // form (video HostVideo se wapas aata hai)
-  HostVideo: { mode?: 'apply' | 'profile' } | undefined; // front camera, 10 sec apne aap (profile = Me ka intro video)
+  HostVideo: { mode?: 'apply' | 'profile' } | undefined; // front camera, apne aap (form 30 sec, profile 10 sec) (profile = Me ka intro video)
   HostEarnings: undefined;
   Withdraw: undefined;
   PayoutAccount: undefined; // UPI + PAN

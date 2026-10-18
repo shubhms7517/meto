@@ -8,6 +8,7 @@ type RemoteMsg = { data?: Record<string, unknown> }; // FCM message (sirf data c
 
 const CALLS = 'calls';
 const MESSAGES = 'messages';
+const RING = 'ring_in_app'; // app khuli ho tab ghanti (popup nahi — call screen pehle se khuli hai)
 
 export async function setupChannels() {
   await notifee.createChannel({
@@ -20,7 +21,30 @@ export async function setupChannels() {
     vibrationPattern: [300, 900, 300, 900],
   });
   await notifee.createChannel({ id: MESSAGES, name: 'Messages', importance: AndroidImportance.HIGH, sound: 'default' });
+  await notifee.createChannel({
+    id: RING,
+    name: 'Ringing while app is open',
+    importance: AndroidImportance.DEFAULT, // awaaz + vibrate, upar popup nahi
+    sound: 'default',
+    vibration: true,
+    vibrationPattern: [300, 900, 300, 900],
+  });
 }
+
+// App khuli hai aur call aayi → ghanti baar-baar (phone silent / vibrate ho to Android khud sambhalta hai)
+const ringId = (callId: number) => `ring-${callId}`;
+export async function startInAppRing(callId: number, name: string) {
+  await setupChannels().catch(() => {});
+  await notifee
+    .displayNotification({
+      id: ringId(callId),
+      title: name || 'Meto',
+      body: 'Incoming video call…',
+      android: { channelId: RING, ongoing: true, autoCancel: false, loopSound: true, timeoutAfter: 30_000, pressAction: { id: 'default' } },
+    })
+    .catch(() => {});
+}
+export const stopInAppRing = (callId: number) => notifee.cancelNotification(ringId(callId)).catch(() => {});
 
 let tokenSent: string | null = null;
 let unsubRefresh: (() => void) | null = null;

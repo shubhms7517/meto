@@ -1,8 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { Dimensions } from 'react-native';
 import {
   ActivityIndicator,
-  Alert,
+  useWindowDimensions,
   Image,
   Pressable,
   ScrollView,
@@ -41,12 +40,15 @@ import {
 } from '../../services/host';
 import { useWallet } from '../../context/WalletContext';
 import { signOut } from '../../services/auth';
+import { appAlert } from '../../lib/dialog';
 
 const MAX_PHOTOS = 9;
-const TILE = (Dimensions.get('window').width - 32 - 12) / 3; // 3 line ka grid
 
 // Host ka "Me": wallet / VIP / level / check-in nahi — kamai, rate, photos, niyam
 export default function HostMeScreen() {
+  const { width } = useWindowDimensions();
+  const TILE = (width - 32 - 12) / 3; // 3 line ka grid
+  const tileSize = { width: TILE, height: TILE * 1.33 };
   const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -72,7 +74,7 @@ export default function HostMeScreen() {
   const refresh = async () => {
     setRefreshing(true);
     await load().catch(() =>
-      Alert.alert(
+      appAlert(
         'Me',
         'Can’t load right now. Check your internet and try again.',
       ),
@@ -93,14 +95,14 @@ export default function HostMeScreen() {
       await uploadPhoto(uri, false);
       await load();
     } catch (e) {
-      Alert.alert('Upload failed', (e as Error).message);
+      appAlert('Upload failed', (e as Error).message);
     } finally {
       setUploading(false);
     }
   };
 
   const removePhoto = (p: MyPhoto) =>
-    Alert.alert(
+    appAlert(
       'Delete photo?',
       'This photo will be removed from your profile.',
       [
@@ -110,7 +112,7 @@ export default function HostMeScreen() {
           style: 'destructive',
           onPress: async () => {
             await deletePhoto(p.id).catch(e =>
-              Alert.alert('Could not delete', (e as Error).message),
+              appAlert('Could not delete', (e as Error).message),
             );
             load().catch(() => {});
           },
@@ -119,7 +121,7 @@ export default function HostMeScreen() {
     );
 
   const onSignOut = () =>
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
+    appAlert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign out',
@@ -133,7 +135,7 @@ export default function HostMeScreen() {
 
   // Video: front camera se 10 sec record, ya gallery se (30 sec tak)
   const addVideo = () =>
-    Alert.alert(
+    appAlert(
       'Add video',
       'Up to 30 sec. Your first video is free for users to watch.',
       [
@@ -149,7 +151,7 @@ export default function HostMeScreen() {
             ).assets?.[0];
             if (!a?.uri) return;
             if ((a.duration ?? 0) > 31) {
-              Alert.alert(
+              appAlert(
                 'Too long',
                 'Please choose a video of 30 seconds or less.',
               );
@@ -160,7 +162,7 @@ export default function HostMeScreen() {
               await uploadHostVideo(a.uri);
               await load();
             } catch (e) {
-              Alert.alert('Video', (e as Error).message);
+              appAlert('Video', (e as Error).message);
             } finally {
               setVideoBusy(false);
             }
@@ -174,7 +176,7 @@ export default function HostMeScreen() {
     );
 
   const removeVideo = (id: number) =>
-    Alert.alert('Delete video?', 'Users will no longer see this video.', [
+    appAlert('Delete video?', 'Users will no longer see this video.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -182,7 +184,7 @@ export default function HostMeScreen() {
         onPress: () =>
           deleteHostVideo(id)
             .then(load)
-            .catch(e => Alert.alert('Video', (e as Error).message)),
+            .catch(e => appAlert('Video', (e as Error).message)),
       },
     ]);
 
@@ -191,7 +193,7 @@ export default function HostMeScreen() {
       setH(await setHostRate(r));
       refreshWallet();
     } catch (e) {
-      Alert.alert('Rate', (e as Error).message);
+      appAlert('Rate', (e as Error).message);
       throw e;
     }
   };
@@ -356,13 +358,12 @@ export default function HostMeScreen() {
               </Text>
             </View>
             <View style={st.chips}>
-              {h.rates.map(r => {
-                const locked = r > h.rateMax;
+              {h.rates.filter(r => r <= h.rateMax).map(r => {
                 const on = r === h.rate;
                 return (
                   <Pressable
                     key={r}
-                    disabled={locked || on}
+                    disabled={on}
                     onPress={() => pickRate(r).catch(() => {})}
                     style={{ flex: 1 }}
                   >
@@ -382,11 +383,9 @@ export default function HostMeScreen() {
                         style={[
                           st.chip,
                           st.chipOff,
-                          locked && { opacity: 0.4 },
                         ]}
                       >
                         <Text style={st.chipText}>
-                          {locked ? '🔒 ' : ''}
                           {r.toLocaleString('en-IN')}
                         </Text>
                       </View>
@@ -415,8 +414,8 @@ export default function HostMeScreen() {
               <Text style={st.customEdit}>{isCustom ? 'Edit' : 'Set'}</Text>
             </Pressable>
             <Text style={st.rateNote}>
-              🔒 Rates above {h.rateMax.toLocaleString('en-IN')} unlock at a
-              higher host level · if you end a call, only full minutes count
+              {h.rateMin.toLocaleString('en-IN')} – {h.rateMax.toLocaleString('en-IN')} gems/min · if you end a
+              call, only full minutes count
             </Text>
           </View>
         )}
@@ -467,7 +466,7 @@ export default function HostMeScreen() {
                 <Pressable
                   onPress={addPhoto}
                   disabled={uploading}
-                  style={[st.tile, st.add]}
+                  style={[st.tile, tileSize, st.add]}
                 >
                   {uploading ? (
                     <ActivityIndicator color={colors.rose1} />
@@ -485,7 +484,7 @@ export default function HostMeScreen() {
                 </Pressable>
               )}
               {me?.photos.map((p, i) => (
-                <View key={p.id} style={st.tile}>
+                <View key={p.id} style={[st.tile, tileSize]}>
                   <Image source={{ uri: p.url }} style={st.fill} />
                   <Badge free={i < media.freePhotos} price={media.photoPrice} />
                   <Pressable
@@ -504,7 +503,7 @@ export default function HostMeScreen() {
                 <Pressable
                   onPress={addVideo}
                   disabled={videoBusy}
-                  style={[st.tile, st.add]}
+                  style={[st.tile, tileSize, st.add]}
                 >
                   {videoBusy ? (
                     <ActivityIndicator color={colors.rose1} />
@@ -517,7 +516,7 @@ export default function HostMeScreen() {
                 </Pressable>
               )}
               {me?.videos?.map((v, i) => (
-                <View key={v.id} style={st.tile}>
+                <View key={v.id} style={[st.tile, tileSize]}>
                   <IntroVideo uri={v.url} style={st.fill} label="" />
                   <Badge free={i < media.freeVideos} price={media.videoPrice} />
                   <Pressable
@@ -675,8 +674,6 @@ const st = StyleSheet.create({
     marginTop: 10,
   },
   tile: {
-    width: TILE,
-    height: TILE * 1.33,
     borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: colors.surface,

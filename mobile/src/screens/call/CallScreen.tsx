@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSafetyMenu } from '../../hooks/useSafetyMenu';
 import {
-  Alert,
   Animated,
   BackHandler,
   Easing,
@@ -52,6 +51,8 @@ import {
 import type { UserCard } from '../../services/users';
 import type { CallBilling } from '../../services/calls';
 import type { RootStackParamList } from '../../navigation/types';
+import { startInAppRing, stopInAppRing } from '../../services/push';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Call'>;
 type Phase =
@@ -83,6 +84,15 @@ export default function CallScreen({ navigation, route }: Props) {
   const [call, setCall] = useState<CallInfo | null>(
     params.mode === 'incoming' ? params.call : null,
   );
+  // Aayi hui call baj rahi hai → ghanti; uthao / kaato / screen band → chup
+  const ringCallId = params.mode === 'incoming' ? params.call.id : null;
+  useEffect(() => {
+    if (ringCallId == null || phase !== 'incoming') return;
+    startInAppRing(ringCallId, peer.name ?? 'Meto');
+    return () => {
+      stopInAppRing(ringCallId);
+    };
+  }, [ringCallId, phase, peer.name]);
   const [remoteUid, setRemoteUid] = useState<number | null>(null);
   const [previewOn, setPreviewOn] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -289,7 +299,7 @@ export default function CallScreen({ navigation, route }: Props) {
       s.off('call:ended', onEnded);
       s.off('call:billing', onBilling);
     };
-  }, [joinChannel, releaseEngine, navigation, params.mode, setBalance]);
+  }, [joinChannel, releaseEngine, navigation, params.mode, setBalance, peer.id]);
 
   // Screen band → sab saaf
   useEffect(
@@ -345,7 +355,7 @@ export default function CallScreen({ navigation, route }: Props) {
     if (!call) return;
     Vibration.cancel();
     if (!(await ensureCallPermissions())) {
-      Alert.alert(
+      appAlert(
         'Permission needed',
         'Allow camera and microphone to answer video calls.',
       );
@@ -409,7 +419,7 @@ export default function CallScreen({ navigation, route }: Props) {
         decline();
         return true;
       }
-      Alert.alert('End call?', undefined, [
+      appAlert('End call?', undefined, [
         { text: 'Stay', style: 'cancel' },
         { text: 'End', style: 'destructive', onPress: hangUp },
       ]);
@@ -532,7 +542,7 @@ export default function CallScreen({ navigation, route }: Props) {
             <View style={styles.rate}>
               <Coin size={20} />
               <Text style={styles.rateText}>
-                {call?.rate ?? rateFor(peer.rate)} gems / min
+                {(call?.rate ?? rateFor(peer.rate)).toLocaleString('en-IN')} gems / min
               </Text>
             </View>
           ) : peer.isHost && call ? (
@@ -563,7 +573,9 @@ export default function CallScreen({ navigation, route }: Props) {
               iconScale={0.9}
             />
             <View>
-              <Text style={styles.tbName}>{peer.name}</Text>
+              <Text style={styles.tbName} numberOfLines={1}>
+                {peer.name}
+              </Text>
               <Text style={styles.timer}>
                 ● {phase === 'active' ? formatDuration(seconds) : 'Connecting'}
               </Text>
@@ -1147,7 +1159,7 @@ function Ended(p: {
               </Text>
             </View>
             <View style={[styles.sumItem, styles.sumBorder]}>
-              <Text style={styles.sumNum}>{p.call!.rate}</Text>
+              <Text style={styles.sumNum}>{p.call!.rate.toLocaleString('en-IN')}</Text>
               <Text style={styles.sumLbl}>Gems / min</Text>
             </View>
           </View>

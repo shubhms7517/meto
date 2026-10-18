@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Easing, Modal, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Modal, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,8 @@ import { buyPack, fmt, getWallet, IS_TEST_PAYMENTS, type Pack, type WalletSummar
 import { useWallet } from '../../context/WalletContext';
 import type { RootStackParamList } from '../../navigation/types';
 import { PurchaseCancelled } from '../../services/billing';
+import { ErrorState, SkeletonList } from '../../components/States';
+import { appAlert } from '../../lib/dialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Wallet'>;
 
@@ -77,7 +79,7 @@ export default function WalletScreen({ navigation }: Props) {
       load();
     } catch (e) {
       if (e instanceof PurchaseCancelled) return; // user ne Play pe khud band kiya
-      Alert.alert('Recharge failed', (e as Error).message);
+      appAlert('Recharge failed', (e as Error).message);
     } finally {
       setPaying(false);
     }
@@ -103,14 +105,9 @@ export default function WalletScreen({ navigation }: Props) {
 
       {!data ? (
         error ? (
-          <View style={styles.center}>
-            <Text style={styles.err}>{error}</Text>
-            <Pressable onPress={load} style={styles.retry}>
-              <Text style={styles.retryText}>Try again</Text>
-            </Pressable>
-          </View>
+          <ErrorState onRetry={load} />
         ) : (
-          <ActivityIndicator color={colors.rose1} style={{ marginTop: 60 }} />
+          <SkeletonList rows={5} avatar={false} />
         )
       ) : (
         <>
@@ -289,7 +286,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   topGlow: { position: 'absolute', left: 0, right: 0, top: 0, height: 360 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 10 },
-  back: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  back: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   title: { color: colors.text, fontSize: 19, fontWeight: '700', flex: 1 },
   histBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   histText: { color: '#ffd6e4', fontSize: 13, fontWeight: '600' },

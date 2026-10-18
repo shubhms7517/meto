@@ -8,7 +8,7 @@ type Props = {
   visible: boolean;
   value: number;
   min: number;
-  max: number; // isse upar 🔒 (host level se khulega)
+  max: number; // sabse zyada rate (admin settings se)
   step: number;
   pointsPerInr: number;
   onClose: () => void;
@@ -27,16 +27,9 @@ export default function RateSheet({ visible, value, min, max, step, pointsPerInr
     if (visible) setRate(Math.min(max, Math.max(min, value)));
   }, [visible, value, min, max]);
 
-  // Bar pe max (3,000) beech me — aage ka aadha hissa 🔒 (host level se khulega), thumb wahan nahi jaata
-  const top = max + (max - min);
-  const [hitLock, setHitLock] = useState(false);
   const clamp = (r: number) => Math.min(max, Math.max(min, Math.round(r / step) * step));
-  const fromX = (x: number) => {
-    const r = min + (Math.max(0, Math.min(w, x)) / w) * (top - min);
-    setHitLock(r > max + step / 2);
-    setRate(clamp(r));
-  };
-  const pct = ((rate - min) / (top - min)) * 100;
+  const fromX = (x: number) => setRate(clamp(min + (Math.max(0, Math.min(w, x)) / w) * (max - min)));
+  const pct = max > min ? ((rate - min) / (max - min)) * 100 : 0;
 
   const save = async () => {
     setSaving(true);
@@ -80,17 +73,13 @@ export default function RateSheet({ visible, value, min, max, step, pointsPerInr
           onResponderMove={e => fromX(e.nativeEvent.locationX)}>
           <View style={st.bar}>
             <LinearGradient colors={[colors.rose1, colors.gold1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[st.fill, { width: `${pct}%` }]} />
-            <View style={st.lockZone} />
           </View>
-          <View pointerEvents="none" style={st.lockMark} />
           <View pointerEvents="none" style={[st.thumb, { left: `${pct}%` }]} />
         </View>
         <View style={st.scale}>
-          <Text style={[st.scaleText, st.scaleSide]}>{fmt(min)}</Text>
-          <Text style={[st.scaleText, st.scaleMid]}>{fmt(max)}</Text>
-          <Text style={[st.scaleText, st.scaleSide, st.scaleLock]}>🔒 {fmt(top)}</Text>
+          <Text style={st.scaleText}>{fmt(min)}</Text>
+          <Text style={st.scaleText}>{fmt(max)}</Text>
         </View>
-        <Text style={[st.lock, hitLock && st.lockHit]}>🔒 Above {fmt(max)} unlocks at a higher host level</Text>
 
         <Text style={st.earn}>
           You earn <Text style={st.earnVal}>₹{fmt(Math.round(rate / Math.max(1, pointsPerInr)))} / min</Text> ({fmt(rate)} points)
@@ -121,16 +110,9 @@ const st = StyleSheet.create({
   track: { height: 34, justifyContent: 'center', marginTop: 14, marginHorizontal: 8 },
   bar: { height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.08)' },
   fill: { position: 'absolute', left: 0, top: 0, bottom: 0 },
-  lockZone: { position: 'absolute', left: '50%', right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(255,138,158,0.18)' },
-  lockMark: { position: 'absolute', left: '50%', width: 2, height: 16, marginLeft: -1, borderRadius: 1, backgroundColor: 'rgba(255,138,158,0.7)' },
   thumb: { position: 'absolute', width: 20, height: 20, marginLeft: -10, borderRadius: 10, backgroundColor: '#fff' },
-  scale: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 4 },
-  scaleSide: { flex: 1 },
-  scaleMid: { textAlign: 'center' },
-  scaleLock: { textAlign: 'right', color: '#ff8a9e' },
+  scale: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 4 },
   scaleText: { color: colors.fine, fontSize: 11 },
-  lock: { color: colors.fine, fontSize: 11, textAlign: 'center', marginTop: 6 },
-  lockHit: { color: '#ff8a9e', fontWeight: '700' },
   earn: { color: colors.muted, fontSize: 12.5, textAlign: 'center', marginTop: 14 },
   earnVal: { color: colors.online, fontWeight: '700' },
   save: { height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginTop: 16 },

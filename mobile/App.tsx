@@ -12,6 +12,7 @@ import { CallProvider } from './src/context/CallContext';
 import { WalletProvider } from './src/context/WalletContext';
 import { NotificationProvider } from './src/context/NotificationContext';
 import { startInviteLinks } from './src/lib/invite';
+import DialogHost from './src/components/DialogHost';
 
 startInviteLinks();
 
@@ -23,6 +24,7 @@ function App() {
           <CallProvider>
             <NotificationProvider>
               <RootNavigator />
+              <DialogHost />
             </NotificationProvider>
           </CallProvider>
         </WalletProvider>
