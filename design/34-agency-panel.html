@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meto · Agency panel design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12070d; --surface: #1d1418; --card: #241c20; --card2: #2b2126; --line: rgba(255,255,255,.08);
+    --text: #f6e9ee; --muted: #b9a3ad; --dim: #7d6872;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d9ae55; --gold-ink: #3a2608;
+    --green: #3ee08f; --red: #ff5f7a; --blue: #7fb0ff; --amber: #ffb547;
+    /* agency portal — same Meto theme as admin */
+    --ag-bg: #12070d; --ag-surface: #1d1418; --ag-card: #241c20; --ag-line: rgba(255,255,255,.08);
+    --teal-1: #ff5f8f; --teal-2: #d81b5c; --ag-ink: #fff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Poppins, system-ui, sans-serif; background: #0b0408; color: var(--text); padding: 30px 26px 70px; font-size: 13px; }
+  header.page h1 { font-size: 25px; } header.page p { color: var(--muted); font-size: 13.5px; margin-top: 4px; max-width: 760px; }
+  h2.sec { margin: 40px 0 2px; font-size: 16px; color: var(--gold-1); } h2.sec.teal { color: var(--gold-1); }
+  h2.sec span { color: var(--dim); font-size: 12.5px; font-weight: 400; }
+  .shot { margin-top: 16px; }
+  .win { border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); box-shadow: 0 30px 60px -30px rgba(0,0,0,.9); }
+  .bar { height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 14px; background: #1a1015; border-bottom: 1px solid var(--line); }
+  .bar.teal { background: #1a1015; }
+  .bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a2a31; } .bar.teal i { background: #244; } .bar span { margin-left: 14px; font-size: 11.5px; color: var(--dim); }
+  .app { display: grid; grid-template-columns: 210px 1fr; min-height: 540px; background: var(--bg); }
+  .app.teal { background: var(--ag-bg); }
+  .side { background: radial-gradient(120% 55% at 0% 0%, #3a0f24, #170a10 60%); border-right: 1px solid var(--line); padding: 16px 12px; }
+  .side.teal { background: radial-gradient(120% 55% at 0% 0%, #3a0f24, #170a10 60%); border-color: var(--ag-line); }
+  .logo { font-size: 20px; font-weight: 800; font-style: italic; color: var(--gold-1); padding: 0 8px 2px; } .logo small { font-size: 9px; font-style: normal; color: var(--rose-1); margin-left: 5px; letter-spacing: .1em; }
+  .logo.teal { color: var(--gold-1); } .logo.teal small { color: var(--rose-1); }
+  .who { margin: 10px 8px 0; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+  .who i { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); flex: none; } .who.teal i { background: linear-gradient(135deg, var(--teal-1), var(--teal-2)); }
+  .who b { color: var(--text); display: block; font-size: 11.5px; }
+  nav { margin-top: 14px; display: flex; flex-direction: column; gap: 2px; }
+  nav a { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 10px; font-size: 12.5px; color: var(--muted); text-decoration: none; }
+  nav a.on { color: #fff; background: linear-gradient(100deg, rgba(255,95,143,.22), rgba(255,95,143,.05)); }
+  nav.teal a.on { background: linear-gradient(100deg, rgba(255,95,143,.22), rgba(255,95,143,.05)); color: #fff; }
+  nav a .n { margin-left: auto; min-width: 18px; height: 18px; padding: 0 6px; border-radius: 9px; display: grid; place-items: center; font-size: 10px; font-weight: 800; color: #fff; background: var(--rose-1); }
+  nav.teal a .n { background: var(--teal-2); }
+  nav .sep { margin: 12px 10px 3px; font-size: 9.5px; letter-spacing: .1em; color: var(--dim); }
+  .main { padding: 22px 24px; overflow: hidden; }
+  .top { display: flex; align-items: flex-start; gap: 14px; }
+  .top h3 { font-size: 19px; } .top .sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .btn { border: 0; border-radius: 10px; padding: 9px 15px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .b-rose { background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); color: #fff; }
+  .b-teal { background: linear-gradient(100deg, var(--teal-1), var(--teal-2)); color: var(--ag-ink); }
+  .b-ghost { background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+  .right { margin-left: auto; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; margin-top: 18px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 13px 15px; }
+  .app.teal .kpi { background: var(--ag-card); border-color: var(--ag-line); }
+  .kpi small { color: var(--dim); font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi b { display: block; font-size: 23px; margin-top: 5px; font-weight: 700; }
+  .kpi.g b { color: var(--green); } .kpi.gold b { color: var(--gold-1); } .kpi.teal b { color: var(--gold-1); }
+  .kpi em { font-style: normal; color: var(--muted); font-size: 10.5px; }
+  .card { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 13px; overflow: hidden; }
+  .app.teal .card { background: var(--ag-card); border-color: var(--ag-line); }
+  .card h4 { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--line); display: flex; align-items: center; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--dim); font-size: 10px; letter-spacing: .05em; font-weight: 600; padding: 10px 16px; border-bottom: 1px solid var(--line); text-transform: uppercase; }
+  td { padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; } tr:last-child td { border-bottom: 0; }
+  .u { display: flex; align-items: center; gap: 9px; } .av { width: 28px; height: 28px; border-radius: 50%; flex: none; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 11px; } .teal-av { background: linear-gradient(135deg, var(--teal-1), var(--teal-2)); color: var(--ag-ink); }
+  .u b { font-size: 12.5px; } .u small { display: block; color: var(--dim); font-size: 10px; }
+  .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+  .p-ok { color: var(--green); background: rgba(62,224,143,.12); } .p-pend { color: var(--amber); background: rgba(255,181,71,.12); } .p-off { color: var(--muted); background: rgba(255,255,255,.06); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; }
+  .r { text-align: right; } .gold { color: var(--gold-1); } .green { color: var(--green); } .dim { color: var(--dim); }
+  .app.teal { color: var(--text); } .app.teal .top h3, .app.teal .card h4 { color: var(--text); }
+  .invite { margin-top: 16px; background: linear-gradient(100deg, rgba(246,220,155,.1), rgba(246,220,155,.02)); border: 1px solid rgba(246,220,155,.3); border-radius: 13px; padding: 16px; }
+  .invite b { font-size: 13px; color: var(--gold-1); } .invite .link { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+  .invite input { flex: 1; background: var(--ag-surface); border: 1px solid var(--ag-line); border-radius: 9px; padding: 9px 12px; color: var(--gold-1); font-size: 12.5px; }
+  .field { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line); }
+  .field:last-child { border: 0; } .field span { font-size: 12.5px; } .field small { display: block; color: var(--dim); font-size: 10.5px; }
+  .input { background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; color: var(--text); font-size: 12.5px; width: 150px; }
+  figcaption { margin-top: 11px; color: var(--muted); font-size: 12.5px; } figcaption b { color: var(--text); }
+  /* login */
+  .login { min-height: 520px; display: grid; place-items: center; background: radial-gradient(70% 60% at 50% 0%, #4a1230, #12070d 72%); }
+  .lbox { width: 360px; max-width: 90%; padding: 30px; border-radius: 22px; background: var(--ag-surface); border: 1px solid var(--ag-line); text-align: center; }
+  .lbox .logo { font-size: 30px; padding: 0; } .lbox p { color: var(--muted); font-size: 12px; margin: 6px 0 18px; }
+  .lbox input { width: 100%; height: 44px; background: var(--ag-bg); border: 1px solid var(--ag-line); border-radius: 11px; padding: 0 14px; color: var(--text); font-size: 13px; margin-bottom: 11px; }
+  .lbox .btn { width: 100%; height: 44px; }
+  .lbox .note { margin-top: 14px; font-size: 11px; color: var(--dim); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Agency panel — design</h1>
+  <p>Two parts: (1) the <b>Agencies page inside the admin panel</b> (owner creates & manages agencies) and (2) a <b>separate agency portal</b> with its own login and its own look, where an agency sees only their own hosts, invite link and commission.</p>
+</header>
+
+<!-- ============ PART A: ADMIN → AGENCIES ============ -->
+<h2 class="sec">A · Admin panel → “Agencies” page <span>· owner only · rose theme like the rest of admin</span></h2>
+<figure class="shot">
+  <div class="win">
+    <div class="bar"><i></i><i></i><i></i><span>admin.meto.app / agencies</span></div>
+    <div class="app">
+      <aside class="side">
+        <div class="logo">Meto<small>ADMIN</small></div>
+        <div class="who"><i></i><div><b>Shubham</b>Owner</div></div>
+        <nav>
+          <a>📊 Dashboard</a>
+          <div class="sep">QUEUES</div>
+          <a>🎙️ Host applications</a>
+          <a>🚩 Reports <span class="n">2</span></a>
+          <a>🔴 Live calls</a>
+          <div class="sep">PEOPLE</div>
+          <a>👥 Users</a>
+          <a>💖 Hosts</a>
+          <a class="on">🏢 Agencies <span class="n">3</span></a>
+          <div class="sep">PLATFORM</div>
+          <a>⚙️ Settings</a>
+          <a>📜 Audit log</a>
+        </nav>
+      </aside>
+      <section class="main">
+        <div class="top">
+          <div><h3>Agencies</h3><div class="sub">Partners who bring hosts · they earn a commission on their hosts’ income</div></div>
+          <button class="btn b-rose right">+ New agency</button>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><small>Agencies</small><b>3</b><em>2 active</em></div>
+          <div class="kpi"><small>Hosts via agencies</small><b>14</b><em>of 21 total</em></div>
+          <div class="kpi gold"><small>Their host earnings · 30d</small><b>₹48,200</b><em>gross</em></div>
+          <div class="kpi g"><small>Commission owed</small><b>₹4,820</b><em>to pay out</em></div>
+        </div>
+        <div class="card">
+          <table>
+            <thead><tr><th>AGENCY</th><th>CODE</th><th>HOSTS</th><th class="r">EARNINGS 30d</th><th>COMMISSION</th><th class="r">OWED</th><th>STATUS</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="u"><span class="av">S</span><div><b>Star Agency</b><small>star@agency.com</small></div></div></td>
+                <td class="dim">AG1045</td><td>8</td><td class="r gold">₹28,400</td><td>10%</td><td class="r green">₹2,840</td><td><span class="pill p-ok">Active</span></td>
+              </tr>
+              <tr>
+                <td><div class="u"><span class="av">M</span><div><b>Moon Talent</b><small>moon@agency.com</small></div></div></td>
+                <td class="dim">AG2290</td><td>6</td><td class="r gold">₹19,800</td><td>10%</td><td class="r green">₹1,980</td><td><span class="pill p-ok">Active</span></td>
+              </tr>
+              <tr>
+                <td><div class="u"><span class="av">R</span><div><b>Rose Models</b><small>rose@agency.com</small></div></div></td>
+                <td class="dim">AG3011</td><td>0</td><td class="r dim">₹0</td><td>8%</td><td class="r dim">₹0</td><td><span class="pill p-off">Paused</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+  <figcaption><b>Admin → Agencies.</b> Owner yahan agency banata hai (naam, login email+password, code, commission %), har agency ki hosts/earnings/owed-commission dekhta hai, aur payout karta hai. Row click → us agency ki detail + “Pay commission”.</figcaption>
+</figure>
+
+<!-- New agency form (admin, small) -->
+<h2 class="sec">A2 · “New agency” form <span>· admin banata hai + login deta hai</span></h2>
+<figure class="shot">
+  <div class="win" style="max-width:520px">
+    <div class="bar"><i></i><i></i><i></i><span>New agency</span></div>
+    <div style="background:var(--surface);padding:22px">
+      <h3 style="font-size:16px;margin-bottom:4px">New agency</h3>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:14px">They log in to the separate agency portal with this email + password.</p>
+      <div class="two">
+        <div><label style="font-size:11.5px;color:var(--muted)">Agency name</label><input class="input" style="width:100%;margin-top:5px" value="Star Agency"></div>
+        <div><label style="font-size:11.5px;color:var(--muted)">Invite code</label><input class="input" style="width:100%;margin-top:5px" value="AG1045"></div>
+        <div><label style="font-size:11.5px;color:var(--muted)">Login email</label><input class="input" style="width:100%;margin-top:5px" value="star@agency.com"></div>
+        <div><label style="font-size:11.5px;color:var(--muted)">Commission %</label><input class="input" style="width:100%;margin-top:5px" value="10"></div>
+        <div style="grid-column:1/3"><label style="font-size:11.5px;color:var(--muted)">First password (10+ chars)</label><input class="input" type="password" style="width:100%;margin-top:5px" value="••••••••••"></div>
+      </div>
+      <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:16px"><button class="btn b-ghost">Cancel</button><button class="btn b-rose">Create agency</button></div>
+    </div>
+  </div>
+  <figcaption><b>Agency banate waqt hi login ban jaata hai.</b> Email + password agency ko diya jaata hai; wo isi se alag agency portal mein login karti hai.</figcaption>
+</figure>
+
+<!-- ============ PART B: AGENCY PORTAL LOGIN ============ -->
+<h2 class="sec teal">B · Agency portal — login <span>· alag UI · teal “partner” look · apna login</span></h2>
+<figure class="shot">
+  <div class="win">
+    <div class="bar teal"><i></i><i></i><i></i><span>partners.meto.app / agency</span></div>
+    <div class="login">
+      <div class="lbox">
+        <div class="logo teal">Meto<small>PARTNERS</small></div>
+        <p>Agency login · bring hosts, earn commission</p>
+        <input placeholder="Agency email">
+        <input type="password" placeholder="Password">
+        <button class="btn b-teal">Sign in</button>
+        <div class="note">Only for agencies · 5 wrong tries = locked 15 min</div>
+      </div>
+    </div>
+  </div>
+  <figcaption><b>Agency portal login.</b> Admin panel se bilkul alag look (teal), alag URL (/agency). Agency apne email+password se aati hai — admin panel mein nahi ghus sakti.</figcaption>
+</figure>
+
+<!-- ============ PART B2: AGENCY DASHBOARD ============ -->
+<h2 class="sec teal">B2 · Agency portal — dashboard <span>· agency ko sirf apna data</span></h2>
+<figure class="shot">
+  <div class="win">
+    <div class="bar teal"><i></i><i></i><i></i><span>partners.meto.app / agency</span></div>
+    <div class="app teal">
+      <aside class="side teal">
+        <div class="logo teal">Meto<small>PARTNERS</small></div>
+        <div class="who teal"><i></i><div><b>Star Agency</b>AG1045</div></div>
+        <nav class="teal">
+          <a class="on">📊 Dashboard</a>
+          <a>💖 My hosts <span class="n">8</span></a>
+          <a>🔗 Invite link</a>
+          <a>💰 Commission</a>
+          <a>⚙️ Account</a>
+        </nav>
+      </aside>
+      <section class="main">
+        <div class="top"><div><h3>Dashboard</h3><div class="sub">Star Agency · last 30 days</div></div></div>
+        <div class="kpis">
+          <div class="kpi teal"><small>My hosts</small><b>8</b><em>6 approved · 1 pending</em></div>
+          <div class="kpi"><small>Online now</small><b>3</b><em>taking calls</em></div>
+          <div class="kpi gold"><small>Host earnings · 30d</small><b>₹28,400</b><em>gross</em></div>
+          <div class="kpi teal"><small>My commission · 10%</small><b>₹2,840</b><em>₹2,840 to pay out</em></div>
+        </div>
+        <div class="invite">
+          <b>🔗 Your invite link</b>
+          <div style="color:var(--dim);font-size:11.5px;margin-top:3px">Share with women to recruit them as hosts — they join under your agency.</div>
+          <div class="link"><input value="https://meto.app/join?agency=AG1045" readonly><button class="btn b-teal">Copy</button><button class="btn b-ghost">QR</button></div>
+        </div>
+        <div class="card">
+          <h4>Recent host activity</h4>
+          <table>
+            <tbody>
+              <tr><td><div class="u"><span class="av teal-av">A</span><div><b>Aisha, 24</b><small>online now</small></div></div></td><td class="r">Video call · 12 min</td><td class="r gold">+₹1,200</td><td class="dim">2 min ago</td></tr>
+              <tr><td><div class="u"><span class="av teal-av">N</span><div><b>Neha, 29</b><small>ID 100000009</small></div></div></td><td class="r">Gift · Diamond</td><td class="r gold">+₹300</td><td class="dim">1 h ago</td></tr>
+              <tr><td><div class="u"><span class="av teal-av">P</span><div><b>Priya, 23</b><small>ID 100000008</small></div></div></td><td class="r">Video call · 8 min</td><td class="r gold">+₹800</td><td class="dim">3 h ago</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+  <figcaption><b>Agency dashboard.</b> Sirf apni agency ka data — hosts, online count, unki kamai (gross), aur apni commission. Invite link copy/QR se hosts recruit kar sakti hai.</figcaption>
+</figure>
+
+<!-- ============ PART B3: AGENCY → MY HOSTS ============ -->
+<h2 class="sec teal">B3 · Agency portal — My hosts <span>· apni hosts ki list</span></h2>
+<figure class="shot">
+  <div class="win">
+    <div class="bar teal"><i></i><i></i><i></i><span>partners.meto.app / agency / hosts</span></div>
+    <div class="app teal">
+      <aside class="side teal">
+        <div class="logo teal">Meto<small>PARTNERS</small></div>
+        <div class="who teal"><i></i><div><b>Star Agency</b>AG1045</div></div>
+        <nav class="teal">
+          <a>📊 Dashboard</a>
+          <a class="on">💖 My hosts <span class="n">8</span></a>
+          <a>🔗 Invite link</a>
+          <a>💰 Commission</a>
+          <a>⚙️ Account</a>
+        </nav>
+      </aside>
+      <section class="main">
+        <div class="top"><div><h3>My hosts</h3><div class="sub">8 hosts joined via your link</div></div></div>
+        <div class="card">
+          <table>
+            <thead><tr><th>HOST</th><th>STATUS</th><th>CALLS 30d</th><th class="r">EARNINGS 30d</th><th class="r">MY CUT</th><th>JOINED</th></tr></thead>
+            <tbody>
+              <tr><td><div class="u"><span class="av teal-av">A</span><div><b>Aisha, 24</b><small><span class="dot"></span> online · ID 100000002</small></div></div></td><td><span class="pill p-ok">Approved</span></td><td>42</td><td class="r gold">₹9,400</td><td class="r gold">₹940</td><td class="dim">11 Oct</td></tr>
+              <tr><td><div class="u"><span class="av teal-av">N</span><div><b>Neha, 29</b><small>ID 100000009</small></div></div></td><td><span class="pill p-ok">Approved</span></td><td>31</td><td class="r gold">₹7,100</td><td class="r gold">₹710</td><td class="dim">12 Oct</td></tr>
+              <tr><td><div class="u"><span class="av teal-av">P</span><div><b>Priya, 23</b><small>ID 100000008</small></div></div></td><td><span class="pill p-ok">Approved</span></td><td>28</td><td class="r gold">₹6,200</td><td class="r gold">₹620</td><td class="dim">12 Oct</td></tr>
+              <tr><td><div class="u"><span class="av teal-av">S</span><div><b>Simran, 22</b><small>ID 100000019</small></div></div></td><td><span class="pill p-pend">Pending review</span></td><td>—</td><td class="r dim">—</td><td class="r dim">—</td><td class="dim">today</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+  <figcaption><b>My hosts.</b> Agency sirf apni hosts dekhti hai — status (pending/approved), calls, kamai aur apna cut. Approve admin karta hai (agency nahi), par pending status agency ko dikhta hai.</figcaption>
+</figure>
+
+</body>
+</html>

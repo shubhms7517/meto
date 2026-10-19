@@ -10,7 +10,7 @@ import { UserPhoto } from './UserPhoto.js';
 import { Wallet, WalletTx } from './Wallet.js';
 import { CheckIn, VipOrder } from './Rewards.js';
 import { Notification } from './Notification.js';
-import { Agency, AppSetting, HostProfile, HostTx, HostWallet } from './Host.js';
+import { Agency, AgencySession, AppSetting, HostProfile, HostTx, HostWallet } from './Host.js';
 import { DeviceToken } from './Device.js';
 import { MediaUnlock, UserVideo } from './Media.js';
 import { PayoutAccount, Withdrawal } from './Payout.js';
@@ -78,4 +78,4 @@ SupportMessage.belongsTo(SupportTicket, { as: 'ticket', foreignKey: 'ticketId', 
 
 export { Admin, AdminSession, AuditLog, ADMIN_ROLES, DeletedAccount, type AdminRole };
 export { SupportMessage, SupportTicket, SUPPORT_TOPICS, type SupportTopic };
-export { ProfileVisit, PayoutAccount, Withdrawal, MediaUnlock, UserVideo, DeviceToken, Agency, AppSetting, HostProfile, HostTx, HostWallet, Block, CheckIn, Notification, VipOrder, Call, Conversation, Follow, Gift, GiftTransaction, Message, Report, Status, StatusView, User, UserPhoto, Wallet, WalletTx };
+export { ProfileVisit, PayoutAccount, Withdrawal, MediaUnlock, UserVideo, DeviceToken, Agency, AgencySession, AppSetting, HostProfile, HostTx, HostWallet, Block, CheckIn, Notification, VipOrder, Call, Conversation, Follow, Gift, GiftTransaction, Message, Report, Status, StatusView, User, UserPhoto, Wallet, WalletTx };

@@ -21,6 +21,7 @@ import { hostRouter } from "./routes/host.routes.js";
 import { supportRouter } from "./routes/support.routes.js";
 import { devicesRouter } from "./routes/devices.routes.js";
 import { adminRouter } from "./routes/admin.routes.js";
+import { agencyRouter } from "./routes/agency.routes.js";
 
 export const app = express();
 
@@ -63,6 +64,8 @@ app.use(express.json({ limit: "100kb" }));
 
 // Admin panel: apna rate limit (panel me bahut requests hoti hain), app ke limit se pehle
 app.use("/api/admin", adminRouter);
+// Agency portal (admin se alag login + UI)
+app.use("/api/agency", agencyRouter);
 
 // Rate limiting — ek IP se bahut zyada requests block
 const json429 = {
@@ -112,6 +115,23 @@ app.get(/^\/admin(\/.*)?$/, (_req, res) =>
       res
         .status(404)
         .end("Admin panel not built — run: npm --prefix admin run build"),
+  ),
+);
+
+// Agency portal website (agency/ ka build) — http://<server>:4000/agency
+const AGENCY_DIST = resolve("../agency/dist");
+app.use(
+  "/agency",
+  express.static(AGENCY_DIST, { index: "index.html", maxAge: "1h" }),
+);
+app.get(/^\/agency(\/.*)?$/, (_req, res) =>
+  res.sendFile(
+    join(AGENCY_DIST, "index.html"),
+    (err) =>
+      err &&
+      res
+        .status(404)
+        .end("Agency portal not built — run: npm --prefix agency run build"),
   ),
 );
 

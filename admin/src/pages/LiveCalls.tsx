@@ -4,7 +4,6 @@ import {
   Empty,
   Pill,
   Tabs,
-  useAuth,
   useDebounced,
   Who,
   type UserCard,
@@ -51,7 +50,6 @@ function fmtDur(fromIso: string, now: number) {
 }
 
 export default function LiveCalls() {
-  const { go } = useAuth();
   const [status, setStatus] = useState<"all" | "connected" | "ringing">("all");
   const [q, setQ] = useState("");
   const dq = useDebounced(q.trim());
@@ -192,13 +190,7 @@ export default function LiveCalls() {
           </thead>
           <tbody>
             {data?.items.map((call) => (
-              <tr
-                key={call.id}
-                className="click"
-                onClick={() =>
-                  call.user && go("users", String(call.user.publicId))
-                }
-              >
+              <tr key={call.id}>
                 <td>
                   <Who u={call.user} />
                 </td>

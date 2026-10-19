@@ -5,7 +5,7 @@ import { api, ApiError } from './api';
 
 export type Role = 'owner' | 'moderator' | 'support' | 'finance';
 export type AdminMe = { id: number; email: string; name: string; role: Role; status: string; lastLoginAt: string | null };
-export type Pending = { applications: number; withdrawals: number; withdrawalsInr: number; support: number; supportLate: number; reports: number; reportsUrgent: number; live: number };
+export type Pending = { applications: number; withdrawals: number; withdrawalsInr: number; support: number; supportLate: number; reports: number; reportsUrgent: number; live: number; agencies: number };
 export type UserCard = { id: number; publicId: number; name: string | null; age: number | null; gender: string | null; avatarUrl: string | null; role: string; status: string; online: boolean };
 
 /* ---------- format ---------- */

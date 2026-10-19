@@ -26,8 +26,17 @@ export class Agency extends Model<InferAttributes<Agency>, InferCreationAttribut
   declare name: string;
   declare commissionPct: CreationOptional<number>; // host ki kamai ka kitna % agency ko (company ke hisse se)
   declare status: CreationOptional<(typeof AGENCY_STATUSES)[number]>;
+  declare email: CreationOptional<string | null>; // agency portal login
+  declare passwordHash: CreationOptional<string | null>;
+  declare lastLoginAt: CreationOptional<Date | null>;
+  declare failedLogins: CreationOptional<number>;
+  declare lockedUntil: CreationOptional<Date | null>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
+
+  toPortalJSON() {
+    return { id: this.id, code: this.code, name: this.name, email: this.email, commissionPct: Number(this.commissionPct) };
+  }
 }
 
 Agency.init(
@@ -37,10 +46,41 @@ Agency.init(
     name: { type: DataTypes.STRING(80), allowNull: false },
     commissionPct: { type: DataTypes.DECIMAL(5, 2), allowNull: false, defaultValue: 0 },
     status: { type: DataTypes.ENUM(...AGENCY_STATUSES), allowNull: false, defaultValue: 'active' },
+    email: { type: DataTypes.STRING(160), allowNull: true, defaultValue: null },
+    passwordHash: { type: DataTypes.STRING(255), allowNull: true, defaultValue: null },
+    lastLoginAt: { type: DataTypes.DATE, allowNull: true, defaultValue: null },
+    failedLogins: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0 },
+    lockedUntil: { type: DataTypes.DATE, allowNull: true, defaultValue: null },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,
   },
   { sequelize, tableName: 'agencies' },
+);
+
+// Agency portal login session (admin se alag) — token ka sirf hash DB me
+export class AgencySession extends Model<InferAttributes<AgencySession>, InferCreationAttributes<AgencySession>> {
+  declare id: CreationOptional<number>;
+  declare agencyId: number;
+  declare tokenHash: string;
+  declare ip: string | null;
+  declare userAgent: string | null;
+  declare expiresAt: Date;
+  declare lastUsedAt: Date;
+  declare createdAt: CreationOptional<Date>;
+}
+
+AgencySession.init(
+  {
+    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    agencyId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+    tokenHash: { type: DataTypes.CHAR(64), allowNull: false, unique: true },
+    ip: { type: DataTypes.STRING(64), allowNull: true },
+    userAgent: { type: DataTypes.STRING(255), allowNull: true },
+    expiresAt: { type: DataTypes.DATE, allowNull: false },
+    lastUsedAt: { type: DataTypes.DATE, allowNull: false },
+    createdAt: DataTypes.DATE,
+  },
+  { sequelize, tableName: 'agency_sessions', updatedAt: false },
 );
 
 // Host ki application + host ki settings. Approve hone par users.role = 'host'.

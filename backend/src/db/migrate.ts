@@ -12,6 +12,12 @@ const COLUMNS: { table: string; column: string; ddl: string }[] = [
   { table: 'gifts', column: 'icon_url', ddl: 'VARCHAR(255) NULL DEFAULT NULL' },
   { table: 'gifts', column: 'svga_url', ddl: 'VARCHAR(255) NULL DEFAULT NULL' },
   { table: 'calls', column: 'host_id', ddl: 'BIGINT UNSIGNED NULL DEFAULT NULL AFTER callee_id' },
+  // Agency portal login (owner admin panel se banata hai)
+  { table: 'agencies', column: 'email', ddl: 'VARCHAR(160) NULL DEFAULT NULL' },
+  { table: 'agencies', column: 'password_hash', ddl: 'VARCHAR(255) NULL DEFAULT NULL' },
+  { table: 'agencies', column: 'last_login_at', ddl: 'DATETIME NULL DEFAULT NULL' },
+  { table: 'agencies', column: 'failed_logins', ddl: 'INT UNSIGNED NOT NULL DEFAULT 0' },
+  { table: 'agencies', column: 'locked_until', ddl: 'DATETIME NULL DEFAULT NULL' },
 ];
 
 // ENUM me naya value (sync() purana column nahi badalta). need = jo value honi chahiye.

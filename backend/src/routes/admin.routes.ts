@@ -24,6 +24,7 @@ import {
   Admin,
   ADMIN_ROLES,
   AdminSession,
+  Agency,
   Gift,
   User,
   Withdrawal,
@@ -839,6 +840,94 @@ adminRouter.patch(
     res.json({ ok: true });
   },
 );
+
+/* ---------- agencies (owner) ---------- */
+
+adminRouter.get("/agencies", requireAdmin("owner"), async (_req, res) =>
+  res.json(await A.listAgencies()),
+);
+
+const agencyCode = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z0-9]{2,20}$/, "Code: 2–20 letters / numbers, no spaces");
+
+adminRouter.post("/agencies", requireAdmin("owner"), async (req, res) => {
+  const p = z
+    .object({
+      name: z.string().trim().min(2).max(80),
+      code: agencyCode,
+      email: z.string().email().max(160),
+      commissionPct: z.coerce.number().min(0).max(50),
+      password: z.string().max(200),
+      myPassword: z.string(),
+    })
+    .parse(req.body);
+  await confirmPassword(req.admin!, p.myPassword);
+  const problem = passwordProblem(p.password);
+  if (problem) throw badRequest(problem);
+  if (await Agency.findOne({ where: { code: p.code } }))
+    throw badRequest("This code is already used");
+  const email = p.email.toLowerCase();
+  if (await Agency.findOne({ where: { email } }))
+    throw badRequest("This email is already an agency");
+  const a = await Agency.create({
+    name: p.name,
+    code: p.code,
+    email,
+    commissionPct: p.commissionPct,
+    passwordHash: await hashPassword(p.password),
+  });
+  await audit(
+    req,
+    "agency.create",
+    { type: "agency", id: a.id },
+    `${a.name} · ${a.code} · ${p.commissionPct}%`,
+    null,
+    { code: a.code, email, commissionPct: p.commissionPct },
+  );
+  res.json({ ok: true, id: a.id });
+});
+
+adminRouter.patch("/agencies/:id", requireAdmin("owner"), async (req, res) => {
+  const p = z
+    .object({
+      name: z.string().trim().min(2).max(80).optional(),
+      commissionPct: z.coerce.number().min(0).max(50).optional(),
+      status: z.enum(["active", "disabled"]).optional(),
+      password: z.string().max(200).optional(),
+      myPassword: z.string(),
+    })
+    .parse(req.body);
+  await confirmPassword(req.admin!, p.myPassword);
+  const a = await Agency.findByPk(pid.parse(req.params.id));
+  if (!a) throw notFound("Agency not found");
+  const before = {
+    name: a.name,
+    commissionPct: Number(a.commissionPct),
+    status: a.status,
+  };
+  const patch: Record<string, unknown> = {};
+  if (p.name !== undefined) patch.name = p.name;
+  if (p.commissionPct !== undefined) patch.commissionPct = p.commissionPct;
+  if (p.status !== undefined) patch.status = p.status;
+  if (p.password) {
+    const problem = passwordProblem(p.password);
+    if (problem) throw badRequest(problem);
+    patch.passwordHash = await hashPassword(p.password);
+  }
+  await a.update(patch);
+  await audit(
+    req,
+    "agency.update",
+    { type: "agency", id: a.id },
+    `${a.name}${p.password ? " · password reset" : ""}`,
+    before,
+    { name: a.name, commissionPct: Number(a.commissionPct), status: a.status },
+  );
+  res.json({ ok: true });
+});
 
 /* ---------- settings ---------- */
 

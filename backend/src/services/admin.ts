@@ -266,7 +266,7 @@ export async function dashboard(range: "today" | "7d" | "30d") {
 
 // Sidebar ki laal ginti
 export async function pending() {
-  const [apps, wd, sup, rep, live] = await Promise.all([
+  const [apps, wd, sup, rep, live, agencies] = await Promise.all([
     one<{ n: number }>(
       `SELECT COUNT(*) n FROM host_profiles WHERE status='pending'`,
     ),
@@ -282,6 +282,7 @@ export async function pending() {
     one<{ n: number }>(
       `SELECT COUNT(*) n FROM calls WHERE status IN ('ringing','accepted')`,
     ),
+    one<{ n: number }>(`SELECT COUNT(*) n FROM agencies`),
   ]);
   return {
     applications: Number(apps.n),
@@ -292,6 +293,7 @@ export async function pending() {
     reports: Number(rep.n),
     reportsUrgent: Number(rep.urgent ?? 0),
     live: Number(live.n),
+    agencies: Number(agencies.n),
   };
 }
 
@@ -555,6 +557,51 @@ export async function giveVip(publicId: number, days: number) {
   await u.update({ vipUntil: until });
   notify(u.id, "vip", { data: { until, months: 0, bonus: 0 } }).catch(() => {});
   return { user: u, before, after: until };
+}
+
+/* ---------------- agencies ---------------- */
+
+export async function listAgencies() {
+  const s = await getSettings();
+  const agencies = await Agency.findAll({ order: [['id', 'ASC']] });
+  // har agency: hosts count + pichhle 30 din ki host earnings (points)
+  const stats = await q<{ aid: number; hosts: number; pts: number }>(
+    `SELECT hp.agency_id aid, COUNT(DISTINCT hp.user_id) hosts,
+            COALESCE(SUM(CASE WHEN ht.points > 0 AND ht.kind IN ('call','gift','message','unlock') AND ht.created_at >= :d THEN ht.points ELSE 0 END), 0) pts
+       FROM host_profiles hp
+       LEFT JOIN host_transactions ht ON ht.user_id = hp.user_id
+      WHERE hp.agency_id IS NOT NULL
+      GROUP BY hp.agency_id`,
+    { d: daysAgo(30) },
+  );
+  const m = new Map(stats.map((r) => [Number(r.aid), r]));
+  const items = agencies.map((a) => {
+    const st = m.get(a.id);
+    const earnInr = Math.round(Number(st?.pts ?? 0) / s.pointsPerInr);
+    const pct = Number(a.commissionPct);
+    return {
+      id: a.id,
+      code: a.code,
+      name: a.name,
+      email: a.email,
+      commissionPct: pct,
+      status: a.status,
+      hosts: Number(st?.hosts ?? 0),
+      earningsInr: earnInr,
+      commissionInr: Math.round((earnInr * pct) / 100),
+      lastLoginAt: a.lastLoginAt,
+    };
+  });
+  return {
+    items,
+    totals: {
+      agencies: agencies.length,
+      active: agencies.filter((a) => a.status === 'active').length,
+      hosts: items.reduce((n, x) => n + x.hosts, 0),
+      earningsInr: items.reduce((n, x) => n + x.earningsInr, 0),
+      commissionInr: items.reduce((n, x) => n + x.commissionInr, 0),
+    },
+  };
 }
 
 /* ---------------- live calls ---------------- */
