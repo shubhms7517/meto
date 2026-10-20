@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agency payout design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12070d; --surface: #1d1418; --card: #241c20; --line: rgba(255,255,255,.08);
+    --text: #f6e9ee; --muted: #b9a3ad; --dim: #7d6872;
+    --rose-1: #ff5f8f; --rose-2: #d81b5c; --gold-1: #f6dc9b; --gold-2: #d9ae55;
+    --green: #3ee08f; --red: #ff5f7a; --amber: #ffb547;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Poppins, system-ui, sans-serif; background: #0b0408; color: var(--text); padding: 30px 26px 70px; font-size: 13px; }
+  header.page h1 { font-size: 25px; } header.page p { color: var(--muted); font-size: 13.5px; margin-top: 4px; max-width: 780px; }
+  h2.sec { margin: 38px 0 2px; font-size: 16px; color: var(--gold-1); } h2.sec span { color: var(--dim); font-size: 12.5px; font-weight: 400; }
+  .shot { margin-top: 14px; }
+  .win { border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); box-shadow: 0 30px 60px -30px rgba(0,0,0,.9); background: var(--bg); }
+  .bar { height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 14px; background: #1a1015; border-bottom: 1px solid var(--line); }
+  .bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a2a31; } .bar span { margin-left: 14px; font-size: 11.5px; color: var(--dim); }
+  .app { display: grid; grid-template-columns: 200px 1fr; min-height: 470px; }
+  .side { background: radial-gradient(120% 55% at 0% 0%, #3a0f24, #170a10 60%); border-right: 1px solid var(--line); padding: 16px 12px; }
+  .logo { font-size: 20px; font-weight: 800; font-style: italic; color: var(--gold-1); padding: 0 8px; } .logo small { font-size: 9px; font-style: normal; color: var(--rose-1); margin-left: 5px; letter-spacing: .1em; }
+  nav { margin-top: 16px; display: flex; flex-direction: column; gap: 2px; }
+  nav a { display: flex; gap: 9px; padding: 8px 10px; border-radius: 10px; font-size: 12.5px; color: var(--muted); }
+  nav a.on { color: #fff; background: linear-gradient(100deg, rgba(255,95,143,.22), rgba(255,95,143,.05)); }
+  .main { padding: 22px 24px; }
+  .top { display: flex; align-items: flex-start; } .top h3 { font-size: 19px; } .top .sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .right { margin-left: auto; }
+  .btn { border: 0; border-radius: 10px; padding: 8px 14px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .b-rose { background: linear-gradient(100deg, var(--rose-1), var(--rose-2)); color: #fff; }
+  .b-gold { background: linear-gradient(100deg, #fff4d6, #e6bf6a); color: #3a2608; }
+  .b-ghost { background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+  .sm { padding: 5px 11px; font-size: 11px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; margin-top: 16px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 13px 15px; }
+  .kpi small { color: var(--muted); font-size: 11px; } .kpi b { display: block; font-size: 22px; margin-top: 4px; } .kpi em { font-style: normal; color: var(--dim); font-size: 10.5px; }
+  .card { margin-top: 15px; background: var(--card); border: 1px solid var(--line); border-radius: 13px; overflow: hidden; }
+  .card h4 { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--dim); font-size: 10px; letter-spacing: .05em; font-weight: 600; padding: 10px 16px; border-bottom: 1px solid var(--line); text-transform: uppercase; }
+  td { padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,.04); } tr:last-child td { border-bottom: 0; }
+  .u { display: flex; align-items: center; gap: 9px; } .av { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--rose-1), var(--rose-2)); display: grid; place-items: center; font-weight: 700; font-size: 11px; }
+  .u small { display: block; color: var(--dim); font-size: 10px; }
+  .r { text-align: right; } .gold { color: var(--gold-1); } .green { color: var(--green); } .amber { color: var(--amber); } .dim { color: var(--dim); }
+  .pill { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 20px; color: var(--green); background: rgba(62,224,143,.12); }
+  figcaption { margin-top: 11px; color: var(--muted); font-size: 12.5px; max-width: 900px; } figcaption b { color: var(--text); }
+  /* dialog */
+  .scrim { padding: 30px; background: rgba(0,0,0,.55); display: grid; place-items: center; }
+  .modal { width: 440px; background: #1f1418; border: 1px solid rgba(255,255,255,.12); border-radius: 20px; padding: 20px; }
+  .modal h3 { font-size: 16px; } .modal p { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .sum { margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sum div { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 9px 11px; } .sum small { color: var(--dim); font-size: 10px; display: block; } .sum b { font-size: 15px; }
+  label { display: block; margin-top: 12px; font-size: 11.5px; color: var(--muted); }
+  .in { width: 100%; margin-top: 5px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; color: var(--text); font-size: 12.5px; font-family: inherit; }
+  .chips { display: flex; gap: 6px; margin-top: 6px; } .chip { padding: 6px 12px; border-radius: 20px; border: 1px solid var(--line); color: var(--muted); font-size: 11.5px; } .chip.on { border-color: var(--rose-1); color: #fff; background: rgba(255,95,143,.15); }
+  .acts { display: flex; justify-content: flex-end; gap: 9px; margin-top: 16px; }
+  .note { margin-top: 10px; font-size: 11px; color: var(--dim); }
+  .detail { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Agency commission payout — design</h1>
+  <p>Admin side only. The owner records when an agency is paid; the panel keeps <b>Earned − Paid = Owed</b> for every agency. Agencies never see commission (as decided).</p>
+</header>
+
+<!-- A: Agencies list with Earned / Paid / Owed -->
+<h2 class="sec">A · Agencies page <span>· new Earned / Paid / Owed columns + Pay button</span></h2>
+<figure class="shot">
+  <div class="win">
+    <div class="bar"><i></i><i></i><i></i><span>admin / agencies</span></div>
+    <div class="app">
+      <aside class="side"><div class="logo">Meto<small>ADMIN</small></div>
+        <nav><a>📊 Dashboard</a><a>👥 Users</a><a>💖 Hosts</a><a class="on">🏢 Agencies</a><a>💸 Withdrawals</a><a>📜 Audit log</a></nav>
+      </aside>
+      <section class="main">
+        <div class="top"><div><h3>Agencies</h3><div class="sub">Partners who bring hosts · commission is paid by you, outside the app</div></div><button class="btn b-rose right">+ New agency</button></div>
+        <div class="kpis">
+          <div class="kpi"><small>Agencies</small><b>2</b><em>2 active</em></div>
+          <div class="kpi"><small>Commission earned · all time</small><b class="gold">₹3,420</b><em>at each agency’s %</em></div>
+          <div class="kpi"><small>Paid to agencies</small><b class="green">₹2,000</b><em>4 payouts</em></div>
+          <div class="kpi"><small>Owed now</small><b class="amber">₹1,420</b><em>still to pay</em></div>
+        </div>
+        <div class="card">
+          <table>
+            <thead><tr><th>Agency</th><th>Hosts</th><th>%</th><th class="r">Earned</th><th class="r">Paid</th><th class="r">Owed</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><div class="u"><span class="av">S</span><div>Star Agency<small>star@agency.com · AG1045</small></div></div></td><td>8</td><td>10%</td><td class="r gold">₹2,840</td><td class="r green">₹2,000</td><td class="r amber"><b>₹840</b></td><td><span class="pill">Active</span></td><td class="r"><button class="btn b-gold sm">Pay</button> <button class="btn b-ghost sm">History</button></td></tr>
+              <tr><td><div class="u"><span class="av">M</span><div>Moon Talent<small>moon@agency.com · MOON22</small></div></div></td><td>6</td><td>10%</td><td class="r gold">₹580</td><td class="r green">₹0</td><td class="r amber"><b>₹580</b></td><td><span class="pill">Active</span></td><td class="r"><button class="btn b-gold sm">Pay</button> <button class="btn b-ghost sm">History</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+  <figcaption><b>Earned</b> = commission on all their hosts’ earnings since the agency joined. <b>Paid</b> = total you recorded. <b>Owed</b> = Earned − Paid. “Pay” opens the dialog below; “History” shows past payouts.</figcaption>
+</figure>
+
+<!-- B: Pay dialog -->
+<h2 class="sec">B · Pay dialog <span>· record a payout you made from your bank / UPI</span></h2>
+<figure class="shot">
+  <div class="win">
+    <div class="bar"><i></i><i></i><i></i><span>Pay · Star Agency</span></div>
+    <div class="scrim">
+      <div class="modal">
+        <h3>Pay Star Agency</h3>
+        <p>First send the money from your bank app, then record it here.</p>
+        <div class="sum"><div><small>Earned</small><b class="gold">₹2,840</b></div><div><small>Paid</small><b class="green">₹2,000</b></div><div><small>Owed</small><b class="amber">₹840</b></div></div>
+        <label>Amount (₹) *<input class="in" value="840"></label>
+        <label>Paid by *<div class="chips"><span class="chip on">UPI</span><span class="chip">Bank transfer</span><span class="chip">Cash</span></div></label>
+        <label>UTR / reference *<input class="in" value="412398765432"></label>
+        <label>Note (optional)<input class="in" placeholder="e.g. October commission"></label>
+        <label>Your password (to confirm) *<input class="in" type="password" value="••••••••••"></label>
+        <div class="acts"><button class="btn b-ghost">Cancel</button><button class="btn b-gold">Record payout ₹840</button></div>
+        <div class="note">Amount can’t be more than Owed. Every payout goes to the audit log.</div>
+      </div>
+    </div>
+  </div>
+  <figcaption><b>Pay dialog.</b> Amount is pre-filled with what is owed (can be less for a part payment). UPI / bank needs a UTR; cash needs a note. Owner password confirms it.</figcaption>
+</figure>
+
+<!-- C: History -->
+<h2 class="sec">C · Payout history <span>· per agency</span></h2>
+<figure class="shot">
+  <div class="win">
+    <div class="bar"><i></i><i></i><i></i><span>Star Agency · history</span></div>
+    <div class="scrim" style="place-items:stretch">
+      <div class="card" style="margin:0">
+        <h4>Star Agency · payouts</h4>
+        <table>
+          <thead><tr><th>Date</th><th class="r">Amount</th><th>Method</th><th>UTR / ref</th><th>Note</th><th>By</th></tr></thead>
+          <tbody>
+            <tr><td>18 Oct 2026</td><td class="r green">₹1,200</td><td>UPI</td><td class="dim">412398765432</td><td>Oct part 2</td><td>Shubham</td></tr>
+            <tr><td>05 Oct 2026</td><td class="r green">₹800</td><td>Bank</td><td class="dim">HDFC0012345</td><td>Oct part 1</td><td>Shubham</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <figcaption><b>History.</b> Every recorded payout with date, amount, method, reference and who recorded it. A wrong entry can’t be deleted (money record) — you add a correction note instead.</figcaption>
+</figure>
+</body>
+</html>

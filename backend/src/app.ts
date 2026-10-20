@@ -102,13 +102,23 @@ app.use(
 );
 
 // Admin panel website (admin/ ka build) — http://<server>:4000/admin
+// Panel files: index.html har baar fresh (naya build turant dikhe), hashed JS/CSS 1 saal cache
+const panelStatic = {
+  index: "index.html",
+  setHeaders: (res: express.Response, path: string) =>
+    res.setHeader(
+      "Cache-Control",
+      path.endsWith(".html") ? "no-cache" : "public, max-age=31536000, immutable",
+    ),
+};
+const noCache = (res: express.Response) => res.setHeader("Cache-Control", "no-cache");
 const ADMIN_DIST = resolve("../admin/dist");
 app.use(
   "/admin",
-  express.static(ADMIN_DIST, { index: "index.html", maxAge: "1h" }),
+  express.static(ADMIN_DIST, panelStatic),
 );
 app.get(/^\/admin(\/.*)?$/, (_req, res) =>
-  res.sendFile(
+  noCache(res).sendFile(
     join(ADMIN_DIST, "index.html"),
     (err) =>
       err &&
@@ -122,10 +132,10 @@ app.get(/^\/admin(\/.*)?$/, (_req, res) =>
 const AGENCY_DIST = resolve("../agency/dist");
 app.use(
   "/agency",
-  express.static(AGENCY_DIST, { index: "index.html", maxAge: "1h" }),
+  express.static(AGENCY_DIST, panelStatic),
 );
 app.get(/^\/agency(\/.*)?$/, (_req, res) =>
-  res.sendFile(
+  noCache(res).sendFile(
     join(AGENCY_DIST, "index.html"),
     (err) =>
       err &&

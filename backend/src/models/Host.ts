@@ -169,3 +169,30 @@ HostTx.init(
   },
   { sequelize, tableName: 'host_transactions', updatedAt: false, indexes: [{ fields: ['user_id', 'id'] }] },
 );
+
+// Agency ko commission ka payout (owner bank/UPI se deta hai, yahan record) — delete nahi hota
+export const PAYOUT_METHODS = ['upi', 'bank', 'cash'] as const;
+export class AgencyPayout extends Model<InferAttributes<AgencyPayout>, InferCreationAttributes<AgencyPayout>> {
+  declare id: CreationOptional<number>;
+  declare agencyId: number;
+  declare amountInr: number;
+  declare method: (typeof PAYOUT_METHODS)[number];
+  declare reference: string | null;
+  declare note: string | null;
+  declare adminId: number;
+  declare createdAt: CreationOptional<Date>;
+}
+
+AgencyPayout.init(
+  {
+    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    agencyId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+    amountInr: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+    method: { type: DataTypes.ENUM(...PAYOUT_METHODS), allowNull: false },
+    reference: { type: DataTypes.STRING(40), allowNull: true },
+    note: { type: DataTypes.STRING(200), allowNull: true },
+    adminId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+    createdAt: DataTypes.DATE,
+  },
+  { sequelize, tableName: 'agency_payouts', updatedAt: false, indexes: [{ fields: ['agency_id'] }] },
+);

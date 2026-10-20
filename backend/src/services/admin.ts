@@ -564,21 +564,29 @@ export async function giveVip(publicId: number, days: number) {
 export async function listAgencies() {
   const s = await getSettings();
   const agencies = await Agency.findAll({ order: [['id', 'ASC']] });
-  // har agency: hosts count + pichhle 30 din ki host earnings (points)
-  const stats = await q<{ aid: number; hosts: number; pts: number }>(
+  // har agency: hosts, 30 din ki earnings, aur agency banne ke baad se poori earnings (commission ke liye)
+  const stats = await q<{ aid: number; hosts: number; pts30: number; ptsAll: number }>(
     `SELECT hp.agency_id aid, COUNT(DISTINCT hp.user_id) hosts,
-            COALESCE(SUM(CASE WHEN ht.points > 0 AND ht.kind IN ('call','gift','message','unlock') AND ht.created_at >= :d THEN ht.points ELSE 0 END), 0) pts
+            COALESCE(SUM(CASE WHEN ht.points > 0 AND ht.kind IN ('call','gift','message','unlock') AND ht.created_at >= :d THEN ht.points ELSE 0 END), 0) pts30,
+            COALESCE(SUM(CASE WHEN ht.points > 0 AND ht.kind IN ('call','gift','message','unlock') AND ht.created_at >= a.created_at THEN ht.points ELSE 0 END), 0) ptsAll
        FROM host_profiles hp
+       JOIN agencies a ON a.id = hp.agency_id
        LEFT JOIN host_transactions ht ON ht.user_id = hp.user_id
-      WHERE hp.agency_id IS NOT NULL
       GROUP BY hp.agency_id`,
     { d: daysAgo(30) },
   );
+  const paid = await q<{ aid: number; inr: number; n: number }>(
+    `SELECT agency_id aid, COALESCE(SUM(amount_inr), 0) inr, COUNT(*) n FROM agency_payouts GROUP BY agency_id`,
+  );
   const m = new Map(stats.map((r) => [Number(r.aid), r]));
+  const pm = new Map(paid.map((r) => [Number(r.aid), r]));
   const items = agencies.map((a) => {
     const st = m.get(a.id);
-    const earnInr = Math.round(Number(st?.pts ?? 0) / s.pointsPerInr);
     const pct = Number(a.commissionPct);
+    const earn30 = Math.round(Number(st?.pts30 ?? 0) / s.pointsPerInr);
+    const earnAll = Math.round(Number(st?.ptsAll ?? 0) / s.pointsPerInr);
+    const earnedInr = Math.round((earnAll * pct) / 100); // commission abhi wale % se
+    const paidInr = Number(pm.get(a.id)?.inr ?? 0);
     return {
       id: a.id,
       code: a.code,
@@ -587,8 +595,10 @@ export async function listAgencies() {
       commissionPct: pct,
       status: a.status,
       hosts: Number(st?.hosts ?? 0),
-      earningsInr: earnInr,
-      commissionInr: Math.round((earnInr * pct) / 100),
+      earningsInr: earn30,
+      earnedInr,
+      paidInr,
+      owedInr: Math.max(0, earnedInr - paidInr),
       lastLoginAt: a.lastLoginAt,
     };
   });
@@ -598,9 +608,90 @@ export async function listAgencies() {
       agencies: agencies.length,
       active: agencies.filter((a) => a.status === 'active').length,
       hosts: items.reduce((n, x) => n + x.hosts, 0),
-      earningsInr: items.reduce((n, x) => n + x.earningsInr, 0),
-      commissionInr: items.reduce((n, x) => n + x.commissionInr, 0),
+      earnedInr: items.reduce((n, x) => n + x.earnedInr, 0),
+      paidInr: items.reduce((n, x) => n + x.paidInr, 0),
+      payouts: paid.reduce((n, r) => n + Number(r.n), 0),
+      owedInr: items.reduce((n, x) => n + x.owedInr, 0),
     },
+  };
+}
+
+// Ek agency ki payout history
+export async function agencyPayouts(agencyId: number) {
+  const rows = await q<{ id: number; amount_inr: number; method: string; reference: string | null; note: string | null; created_at: Date; admin: string | null }>(
+    `SELECT p.id, p.amount_inr, p.method, p.reference, p.note, p.created_at, ad.name admin
+       FROM agency_payouts p LEFT JOIN admins ad ON ad.id = p.admin_id
+      WHERE p.agency_id = :aid ORDER BY p.id DESC`,
+    { aid: agencyId },
+  );
+  return { items: rows.map((r) => ({ id: r.id, amountInr: Number(r.amount_inr), method: r.method, reference: r.reference, note: r.note, at: r.created_at, by: r.admin })) };
+}
+
+// Ek agency ka poora hisaab: kaun link se aaya, kaun host bana, har host ki kamai + commission
+export async function agencyDetail(id: number) {
+  const a = await Agency.findByPk(id);
+  if (!a) throw notFound('Agency not found');
+  const s = await getSettings();
+  const pct = Number(a.commissionPct);
+  const row = (await listAgencies()).items.find((x) => x.id === a.id)!;
+  const hostRows = await q<{ uid: number; status: string; joined: Date; pts: number; calls: number }>(
+    `SELECT hp.user_id uid, hp.status, hp.created_at joined,
+            COALESCE(SUM(CASE WHEN ht.points > 0 AND ht.kind IN ('call','gift','message','unlock') AND ht.created_at >= :since THEN ht.points ELSE 0 END), 0) pts,
+            COALESCE(SUM(CASE WHEN ht.kind = 'call' AND ht.points > 0 AND ht.created_at >= :since THEN 1 ELSE 0 END), 0) calls
+       FROM host_profiles hp
+       LEFT JOIN host_transactions ht ON ht.user_id = hp.user_id
+      WHERE hp.agency_id = :aid
+      GROUP BY hp.user_id, hp.status, hp.created_at`,
+    { aid: a.id, since: a.createdAt },
+  );
+  // Link se aaye log + is agency ke saare host applicants (reject & block me link record mit jaata hai, par yahan dikhna chahiye)
+  const signed = await User.findAll({
+    where: { [Op.or]: [{ inviteAgencyId: a.id }, ...(hostRows.length ? [{ id: hostRows.map((h) => Number(h.uid)) }] : [])] },
+    order: [['createdAt', 'DESC']],
+    limit: 500,
+  });
+  const formOf = new Map(hostRows.map((h) => [Number(h.uid), h.status]));
+  // link se aaye log + jinki host profile is agency me hai (dono ki details chahiye)
+  const ids = [...new Set([...hostRows.map((h) => Number(h.uid)), ...signed.map((u) => u.id)])];
+  const users = new Map((ids.length ? await User.findAll({ where: { id: ids } }) : []).map((u) => [u.id, u]));
+  const hosts = hostRows
+    .map((h) => {
+      const u = users.get(Number(h.uid));
+      const earningsInr = Math.round(Number(h.pts) / s.pointsPerInr);
+      const live = h.status === 'approved' || h.status === 'suspended';
+      return {
+        user: u ? userCard(u) : null,
+        status: h.status,
+        joinedAt: h.joined,
+        calls: live ? Number(h.calls) : null,
+        earningsInr: live ? earningsInr : null,
+        commissionInr: live ? Math.round((earningsInr * pct) / 100) : null,
+      };
+    })
+    .sort((x, y) => (y.earningsInr ?? -1) - (x.earningsInr ?? -1));
+  const count = (st: string[]) => hostRows.filter((h) => st.includes(h.status)).length;
+  return {
+    agency: { id: a.id, code: a.code, name: a.name, email: a.email, commissionPct: pct, status: a.status, createdAt: a.createdAt },
+    counts: {
+      signedUp: signed.length,
+      approved: count(['approved', 'suspended']),
+      pending: count(['pending']),
+      rejected: count(['rejected']),
+    },
+    earningsInr: hosts.reduce((n, h) => n + (h.earningsInr ?? 0), 0),
+    earnedInr: row.earnedInr,
+    paidInr: row.paidInr,
+    owedInr: row.owedInr,
+    hosts,
+    signedUp: signed.map((u) => {
+      const st = formOf.get(u.id);
+      return {
+        user: userCard(users.get(u.id) ?? u),
+        signedUpAt: u.createdAt,
+        // host form ka haal: approved / pending / rejected / not_applied / not_allowed (mard)
+        form: st ? (st === 'suspended' ? 'approved' : st) : u.gender === 'male' ? 'not_allowed' : 'not_applied',
+      };
+    }),
   };
 }
 

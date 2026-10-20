@@ -1140,3 +1140,13 @@ video.vid {
 .live-calls-page .kpi em {
   color: var(--muted);
 }
+
+/* Agencies page (design 35) */
+.agencies-page .kpi em { color: var(--dim); }
+.agencies-page .ag-name { cursor: pointer; }
+.agencies-page .ag-name:hover .nm { color: var(--rose-1); }
+.pill-chips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 7px; }
+.pill-chips button { padding: 7px 15px; border-radius: 20px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 12px; font-family: inherit; cursor: pointer; }
+.pill-chips button:hover { color: var(--text); }
+.pill-chips button.on { border-color: var(--rose-1); color: #fff; background: rgba(255, 95, 143, 0.15); }
+.btn.sm { padding: 6px 13px; font-size: 12px; }

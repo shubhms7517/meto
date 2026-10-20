@@ -25,6 +25,7 @@ import {
   ADMIN_ROLES,
   AdminSession,
   Agency,
+  AgencyPayout,
   Gift,
   User,
   Withdrawal,
@@ -847,6 +848,15 @@ adminRouter.get("/agencies", requireAdmin("owner"), async (_req, res) =>
   res.json(await A.listAgencies()),
 );
 
+// Naye agency ke liye unique invite code (AG + 4 digit) — form me pehle se bhar jaata hai
+adminRouter.get("/agencies/next-code", requireAdmin("owner"), async (_req, res) => {
+  for (let i = 0; i < 50; i++) {
+    const code = `AG${1000 + Math.floor(Math.random() * 9000)}`;
+    if (!(await Agency.findOne({ where: { code } }))) return res.json({ code });
+  }
+  throw badRequest("Could not make a code — type one yourself");
+});
+
 const agencyCode = z
   .string()
   .trim()
@@ -896,6 +906,7 @@ adminRouter.patch("/agencies/:id", requireAdmin("owner"), async (req, res) => {
       name: z.string().trim().min(2).max(80).optional(),
       commissionPct: z.coerce.number().min(0).max(50).optional(),
       status: z.enum(["active", "disabled"]).optional(),
+      email: z.string().email().max(160).optional(),
       password: z.string().max(200).optional(),
       myPassword: z.string(),
     })
@@ -905,6 +916,7 @@ adminRouter.patch("/agencies/:id", requireAdmin("owner"), async (req, res) => {
   if (!a) throw notFound("Agency not found");
   const before = {
     name: a.name,
+    email: a.email,
     commissionPct: Number(a.commissionPct),
     status: a.status,
   };
@@ -912,6 +924,16 @@ adminRouter.patch("/agencies/:id", requireAdmin("owner"), async (req, res) => {
   if (p.name !== undefined) patch.name = p.name;
   if (p.commissionPct !== undefined) patch.commissionPct = p.commissionPct;
   if (p.status !== undefined) patch.status = p.status;
+  if (p.email !== undefined) {
+    const email = p.email.toLowerCase();
+    const other = await Agency.findOne({ where: { email } });
+    if (other && other.id !== a.id)
+      throw badRequest("This email is already an agency");
+    // Pehli baar login de rahe ho to password bhi chahiye
+    if (!a.passwordHash && !p.password)
+      throw badRequest("Set a password too, so they can log in");
+    patch.email = email;
+  }
   if (p.password) {
     const problem = passwordProblem(p.password);
     if (problem) throw badRequest(problem);
@@ -922,11 +944,57 @@ adminRouter.patch("/agencies/:id", requireAdmin("owner"), async (req, res) => {
     req,
     "agency.update",
     { type: "agency", id: a.id },
-    `${a.name}${p.password ? " · password reset" : ""}`,
+    `${a.name}${p.email !== undefined && p.email !== before.email ? " · login email set" : ""}${p.password ? " · password reset" : ""}`,
     before,
-    { name: a.name, commissionPct: Number(a.commissionPct), status: a.status },
+    { name: a.name, email: a.email, commissionPct: Number(a.commissionPct), status: a.status },
   );
   res.json({ ok: true });
+});
+
+// Commission payout: owner bank/UPI se deta hai, yahan record karta hai (delete nahi hota)
+adminRouter.get("/agencies/:id/detail", requireAdmin("owner"), async (req, res) =>
+  res.json(await A.agencyDetail(pid.parse(req.params.id))),
+);
+adminRouter.get("/agencies/:id/payouts", requireAdmin("owner"), async (req, res) =>
+  res.json(await A.agencyPayouts(pid.parse(req.params.id))),
+);
+adminRouter.post("/agencies/:id/payouts", requireAdmin("owner"), async (req, res) => {
+  const p = z
+    .object({
+      amountInr: z.coerce.number().int().min(1).max(10_000_000),
+      method: z.enum(["upi", "bank", "cash"]),
+      reference: z.string().trim().max(40).optional(),
+      note: z.string().trim().max(200).optional(),
+      myPassword: z.string(),
+    })
+    .parse(req.body);
+  await confirmPassword(req.admin!, p.myPassword);
+  const a = await Agency.findByPk(pid.parse(req.params.id));
+  if (!a) throw notFound("Agency not found");
+  if (p.method !== "cash" && !/^[A-Za-z0-9]{6,40}$/.test(p.reference ?? ""))
+    throw badRequest("Enter the UTR / reference (6–40 letters or numbers)");
+  if (p.method === "cash" && !(p.note && p.note.length >= 3))
+    throw badRequest("Add a note for a cash payment");
+  const row = (await A.listAgencies()).items.find((x) => x.id === a.id)!;
+  if (p.amountInr > row.owedInr)
+    throw badRequest(`Amount is more than owed (₹${row.owedInr.toLocaleString("en-IN")})`);
+  const pay = await AgencyPayout.create({
+    agencyId: a.id,
+    amountInr: p.amountInr,
+    method: p.method,
+    reference: p.method === "cash" ? null : p.reference!,
+    note: p.note || null,
+    adminId: req.admin!.id,
+  });
+  await audit(
+    req,
+    "agency.payout",
+    { type: "agency", id: a.id },
+    `${a.name} · ₹${p.amountInr.toLocaleString("en-IN")} · ${p.method}${p.reference ? ` · ${p.reference}` : ""}`,
+    { owedInr: row.owedInr },
+    { paidInr: p.amountInr, owedInr: row.owedInr - p.amountInr, payoutId: pay.id },
+  );
+  res.json({ ok: true, id: pay.id });
 });
 
 /* ---------- settings ---------- */

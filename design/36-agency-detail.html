@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agency detail design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#12070d; --surface:#1d1418; --card:#241c20; --line:rgba(255,255,255,.08); --text:#f6e9ee; --muted:#b9a3ad; --dim:#7d6872; --rose-1:#ff5f8f; --rose-2:#d81b5c; --gold-1:#f6dc9b; --green:#3ee08f; --red:#ff5f7a; --amber:#ffb547; --blue:#7fb0ff; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:Poppins,system-ui,sans-serif; background:#0b0408; color:var(--text); padding:30px 26px 70px; font-size:13px; }
+  header.page h1 { font-size:25px; } header.page p { color:var(--muted); font-size:13.5px; margin-top:4px; max-width:820px; }
+  h2.sec { margin:36px 0 2px; font-size:16px; color:var(--gold-1); } h2.sec span { color:var(--dim); font-size:12.5px; font-weight:400; }
+  .win { margin-top:14px; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:var(--bg); }
+  .bar { height:34px; display:flex; align-items:center; gap:7px; padding:0 14px; background:#1a1015; border-bottom:1px solid var(--line); }
+  .bar i { width:11px; height:11px; border-radius:50%; background:#3a2a31; } .bar span { margin-left:14px; font-size:11.5px; color:var(--dim); }
+  .main { padding:22px 26px 28px; }
+  .back { color:var(--rose-1); font-size:12px; }
+  .head { display:flex; align-items:center; gap:14px; margin-top:10px; }
+  .av { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,var(--rose-1),var(--rose-2)); display:grid; place-items:center; font-weight:800; font-size:17px; }
+  .head h3 { font-size:20px; } .head .sub { color:var(--muted); font-size:12px; margin-top:2px; }
+  .right { margin-left:auto; display:flex; gap:8px; }
+  .btn { border:0; border-radius:10px; padding:8px 15px; font-size:12px; font-weight:600; font-family:inherit; }
+  .b-gold { background:linear-gradient(100deg,#fff4d6,#e6bf6a); color:#3a2608; } .b-ghost { background:var(--surface); border:1px solid var(--line); color:var(--text); }
+  .pill { display:inline-block; font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:20px; }
+  .ok { color:var(--green); background:rgba(62,224,143,.12); } .pend { color:var(--amber); background:rgba(255,181,71,.12); } .no { color:var(--red); background:rgba(255,95,122,.12); } .gray { color:var(--muted); background:rgba(255,255,255,.07); }
+  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:11px; margin-top:16px; }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:13px; padding:13px 15px; }
+  .kpi small { color:var(--muted); font-size:11px; } .kpi b { display:block; font-size:22px; margin-top:4px; } .kpi em { font-style:normal; color:var(--dim); font-size:10.5px; }
+  .tabs { display:flex; gap:4px; margin-top:18px; border-bottom:1px solid var(--line); }
+  .tabs a { padding:9px 14px; font-size:12.5px; color:var(--muted); border-bottom:2px solid transparent; } .tabs a.on { color:#fff; border-color:var(--rose-1); } .tabs a b { margin-left:5px; font-size:10.5px; color:var(--dim); }
+  .card { margin-top:12px; background:var(--card); border:1px solid var(--line); border-radius:13px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { text-align:left; color:var(--dim); font-size:10px; letter-spacing:.05em; font-weight:600; padding:10px 16px; border-bottom:1px solid var(--line); text-transform:uppercase; }
+  td { padding:11px 16px; border-bottom:1px solid rgba(255,255,255,.04); } tr:last-child td { border-bottom:0; }
+  .u { display:flex; align-items:center; gap:9px; } .u i { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--rose-1),var(--rose-2)); flex:none; } .u small { display:block; color:var(--dim); font-size:10.5px; }
+  .r { text-align:right; } .gold { color:var(--gold-1); } .green { color:var(--green); } .amber { color:var(--amber); } .dim { color:var(--dim); } .link { color:var(--rose-1); }
+  .tot td { font-weight:700; background:rgba(255,255,255,.02); }
+  .note { margin-top:10px; padding:10px 13px; border-radius:11px; font-size:11.5px; color:#bcd5ff; background:rgba(127,176,255,.08); border:1px solid rgba(127,176,255,.25); }
+  figcaption { margin-top:11px; color:var(--muted); font-size:12.5px; max-width:920px; } figcaption b { color:var(--text); }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Agency detail — design</h1>
+  <p>Admin opens an agency (click its name in the Agencies table) and sees <b>exactly who came through that agency</b> — every person who signed up with the link, every host, what each host earned and how much commission it makes — so you can check before you pay.</p>
+</header>
+
+<h2 class="sec">A · Agency detail — Hosts tab <span>· who came, what they earned, commission per host</span></h2>
+<div class="win"><div class="bar"><i></i><i></i><i></i><span>admin / agencies / Star Agency</span></div>
+<div class="main">
+  <div class="back">← Agencies</div>
+  <div class="head"><div class="av">S</div><div><h3>Star Agency <span class="pill ok">Active</span></h3><div class="sub">AG1045 · star@agency.com · 10% commission · since 11 Oct 2026</div></div>
+    <div class="right"><button class="btn b-ghost">Edit</button><button class="btn b-gold">Pay ₹840</button></div></div>
+  <div class="kpis">
+    <div class="kpi"><small>Signed up via link</small><b>14</b><em>opened the app with their link</em></div>
+    <div class="kpi"><small>Hosts</small><b class="green">8</b><em>approved · 3 pending · 2 rejected</em></div>
+    <div class="kpi"><small>Host earnings · since joining</small><b class="gold">₹28,400</b><em>what their hosts earned</em></div>
+    <div class="kpi"><small>Commission</small><b class="amber">₹840 owed</b><em>earned ₹2,840 · paid ₹2,000</em></div>
+  </div>
+  <div class="tabs"><a class="on">Hosts<b>13</b></a><a>Signed up via link<b>14</b></a><a>Payouts<b>2</b></a></div>
+  <div class="card"><table>
+    <thead><tr><th>Host</th><th>Status</th><th>Joined</th><th class="r">Calls</th><th class="r">Earned</th><th class="r">Commission (10%)</th></tr></thead>
+    <tbody>
+      <tr><td><div class="u"><i></i><div class="link">Aisha, 24<small>ID 100000002 · online</small></div></div></td><td><span class="pill ok">Approved</span></td><td>12 Oct</td><td class="r">42</td><td class="r gold">₹9,400</td><td class="r amber">₹940</td></tr>
+      <tr><td><div class="u"><i></i><div class="link">Neha, 29<small>ID 100000009</small></div></div></td><td><span class="pill ok">Approved</span></td><td>12 Oct</td><td class="r">31</td><td class="r gold">₹7,100</td><td class="r amber">₹710</td></tr>
+      <tr><td><div class="u"><i></i><div class="link">Simran, 22<small>ID 100000019</small></div></div></td><td><span class="pill pend">Pending</span></td><td class="dim">applied today</td><td class="r dim">—</td><td class="r dim">—</td><td class="r dim">—</td></tr>
+      <tr><td><div class="u"><i></i><div class="link">Ritu, 25<small>ID 100000021</small></div></div></td><td><span class="pill no">Rejected</span></td><td class="dim">—</td><td class="r dim">—</td><td class="r dim">—</td><td class="r dim">—</td></tr>
+      <tr class="tot"><td colspan="3">Total (8 approved hosts)</td><td class="r">162</td><td class="r gold">₹28,400</td><td class="r amber">₹2,840</td></tr>
+    </tbody></table></div>
+  <div class="note">Earned = what the host made since she joined this agency. Commission = Earned × agency %. Total commission here matches “Earned” in the Agencies list.</div>
+</div></div>
+<figcaption><b>Hosts tab.</b> Every host linked to the agency with status. Click a host → her Hosts page (calls, reports, earnings) to double-check. Pending / rejected show too, so you see everyone the agency sent.</figcaption>
+
+<h2 class="sec">B · Signed up via link tab <span>· everyone who opened the app with the agency link</span></h2>
+<div class="win"><div class="bar"><i></i><i></i><i></i><span>admin / agencies / Star Agency · signed up</span></div>
+<div class="main" style="padding-top:16px">
+  <div class="tabs" style="margin-top:0"><a>Hosts<b>13</b></a><a class="on">Signed up via link<b>14</b></a><a>Payouts<b>2</b></a></div>
+  <div class="card"><table>
+    <thead><tr><th>Person</th><th>Signed up</th><th>Gender</th><th>Host form</th></tr></thead>
+    <tbody>
+      <tr><td><div class="u"><i></i><div class="link">Aisha, 24<small>ID 100000002</small></div></div></td><td>11 Oct</td><td>Female</td><td><span class="pill ok">Approved host</span></td></tr>
+      <tr><td><div class="u"><i></i><div class="link">Simran, 22<small>ID 100000019</small></div></div></td><td>20 Oct</td><td>Female</td><td><span class="pill pend">Pending</span></td></tr>
+      <tr><td><div class="u"><i></i><div class="link">Pooja, 21<small>ID 100000024</small></div></div></td><td>19 Oct</td><td>Female</td><td><span class="pill gray">Not applied yet</span></td></tr>
+      <tr><td><div class="u"><i></i><div class="link">Rahul, 27<small>ID 100000025</small></div></div></td><td>18 Oct</td><td>Male</td><td><span class="pill gray">Not allowed (men can’t host)</span></td></tr>
+    </tbody></table></div>
+</div></div>
+<figcaption><b>Signed up via link.</b> Shows link quality: how many people the agency really brought, who applied, who didn’t. Men who used the link can’t become hosts — they show here so you know.</figcaption>
+
+<h2 class="sec">C · Payouts tab <span>· same history as before</span></h2>
+<div class="win"><div class="bar"><i></i><i></i><i></i><span>admin / agencies / Star Agency · payouts</span></div>
+<div class="main" style="padding-top:16px">
+  <div class="tabs" style="margin-top:0"><a>Hosts<b>13</b></a><a>Signed up via link<b>14</b></a><a class="on">Payouts<b>2</b></a></div>
+  <div class="card"><table>
+    <thead><tr><th>Date</th><th class="r">Amount</th><th>Method</th><th>UTR / ref</th><th>Note</th><th>By</th></tr></thead>
+    <tbody>
+      <tr><td>18 Oct 2026</td><td class="r green">₹1,200</td><td>UPI</td><td class="dim">412398765432</td><td>Oct part 2</td><td>Shubham</td></tr>
+      <tr><td>05 Oct 2026</td><td class="r green">₹800</td><td>Bank</td><td class="dim">HDFC0012345</td><td>Oct part 1</td><td>Shubham</td></tr>
+    </tbody></table></div>
+</div></div>
+<figcaption><b>Payouts.</b> The History button in the table opens this tab directly.</figcaption>
+</body>
+</html>

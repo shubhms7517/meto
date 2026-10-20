@@ -30,7 +30,7 @@ const PAGES: Page[] = [
   { key: 'support', label: 'Support', icon: '🎧', roles: ['support'], el: id => <Support id={id} />, badge: p => p.support },
   { key: 'users', label: 'Users', icon: '👥', roles: ['moderator', 'support', 'finance'], el: id => <Users id={id} />, section: 'PEOPLE' },
   { key: 'hosts', label: 'Hosts', icon: '💖', roles: ['moderator', 'support', 'finance'], el: id => <Hosts id={id} /> },
-  { key: 'agencies', label: 'Agencies', icon: '🏢', roles: [], el: () => <Agencies />, badge: p => p.agencies },
+  { key: 'agencies', label: 'Agencies', icon: '🏢', roles: [], el: id => <Agencies id={id} />, badge: p => p.agencies },
   { key: 'transactions', label: 'Transactions', icon: '💎', roles: ['finance', 'support'], el: () => <Transactions />, section: 'MONEY' },
   { key: 'store', label: 'Store · gifts', icon: '🛍️', roles: [], el: () => <Store /> },
   { key: 'notices', label: 'Notices & push', icon: '📢', roles: [], el: () => <Notices />, section: 'PLATFORM' },
