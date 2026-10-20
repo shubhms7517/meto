@@ -1,5 +1,6 @@
 package com.meto
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
 import com.facebook.react.ReactActivity
@@ -20,6 +21,13 @@ class MainActivity : ReactActivity() {
     // Release app me screenshot / screen recording band (host ka chehra koi record na kare).
     // Debug build me khula rehta hai taaki testing ho sake.
     if (!BuildConfig.DEBUG) window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+    // Link (meto://join?agency=...) se screen nayi bani par JS pehle se chal raha hai (app background me thi,
+    // Android ne screen band kar di thi). Tab React Native link JS ko nahi deta → khud bhejo.
+    // savedInstanceState != null = rotation jaisa recreate → dobara mat bhejo.
+    if (savedInstanceState == null && intent?.action == Intent.ACTION_VIEW && intent?.data != null) {
+      val host = reactHost
+      if (host?.currentReactContext != null) host.onNewIntent(intent)
+    }
   }
 
   /**

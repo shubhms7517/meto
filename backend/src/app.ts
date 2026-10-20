@@ -22,6 +22,7 @@ import { supportRouter } from "./routes/support.routes.js";
 import { devicesRouter } from "./routes/devices.routes.js";
 import { adminRouter } from "./routes/admin.routes.js";
 import { agencyRouter } from "./routes/agency.routes.js";
+import { joinRouter } from "./routes/join.routes.js";
 
 export const app = express();
 
@@ -91,6 +92,9 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: json429,
 });
+
+// Agency invite link ka web page (phone browser → Meto app)
+app.use(joinRouter);
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
