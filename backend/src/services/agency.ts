@@ -29,7 +29,6 @@ async function hostRows(agencyId: number) {
 
 export async function agencyDashboard(agency: Agency) {
   const s = await getSettings();
-  const pct = Number(agency.commissionPct);
   const rows = await hostRows(agency.id);
   const ids = rows.map((r) => Number(r.user_id));
   const users = new Map((ids.length ? await User.findAll({ where: { id: ids } }) : []).map((u) => [u.id, u]));
@@ -61,8 +60,7 @@ export async function agencyDashboard(agency: Agency) {
       online: rows.filter((r) => online(Number(r.user_id))).length,
     },
     earningsInr,
-    commissionInr: Math.round((earningsInr * pct) / 100),
-    commissionPct: pct,
+    calls30d: approved.reduce((n, r) => n + Number(r.calls), 0),
     recent: recent.map((r) => {
       const u = users.get(Number(r.uid));
       return {
@@ -78,7 +76,6 @@ export async function agencyDashboard(agency: Agency) {
 
 export async function agencyHosts(agency: Agency) {
   const s = await getSettings();
-  const pct = Number(agency.commissionPct);
   const rows = await hostRows(agency.id);
   const users = new Map((rows.length ? await User.findAll({ where: { id: rows.map((r) => Number(r.user_id)) } }) : []).map((u) => [u.id, u]));
   return {
@@ -95,10 +92,26 @@ export async function agencyHosts(agency: Agency) {
           status: r.status,
           calls: Number(r.calls),
           earningsInr,
-          myCutInr: Math.round((earningsInr * pct) / 100),
           joinedAt: r.reviewed_at,
         };
       })
       .sort((a, b) => b.earningsInr - a.earningsInr),
+  };
+}
+
+// Invite link page: link + is link se kitne aaye
+export async function agencyInvite(agency: Agency) {
+  const [st] = await q<{ signed: number; pending: number; approved: number; rejected: number }>(
+    `SELECT
+       (SELECT COUNT(*) FROM users WHERE invite_agency_id = :aid) signed,
+       (SELECT COUNT(*) FROM host_profiles WHERE agency_id = :aid AND status = 'pending') pending,
+       (SELECT COUNT(*) FROM host_profiles WHERE agency_id = :aid AND status IN ('approved','suspended')) approved,
+       (SELECT COUNT(*) FROM host_profiles WHERE agency_id = :aid AND status = 'rejected') rejected`,
+    { aid: agency.id },
+  );
+  return {
+    code: agency.code,
+    link: inviteLink(agency.code),
+    counts: { signedUp: Number(st?.signed ?? 0), pending: Number(st?.pending ?? 0), approved: Number(st?.approved ?? 0), rejected: Number(st?.rejected ?? 0) },
   };
 }

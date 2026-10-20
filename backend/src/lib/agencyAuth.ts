@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { Op } from 'sequelize';
 import { Agency, AgencySession } from '../models/index.js';
 import { forbidden, HttpError } from './errors.js';
-import { checkPassword } from './adminAuth.js';
+import { checkPassword, hashPassword, passwordProblem } from './adminAuth.js';
 
 // Agency portal login — admin se bilkul alag (apni session table)
 const SESSION_MS = 12 * 60 * 60_000;
@@ -73,3 +73,15 @@ export function requireAgency() {
 
 // Purani session saaf (kabhi-kabhi)
 export const sweepAgencySessions = () => AgencySession.destroy({ where: { expiresAt: { [Op.lt]: new Date() } } });
+
+// Agency apna password badle (purana sahi hona chahiye) — baaki sab session band, ye wala chalta rahe
+export async function agencyChangePassword(req: Request, current: string, next: string) {
+  const agency = req.agency!;
+  if (!agency.passwordHash || !(await checkPassword(current, agency.passwordHash))) throw new HttpError(401, 'bad_password', 'Current password is wrong');
+  const problem = passwordProblem(next);
+  if (problem) throw new HttpError(400, 'bad_request', problem);
+  if (current === next) throw new HttpError(400, 'bad_request', 'New password must be different');
+  await agency.update({ passwordHash: await hashPassword(next) });
+  const t = bearer(req);
+  await AgencySession.destroy({ where: { agencyId: agency.id, ...(t ? { tokenHash: { [Op.ne]: sha(t) } } : {}) } });
+}

@@ -35,7 +35,8 @@ export class Agency extends Model<InferAttributes<Agency>, InferCreationAttribut
   declare updatedAt: CreationOptional<Date>;
 
   toPortalJSON() {
-    return { id: this.id, code: this.code, name: this.name, email: this.email, commissionPct: Number(this.commissionPct) };
+    // Commission agency ko nahi dikhana (sirf admin dekhta hai)
+    return { id: this.id, code: this.code, name: this.name, email: this.email, lastLoginAt: this.lastLoginAt };
   }
 }
 

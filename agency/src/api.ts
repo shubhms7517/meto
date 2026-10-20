@@ -50,7 +50,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const e = data?.error ?? {};
-    if (res.status === 401 && e.code !== 'bad_login') {
+    if (res.status === 401 && e.code !== 'bad_login' && e.code !== 'bad_password') {
       setToken(null);
       onSignedOut?.();
     }

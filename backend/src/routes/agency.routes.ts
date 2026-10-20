@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import { agencyLogin, agencyLogout, requireAgency } from '../lib/agencyAuth.js';
+import { agencyChangePassword, agencyLogin, agencyLogout, requireAgency } from '../lib/agencyAuth.js';
 import * as A from '../services/agency.js';
 
 export const agencyRouter = Router();
@@ -21,3 +21,9 @@ agencyRouter.post('/auth/logout', async (req, res) => {
 agencyRouter.get('/me', requireAgency(), (req, res) => res.json({ agency: req.agency!.toPortalJSON() }));
 agencyRouter.get('/dashboard', requireAgency(), async (req, res) => res.json(await A.agencyDashboard(req.agency!)));
 agencyRouter.get('/hosts', requireAgency(), async (req, res) => res.json(await A.agencyHosts(req.agency!)));
+agencyRouter.get('/invite', requireAgency(), async (req, res) => res.json(await A.agencyInvite(req.agency!)));
+agencyRouter.post('/account/password', requireAgency(), async (req, res) => {
+  const p = z.object({ current: z.string().min(1).max(200), next: z.string().max(200) }).parse(req.body);
+  await agencyChangePassword(req, p.current, p.next);
+  res.json({ ok: true });
+});

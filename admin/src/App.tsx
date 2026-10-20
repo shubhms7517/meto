@@ -143,6 +143,20 @@ export default function App() {
   );
 }
 
+// Ek hi login page: agency ka email/password ho to agency portal (/agency) pe bhej do
+async function agencySignIn(email: string, password: string) {
+  try {
+    const res = await fetch('/api/agency/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+    if (!res.ok) return false;
+    const r = (await res.json()) as { token: string };
+    localStorage.setItem('meto_agency_token', r.token);
+    location.href = '/agency/';
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function Login({ onIn }: { onIn: (a: AdminMe, p: Pending) => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -158,6 +172,8 @@ function Login({ onIn }: { onIn: (a: AdminMe, p: Pending) => void }) {
       const m = await api<{ admin: AdminMe; pending: Pending }>('/auth/me');
       onIn(m.admin, m.pending);
     } catch (e2) {
+      // Admin nahi mila → shayad agency hai: wahi login agency portal ke liye try karo
+      if (e2 instanceof ApiError && e2.code === 'bad_login' && (await agencySignIn(email, password))) return;
       setErr(e2 instanceof ApiError ? e2.message : 'Something went wrong');
     } finally {
       setBusy(false);
@@ -166,17 +182,15 @@ function Login({ onIn }: { onIn: (a: AdminMe, p: Pending) => void }) {
   return (
     <div className="login">
       <form className="lbox" onSubmit={submit}>
-        <div className="logo">
-          Meto <small>ADMIN</small>
-        </div>
-        <p>Meto team only</p>
+        <div className="logo">Meto</div>
+        <p>Meto team &amp; partner agencies</p>
         <input className="input" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" autoFocus />
         <input className="input" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
         {err && <div className="err">{err}</div>}
         <button className="btn b-rose big mt" disabled={busy || !email || !password}>
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
-        <div className="note">Each admin has their own login · 5 wrong tries = locked 15 min · every action is logged</div>
+        <div className="note">Admins and agencies sign in here · 5 wrong tries = locked 15 min · every action is logged</div>
       </form>
     </div>
   );
