@@ -268,7 +268,7 @@ export default function MeScreen() {
             <Text style={styles.walletLbl}>Gems balance</Text>
             <View style={styles.balRow}>
               <Coin size={26} />
-              <Text style={styles.bal}>{(balance ?? 0).toLocaleString('en-IN')}</Text>
+              <Text style={styles.bal}>{balance == null ? '—' : balance.toLocaleString('en-IN')}</Text>
             </View>
           </View>
           <Pressable onPress={() => navigation.navigate('Wallet')}>

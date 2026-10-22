@@ -2,11 +2,13 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 import { connectSocket, disconnectSocket } from '../services/socket';
 import { ChatMessage, ChatSummary, getChats } from '../services/chat';
+import { onNetChange } from '../lib/netStatus';
 
 type ChatState = {
   chats: ChatSummary[];
   unreadTotal: number;
   loaded: boolean;
+  failed: boolean; // server nahi mila aur list abhi tak nahi aayi
   connected: boolean;
   typing: Record<number, boolean>; // publicId → abhi likh raha hai
   refresh: () => Promise<void>;
@@ -19,6 +21,7 @@ const Ctx = createContext<ChatState | null>(null);
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [connected, setConnected] = useState(false);
   const [typing, setTyping] = useState<Record<number, boolean>>({});
   const active = useRef<number | null>(null);
@@ -29,10 +32,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const res = await getChats();
       setChats(res.chats);
       setLoaded(true);
+      setFailed(false);
     } catch {
-      // network — agli baar
+      setFailed(true); // network — Retry dikhao, server aate hi khud dobara
     }
   }, []);
+  useEffect(() => onNetChange(on => on && refresh()), [refresh]);
 
   const markLocalRead = useCallback((conversationId: number) => {
     setChats(cs => cs.map(c => (c.id === conversationId ? { ...c, unread: 0 } : c)));
@@ -148,6 +153,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       chats,
       unreadTotal: chats.reduce((n, c) => n + c.unread, 0),
       loaded,
+      failed,
       connected,
       typing,
       refresh,
@@ -156,7 +162,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       },
       markLocalRead,
     }),
-    [chats, loaded, connected, typing, refresh, markLocalRead],
+    [chats, loaded, failed, connected, typing, refresh, markLocalRead],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

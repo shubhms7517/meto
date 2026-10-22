@@ -15,6 +15,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CoinChip from '../../components/CoinChip';
+import { onNetChange } from '../../lib/netStatus';
 import { useWallet } from '../../context/WalletContext';
 import { useNotifications } from '../../context/NotificationContext';
 import Glow from '../../components/Glow';
@@ -91,6 +92,15 @@ export default function DiscoverScreen() {
     refresh(tab).finally(() => setLoading(false));
   }, [tab, refresh, filter]);
 
+  const retry = () => {
+    setLoading(true);
+    refresh(tab).finally(() => setLoading(false));
+  };
+  // Server wapas aaya aur list load nahi hui thi → khud dobara
+  const errorRef = useRef(error);
+  errorRef.current = error;
+  useEffect(() => onNetChange(on => on && !!errorRef.current && refresh(tab)), [tab, refresh]);
+
   // Chupchaap taaza karna (online status badalta rehta hai): screen pe wapas aane pe + har 1 min.
   // Agar user neeche tak scroll kar chuka hai (page > 1) to list nahi chhedte, sirf favourites row.
   const pageRef = useRef(page);
@@ -158,7 +168,7 @@ export default function DiscoverScreen() {
               <Text style={styles.onlineText}>Online</Text>
             </View>
           ) : (
-            <CoinChip balance={balance ?? 0} onPress={() => navigation.navigate('Wallet')} />
+            <CoinChip balance={balance} onPress={() => navigation.navigate('Wallet')} />
           )}
           <Pressable style={styles.iconBtn} onPress={() => navigation.navigate('Notifications')}>
             <Icon name="bell" size={20} />
@@ -230,6 +240,11 @@ export default function DiscoverScreen() {
               <Text style={styles.emptyText}>
                 {error || (tab === 'following' ? 'Follow people you like and they will show up here.' : nFilters > 0 ? 'Try a wider age range or turn off “Online now only”.' : 'Pull down to refresh.')}
               </Text>
+              {!!error && (
+                <Pressable onPress={retry} style={styles.clearBtn}>
+                  <Text style={styles.clearText}>Retry</Text>
+                </Pressable>
+              )}
               {!error && tab === 'discover' && nFilters > 0 && (
                 <Pressable onPress={() => applyFilter(DEFAULT_FILTER)} style={styles.clearBtn}>
                   <Text style={styles.clearText}>Clear filter</Text>

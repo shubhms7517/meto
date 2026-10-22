@@ -2,7 +2,7 @@
  * @format
  */
 
-import { AppRegistry } from 'react-native';
+import { AppRegistry, LogBox } from 'react-native';
 import App from './App';
 import { name as appName } from './app.json';
 import { API_URL } from './src/services/api';
@@ -27,5 +27,8 @@ if (__DEV__) {
     };
   }
 }
+
+// Phone pe developer wali warning patti nahi (warnings backend log me jaati hain)
+LogBox.ignoreAllLogs(true);
 
 AppRegistry.registerComponent(appName, () => App);

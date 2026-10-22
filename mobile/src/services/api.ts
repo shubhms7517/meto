@@ -1,12 +1,13 @@
 import { TurboModuleRegistry, type TurboModule } from 'react-native';
 import { getAuth, getIdToken } from '@react-native-firebase/auth';
+import { markOffline, markOnline, setNetBase } from '../lib/netStatus';
 
 // Development: backend usi PC pe hai jahan se app ka code (Metro) aaya.
 // USB pe Metro = localhost (adb reverse), WiFi pe Metro = PC ka IP → backend bhi wahi IP.
 // Isse USB toote to bhi app WiFi se chalti rehti hai.
 // TODO (launch): production me asli server ka https URL
 const PORT = 4000;
-const FALLBACK_HOST = '192.168.1.11'; // PC ka WiFi IP (release/bina-Metro build ke liye)
+const FALLBACK_HOST = '192.168.1.13'; // PC ka WiFi IP (release/bina-Metro build ke liye)
 
 function devHost(): string {
   try {
@@ -21,6 +22,7 @@ function devHost(): string {
 }
 
 export const API_URL = `http://${devHost()}:${PORT}`;
+setNetBase(API_URL);
 
 // Server photos ke link "http://localhost:4000/uploads/..." jaise save karta hai —
 // unhe isi API ke address pe mod do, taaki WiFi pe bhi photos load hon.
@@ -66,7 +68,7 @@ async function authHeader(): Promise<Record<string, string>> {
 }
 
 // WiFi beech me atak jaye to request hamesha latki na rahe — itne der baad "Retry" dikhe
-const TIMEOUT_MS = 20_000;
+const TIMEOUT_MS = 12_000;
 const UPLOAD_TIMEOUT_MS = 180_000; // photo / video (host form me 30 sec video)
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -81,12 +83,14 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     });
   } catch (e) {
     if (e instanceof ApiError) throw e;
+    markOffline(); // upar "Can't reach Meto" patti + chupchaap dobara check
     if (ctrl.signal.aborted) throw new ApiError(0, 'timeout', 'Server is taking too long. Check your connection and try again');
     throw new ApiError(0, 'network_error', 'Cannot reach server. Check your connection');
   } finally {
     clearTimeout(timer);
   }
 
+  markOnline(); // server ne jawab diya (error bhi ho to server chal raha hai)
   const text = await res.text().catch(() => '');
   let body: any = null;
   try {

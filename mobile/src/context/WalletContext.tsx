@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
+import { onNetChange } from '../lib/netStatus';
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 import { connectSocket } from '../services/socket';
 import { getWallet, recoverPurchases } from '../services/wallet';
@@ -69,6 +70,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         s.off('connect', refresh);
       };
     });
+    // Server wapas aaya → balance + host/user dobara (offline me shuru hui app sahi interface pe aaye)
+    const net = onNetChange(on => on && getAuth().currentUser && refresh());
     // App background se wapas aaye → taaza balance (beech me koi event chhoot gaya ho to)
     const app = AppState.addEventListener('change', st => {
       if (st === 'active' && getAuth().currentUser) refresh();
@@ -76,6 +79,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return () => {
       unsub();
       off?.();
+      net();
       app.remove();
     };
   }, [refresh]);

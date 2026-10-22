@@ -3,13 +3,13 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import Coin from './Coin';
 import { colors } from '../theme';
 
-type Props = { balance: number; onPress?: () => void };
+type Props = { balance: number | null; onPress?: () => void };
 
 export default function CoinChip({ balance, onPress }: Props) {
   return (
     <Pressable onPress={onPress} style={styles.chip}>
       <Coin size={22} />
-      <Text style={styles.text}>{balance.toLocaleString('en-IN')}</Text>
+      <Text style={styles.text}>{balance == null ? '—' : balance.toLocaleString('en-IN')}</Text>
     </Pressable>
   );
 }

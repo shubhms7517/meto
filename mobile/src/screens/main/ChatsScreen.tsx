@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Avatar from '../../components/Avatar';
 import Icon from '../../components/Icon';
 import Ticks from '../../components/Ticks';
+import { ErrorState } from '../../components/States';
 import { colors, gradients } from '../../theme';
 import { useChat } from '../../context/ChatContext';
 import { useCall } from '../../context/CallContext';
@@ -40,7 +41,7 @@ export default function ChatsScreen() {
   const TAB_W = (width - 28) / 4;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
-  const { chats, loaded, typing, refresh } = useChat();
+  const { chats, loaded, failed, typing, refresh } = useChat();
   const { placeCall } = useCall();
 
   const [tab, setTab] = useState<Tab>('chats');
@@ -130,6 +131,8 @@ export default function ChatsScreen() {
           ListEmptyComponent={
             loaded ? (
               <Empty icon="chat" title="No chats yet" text="Find someone you like on Discover and say hi 👋" />
+            ) : failed ? (
+              <ErrorState onRetry={refresh} />
             ) : (
               <ActivityIndicator color={colors.rose1} style={{ marginTop: 40 }} />
             )

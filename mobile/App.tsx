@@ -13,6 +13,8 @@ import { WalletProvider } from './src/context/WalletContext';
 import { NotificationProvider } from './src/context/NotificationContext';
 import { startInviteLinks } from './src/lib/invite';
 import DialogHost from './src/components/DialogHost';
+import OfflineBanner from './src/components/OfflineBanner';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 startInviteLinks();
 
@@ -23,7 +25,10 @@ function App() {
         <WalletProvider>
           <CallProvider>
             <NotificationProvider>
-              <RootNavigator />
+              <ErrorBoundary>
+                <RootNavigator />
+              </ErrorBoundary>
+              <OfflineBanner />
               <DialogHost />
             </NotificationProvider>
           </CallProvider>

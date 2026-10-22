@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { onNetChange } from '../lib/netStatus';
 
 /**
  * Page ka data: pehli baar loading, phir error (Retry) ya data; neeche kheencho → refresh.
@@ -27,6 +28,10 @@ export function useLoad<T>(fetcher: () => Promise<T>, { focus = false }: { focus
   useEffect(() => {
     if (!focus) run();
   }, [focus, run]);
+  // Server wapas aaya → jo page fail tha wo khud dobara load
+  const failedRef = useRef(false);
+  failedRef.current = failed;
+  useEffect(() => onNetChange(on => on && failedRef.current && run()), [run]);
   useFocusEffect(
     useCallback(() => {
       if (focus) run();
