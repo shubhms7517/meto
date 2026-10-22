@@ -18,11 +18,16 @@ const COLUMNS: { table: string; column: string; ddl: string }[] = [
   { table: 'agencies', column: 'last_login_at', ddl: 'DATETIME NULL DEFAULT NULL' },
   { table: 'agencies', column: 'failed_logins', ddl: 'INT UNSIGNED NOT NULL DEFAULT 0' },
   { table: 'agencies', column: 'locked_until', ddl: 'DATETIME NULL DEFAULT NULL' },
+  { table: 'host_profiles', column: 'rate_min', ddl: 'INT UNSIGNED NULL DEFAULT NULL' },
+  { table: 'host_profiles', column: 'rate_max', ddl: 'INT UNSIGNED NULL DEFAULT NULL' },
+  { table: 'agencies', column: 'gems_per_bean', ddl: 'INT UNSIGNED NOT NULL DEFAULT 10' },
+  { table: 'agencies', column: 'gem_balance', ddl: 'BIGINT UNSIGNED NOT NULL DEFAULT 0' },
+  { table: 'withdrawals', column: 'beans', ddl: 'BIGINT UNSIGNED NOT NULL DEFAULT 0' },
 ];
 
 // ENUM me naya value (sync() purana column nahi badalta). need = jo value honi chahiye.
 const ENUMS: { table: string; column: string; need: string; ddl: string }[] = [
-  { table: 'wallet_transactions', column: 'kind', need: 'unlock', ddl: "ENUM('recharge','bonus','call','gift','checkin','refund','admin','message','unlock') NOT NULL" },
+  { table: 'wallet_transactions', column: 'kind', need: 'agency', ddl: "ENUM('recharge','bonus','call','gift','checkin','refund','admin','message','unlock','agency') NOT NULL" },
   { table: 'messages', column: 'type', need: 'call', ddl: "ENUM('text','image','gift','system','call') NOT NULL DEFAULT 'text'" },
   { table: 'host_transactions', column: 'kind', need: 'unlock', ddl: "ENUM('call','gift','withdraw','refund','admin','message','unlock') NOT NULL" },
 ];

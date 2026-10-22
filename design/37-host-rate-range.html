@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Host rate range design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#12070d; --surface:#1d1418; --card:#241c20; --line:rgba(255,255,255,.08); --text:#f6e9ee; --muted:#b9a3ad; --dim:#7d6872; --rose-1:#ff5f8f; --rose-2:#d81b5c; --gold-1:#f6dc9b; --green:#3ee08f; --red:#ff5f7a; --amber:#ffb547; --blue:#7fb0ff; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:Poppins,system-ui,sans-serif; background:#0b0408; color:var(--text); padding:30px 26px 70px; font-size:13px; }
+  header.page h1 { font-size:25px; } header.page p { color:var(--muted); font-size:13.5px; margin-top:4px; max-width:860px; line-height:1.55; }
+  h2.sec { margin:36px 0 2px; font-size:16px; color:var(--gold-1); } h2.sec span { color:var(--dim); font-size:12.5px; font-weight:400; }
+  .win { margin-top:14px; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:var(--bg); }
+  .bar { height:34px; display:flex; align-items:center; gap:7px; padding:0 14px; background:#1a1015; border-bottom:1px solid var(--line); }
+  .bar i { width:11px; height:11px; border-radius:50%; background:#3a2a31; } .bar span { margin-left:14px; font-size:11.5px; color:var(--dim); }
+  .main { padding:22px 26px 28px; }
+  .top h3 { font-size:22px; } .top .sub { color:var(--muted); font-size:12px; margin-top:3px; }
+  .filters { display:flex; gap:9px; margin-top:12px; }
+  .sel { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:8px 13px; font-size:12px; }
+  .grid { display:grid; grid-template-columns:1fr 330px; gap:16px; margin-top:14px; align-items:start; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:13px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { text-align:left; color:var(--dim); font-size:10px; letter-spacing:.05em; font-weight:600; padding:11px 14px; border-bottom:1px solid var(--line); text-transform:uppercase; }
+  td { padding:11px 14px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle; } tr:last-child td { border-bottom:0; }
+  tr.sel-row td { background:rgba(255,95,143,.06); }
+  .u { display:flex; align-items:center; gap:9px; } .u i { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--rose-1),var(--rose-2)); flex:none; }
+  .u small { display:block; color:var(--dim); font-size:10.5px; } .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green); margin-right:5px; }
+  .r { text-align:right; } .gold { color:var(--gold-1); } .dim { color:var(--dim); } .green { color:var(--green); } .new { outline:2px dashed rgba(246,220,155,.55); outline-offset:-3px; }
+  .rate b { display:block; } .rate small { color:var(--dim); font-size:10.5px; } .rate small.own { color:var(--blue); }
+  .ag b { display:block; font-weight:500; } .ag small { color:var(--dim); font-size:10.5px; }
+  .pill { display:inline-block; font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:20px; } .ok { color:var(--green); background:rgba(62,224,143,.12); }
+  .side { padding:16px; } .side h4 { font-size:15px; } .side .s { color:var(--dim); font-size:11px; }
+  .kv { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:12px; } .kv span { color:var(--muted); }
+  .box { margin-top:12px; padding:12px; border-radius:12px; background:var(--surface); border:1px solid var(--line); }
+  .box .lbl { color:var(--muted); font-size:11px; } .box .big { font-size:18px; font-weight:700; color:var(--gold-1); margin-top:2px; }
+  .range { margin-top:10px; height:6px; border-radius:6px; background:#3a2a31; position:relative; }
+  .range .fill { position:absolute; top:0; bottom:0; border-radius:6px; background:linear-gradient(90deg,var(--rose-1),var(--gold-1)); }
+  .range .pin { position:absolute; top:-5px; width:16px; height:16px; border-radius:50%; background:#fff; border:3px solid var(--rose-2); transform:translateX(-50%); }
+  .ticks { display:flex; justify-content:space-between; color:var(--dim); font-size:10px; margin-top:6px; }
+  .btn { border:0; border-radius:10px; padding:8px 14px; font-size:12px; font-weight:600; font-family:inherit; }
+  .b-gold { background:linear-gradient(100deg,#fff4d6,#e6bf6a); color:#3a2608; } .b-ghost { background:var(--surface); border:1px solid var(--line); color:var(--text); } .b-rose { background:linear-gradient(100deg,var(--rose-1),var(--rose-2)); color:#fff; }
+  .row { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  /* dialog */
+  .dlg-wrap { padding:34px; display:grid; place-items:center; background:rgba(0,0,0,.55); }
+  .dlg { width:430px; background:var(--card); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:20px 22px; }
+  .dlg h4 { font-size:16px; } .dlg .s { color:var(--muted); font-size:12px; margin-top:3px; }
+  .f3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:16px; }
+  .fld label { display:block; color:var(--muted); font-size:11px; margin-bottom:5px; }
+  .fld div { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:9px 11px; font-size:13.5px; font-weight:600; }
+  .fld.on div { border-color:var(--rose-1); }
+  .chk { display:flex; align-items:center; gap:8px; margin-top:14px; font-size:12px; color:var(--muted); } .chk i { width:16px; height:16px; border-radius:5px; border:1.5px solid var(--dim); }
+  .hint { margin-top:12px; padding:9px 12px; border-radius:10px; font-size:11.5px; color:#bcd5ff; background:rgba(127,176,255,.08); border:1px solid rgba(127,176,255,.25); line-height:1.5; }
+  .err { margin-top:10px; font-size:11.5px; color:var(--red); }
+  .act { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+  /* phone */
+  .phones { display:flex; gap:26px; flex-wrap:wrap; margin-top:14px; }
+  .phone { width:330px; border-radius:30px; border:1px solid rgba(255,255,255,.12); background:linear-gradient(180deg,#2a0f1d,#12070d 40%); padding:18px 16px 22px; }
+  .phone .t { color:var(--dim); font-size:11px; margin-bottom:10px; }
+  .rc { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; }
+  .rc .h { display:flex; justify-content:space-between; font-size:13px; } .rc .h b { color:var(--gold-1); }
+  .chips { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:12px; }
+  .chips span { text-align:center; padding:9px 0; border-radius:11px; background:var(--surface); font-weight:600; font-size:12px; }
+  .chips span.on { background:linear-gradient(100deg,#fff4d6,#e6bf6a); color:#3a2608; } .chips span.off { opacity:.3; text-decoration:line-through; }
+  .custom { margin-top:10px; border:1.5px dashed rgba(255,255,255,.18); border-radius:12px; padding:10px 12px; font-size:12px; display:flex; justify-content:space-between; } .custom b { color:var(--rose-1); }
+  .rc .foot { color:var(--dim); font-size:10.5px; margin-top:9px; line-height:1.5; } .rc .foot b { color:var(--muted); font-weight:600; }
+  figcaption { margin-top:11px; color:var(--muted); font-size:12.5px; max-width:940px; line-height:1.55; } figcaption b { color:var(--text); }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Host rate range + Agency column — design</h1>
+  <p>Admin sets a <b>minimum and maximum call rate for each host</b>. The host can only pick a rate inside her range in the app. If no range is set for a host, the Settings range applies (500–3,000). The Hosts table gets its own <b>Agency</b> column.</p>
+</header>
+
+<h2 class="sec">A · Hosts table <span>· new Agency column · Rate shows her range below</span></h2>
+<div class="win"><div class="bar"><i></i><i></i><i></i><span>admin / hosts</span></div>
+<div class="main">
+  <div class="top"><h3>Hosts</h3><div class="sub">Earnings, pickup rate and short calls (host ended before 1 min) · last 30 days</div></div>
+  <div class="filters"><span class="sel">All hosts ▾</span><span class="sel">Sort: earnings today ▾</span><span class="sel">☐ Online only</span></div>
+  <div class="grid">
+    <div class="card"><table>
+      <thead><tr><th>Host</th><th class="new">Agency</th><th class="r">Rate · range</th><th class="r">Today</th><th class="r">Total</th><th class="r">Pickup</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr class="sel-row"><td><div class="u"><i></i><div><span class="dot"></span>Aisha, 24<small>ID 100000002</small></div></div></td>
+          <td class="ag new"><b>Star Agency</b><small>AG1045</small></td>
+          <td class="r rate"><b>1,500</b><small class="own">1,000 – 2,000</small></td><td class="r gold">₹0</td><td class="r">₹96</td><td class="r">100%</td><td><span class="pill ok">Active</span></td></tr>
+        <tr><td><div class="u"><i></i><div><span class="dot"></span>Kavya, 23<small>ID 100000003</small></div></div></td>
+          <td class="ag new dim">—</td>
+          <td class="r rate"><b>1,500</b><small>500 – 3,000 · default</small></td><td class="r gold">₹0</td><td class="r">₹0</td><td class="r" style="color:var(--red)">0%</td><td><span class="pill ok">Active</span></td></tr>
+        <tr><td><div class="u"><i></i><div><span class="dot"></span>Sony, 24<small>ID 100000018</small></div></div></td>
+          <td class="ag new"><b>Star Agency</b><small>AG1045</small></td>
+          <td class="r rate"><b>2,000</b><small class="own">2,000 – 3,000</small></td><td class="r gold">₹0</td><td class="r">₹40</td><td class="r">80%</td><td><span class="pill ok">Active</span></td></tr>
+        <tr><td><div class="u"><i></i><div>Meera, 26<small>ID 100000005</small></div></div></td>
+          <td class="ag new dim">—</td>
+          <td class="r rate"><b>2,000</b><small>500 – 3,000 · default</small></td><td class="r gold">₹0</td><td class="r">₹0</td><td class="r dim">—</td><td><span class="pill ok">Active</span></td></tr>
+      </tbody></table></div>
+    <div class="card side">
+      <h4>Aisha, 24</h4><div class="s">ID 100000002 · online</div>
+      <div class="kv"><span>Agency</span><b>Star Agency · AG1045</b></div>
+      <div class="kv"><span>Host since</span><b>12 Oct 2026</b></div>
+      <div class="box">
+        <div class="lbl">Call rate</div><div class="big">1,500 gems/min</div>
+        <div class="range"><div class="fill" style="left:20%;right:40%"></div><div class="pin" style="left:40%"></div></div>
+        <div class="ticks"><span>500</span><span style="color:var(--blue)">her range 1,000 – 2,000</span><span>3,000</span></div>
+      </div>
+      <div class="row"><button class="btn b-gold">Edit rate &amp; range</button><button class="btn b-ghost">Pause</button></div>
+    </div>
+  </div>
+</div></div>
+<figcaption><b>Agency column</b> (dashed = new): agency name + code, or “—” if the host joined without an agency. <b>Rate · range</b>: her current rate, and under it her range — <span style="color:var(--blue)">blue</span> when the admin set her own range, grey “default” when the Settings range applies. In the side panel, the old “Change rate” button becomes <b>Edit rate &amp; range</b>.</figcaption>
+
+<h2 class="sec">B · Edit rate &amp; range dialog <span>· owner/admin sets min, max and current rate</span></h2>
+<div class="win"><div class="bar"><i></i><i></i><i></i><span>admin / hosts / Aisha · edit rate</span></div>
+<div class="dlg-wrap"><div class="dlg">
+  <h4>Rate &amp; range · Aisha</h4>
+  <div class="s">She can only choose a rate between Minimum and Maximum in the app.</div>
+  <div class="f3">
+    <div class="fld"><label>Minimum</label><div>1,000</div></div>
+    <div class="fld"><label>Maximum</label><div>2,000</div></div>
+    <div class="fld on"><label>Current rate</label><div>1,500</div></div>
+  </div>
+  <div class="chk"><i></i>Use default range (500 – 3,000 from Settings)</div>
+  <div class="hint">Range must stay inside 500 – 3,000 (Settings limits) and go in steps of 100. If you make the range smaller than her current rate, her rate moves inside the new range and she gets a notice in the app.</div>
+  <div class="err">Example error: “Maximum must be more than Minimum”.</div>
+  <div class="act"><button class="btn b-ghost">Cancel</button><button class="btn b-rose">Save</button></div>
+</div></div></div>
+<figcaption><b>Tick “Use default range”</b> to remove her own range — she goes back to the Settings limits. Every change is written to the Audit log (before → after).</figcaption>
+
+<h2 class="sec">C · Host app — Me screen rate card <span>· what Aisha sees</span></h2>
+<div class="phones">
+  <div class="phone"><div class="t">With her own range (1,000 – 2,000)</div>
+    <div class="rc"><div class="h"><span>Your call rate</span><b>1,500 / min</b></div>
+      <div class="chips"><span>1,000</span><span class="on">1,500</span><span>2,000</span><span class="off">3,000</span></div>
+      <div class="custom"><span>✏️ Custom rate · set your own amount</span><b>Set</b></div>
+      <div class="foot"><b>1,000 – 2,000 gems/min · set by Meto team</b> · if you end a call, only full minutes count</div></div></div>
+  <div class="phone"><div class="t">No own range (default)</div>
+    <div class="rc"><div class="h"><span>Your call rate</span><b>1,000 / min</b></div>
+      <div class="chips"><span class="on">1,000</span><span>1,500</span><span>2,000</span><span>3,000</span></div>
+      <div class="custom"><span>✏️ Custom rate · set your own amount</span><b>Set</b></div>
+      <div class="foot">500 – 3,000 gems/min · if you end a call, only full minutes count</div></div></div>
+</div>
+<figcaption>Chips outside her range are greyed out and can’t be tapped. Custom rate only accepts values inside her range. Nothing else on the Me screen changes.</figcaption>
+</body>
+</html>

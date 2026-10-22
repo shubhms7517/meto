@@ -72,7 +72,7 @@ export async function unlockMedia(viewer: User, hostPublicId: number, kind: Medi
   } catch {
     // dobara tap (race) — unique index; gems ek hi baar kate (uniqueKey)
   }
-  await applyHostTx(host.id, Math.floor(price * s.hostPointsPerGem), {
+  await applyHostTx(host.id, Math.floor(price), {
     kind: 'unlock',
     title: `${kind === 'photo' ? 'Photo' : 'Video'} unlocked · ${viewer.name ?? 'User'}`,
     uniqueKey: key,

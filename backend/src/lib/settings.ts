@@ -2,8 +2,10 @@ import { AppSetting } from '../models/Host.js';
 
 // Owner ke admin panel se badalne wale number. DB me na ho to ye default chalte hain.
 export const SETTING_DEFAULTS = {
-  hostPointsPerGem: 1, // user ke 1 gem par host ko kitne points
-  pointsPerInr: 100, // 100 points = ₹1
+  // Host ko poore gems milte hain. Withdraw pe: gems → beans → ₹ (rate sirf admin dekhta hai)
+  gemsPerBean: 10, // host: 1 bean = kitne gems (sab hosts ka ek rate)
+  beansPerInr: 10, // kitne beans = ₹1 (sirf admin ko dikhta hai)
+  minWithdrawBeans: 5000, // host kam se kam itne beans nikale
   hostRates: [1000, 1500, 2000, 3000], // jaldi chunne ke chips (custom bhi chalta hai)
   hostRateDefault: 1000,
   hostRateMin: 500, // custom rate kam se kam
@@ -11,7 +13,6 @@ export const SETTING_DEFAULTS = {
   hostRateOpenMax: 3000, // sabse zyada rate (host level nahi — seedha limit)
   matchRate: 1000, // Random match ki call ka rate (host ka apna rate nahi)
   vipCallDiscountPct: 10, // VIP user ko call kitni % sasti
-  minWithdrawInr: 500,
   tdsPct: 1, // withdraw pe TDS % (CA se pakka karein)
   freeMessagesPerHost: 3, // har host ke saath itne message free
   messagePrice: 200, // uske baad gems per message (host ko utne points)
@@ -43,6 +44,27 @@ export async function getSettings(): Promise<Settings> {
 export async function setSetting<K extends SettingKey>(key: K, value: Settings[K]) {
   await AppSetting.upsert({ key, value });
   cache = null;
+}
+
+// Host ki rate range: admin ne us host ke liye di ho to wo, warna Settings wali.
+// Settings ki limit hamesha upar rehti hai (range usse bahar nahi ja sakti).
+export function hostRange(hp: { rateMin?: number | null; rateMax?: number | null } | null, s: Settings) {
+  const own = hp?.rateMin != null && hp?.rateMax != null;
+  const min = own ? Math.max(s.hostRateMin, hp!.rateMin!) : s.hostRateMin;
+  const max = own ? Math.min(s.hostRateOpenMax, hp!.rateMax!) : s.hostRateOpenMax;
+  if (min > max) return { min: s.hostRateMin, max: s.hostRateOpenMax, own: false };
+  return { min, max, own };
+}
+
+// Admin ke hisaab ke liye: kitne gems = ₹1 (host/agency ko kabhi nahi dikhana)
+export const gemsPerInr = (s: Settings) => s.gemsPerBean * s.beansPerInr;
+// Host ke gems → beans (poore beans hi)
+export const gemsToBeans = (gems: number, s: Settings) => Math.floor(gems / s.gemsPerBean);
+
+// Agency commission: hosts ke gems ka % → gems, phir is agency ke rate se beans
+export function agencyCommission(a: { commissionPct: number | string; gemsPerBean: number }, hostGems: number) {
+  const gems = Math.floor((hostGems * Number(a.commissionPct)) / 100);
+  return { gems, beans: Math.floor(gems / Math.max(1, a.gemsPerBean)) };
 }
 
 // User ko host ki call kitne gems/min padegi (VIP ko chhoot)

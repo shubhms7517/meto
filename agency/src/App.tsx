@@ -2,12 +2,18 @@ import { useCallback, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { api, ApiError, getToken, setSignedOutHandler, setToken } from './api';
 
-// Commission agency ko kahin nahi dikhana — sirf hosts, unki kamai aur invite link
+// Agency ko ₹, commission % ya bean rate kabhi nahi dikhana — sirf gems aur commission beans
 type Agency = { id: number; code: string; name: string; email: string | null; lastLoginAt: string | null };
-type Page = 'dashboard' | 'hosts' | 'invite' | 'account';
-const PAGES: Page[] = ['dashboard', 'hosts', 'invite', 'account'];
-const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
+type Page = 'dashboard' | 'gems' | 'hosts' | 'invite' | 'account';
+const PAGES: Page[] = ['dashboard', 'gems', 'hosts', 'invite', 'account'];
 const num = (n: number) => Math.round(n).toLocaleString('en-IN');
+const Gems = ({ n, sign }: { n: number; sign?: boolean }) => (
+  <span className="gem">
+    {sign && n > 0 ? '+' : ''}
+    {num(n)}
+  </span>
+);
+const Beans = ({ n }: { n: number }) => <span className="bean">{num(n)}</span>;
 
 function Avatar({ name, url }: { name: string | null; url?: string | null }) {
   const [bad, setBad] = useState(false);
@@ -50,9 +56,13 @@ const StatusPill = ({ s }: { s: string }) =>
 type Dash = {
   agency: Agency & { inviteLink: string };
   counts: { hosts: number; approved: number; pending: number; online: number };
-  earningsInr: number;
+  gemBalance: number; // users ko bhejne ke liye
+  hostGems: number; // agency banne ke baad se hosts ke gems
+  hostGems30: number;
+  commissionBeans: number;
+  usersThisMonth: number;
   calls30d: number;
-  recent: { host: { name: string | null; publicId: number; avatarUrl: string | null; online: boolean } | null; title: string; subtitle: string | null; inr: number; at: string }[];
+  recent: { host: { name: string | null; publicId: number; avatarUrl: string | null; online: boolean } | null; title: string; subtitle: string | null; gems: number; at: string }[];
 };
 
 function Dashboard({ agency, go }: { agency: Agency; go: (p: Page) => void }) {
@@ -62,29 +72,34 @@ function Dashboard({ agency, go }: { agency: Agency; go: (p: Page) => void }) {
     <section>
       <div className="top">
         <h2>Dashboard</h2>
-        <div className="sub">{agency.name} · last 30 days</div>
+        <div className="sub">{agency.name}</div>
       </div>
       {error && <div className="alert">{error}</div>}
       <div className="kpis">
         <div className="kpi">
-          <small>My hosts</small>
-          <b>{d?.counts.hosts ?? '—'}</b>
-          <em>{d ? `${d.counts.approved} approved · ${d.counts.pending} pending` : ''}</em>
-        </div>
-        <div className="kpi green">
-          <small>Online now</small>
-          <b>{d?.counts.online ?? '—'}</b>
-          <em>taking calls</em>
-        </div>
-        <div className="kpi gold">
-          <small>Host earnings · 30d</small>
-          <b>{d ? inr(d.earningsInr) : '—'}</b>
-          <em>all your hosts</em>
+          <small>Gems stock</small>
+          <b>{d ? <Gems n={d.gemBalance} /> : '—'}</b>
+          <em>
+            to send to users ·{' '}
+            <button className="link-btn" onClick={() => go('gems')}>
+              Send gems →
+            </button>
+          </em>
         </div>
         <div className="kpi">
-          <small>Calls · 30d</small>
-          <b>{d ? num(d.calls30d) : '—'}</b>
-          <em>by your hosts</em>
+          <small>Your hosts earned</small>
+          <b>{d ? <Gems n={d.hostGems} /> : '—'}</b>
+          <em>gems, since you joined{d ? ` · ${num(d.hostGems30)} in 30 days` : ''}</em>
+        </div>
+        <div className="kpi">
+          <small>Commission</small>
+          <b>{d ? <Beans n={d.commissionBeans} /> : '—'}</b>
+          <em>beans · from your hosts</em>
+        </div>
+        <div className="kpi">
+          <small>My hosts</small>
+          <b>{d?.counts.hosts ?? '—'}</b>
+          <em>{d ? `${d.counts.approved} approved · ${d.counts.online} online · ${num(d.usersThisMonth)} users got gems this month` : ''}</em>
         </div>
       </div>
 
@@ -123,7 +138,9 @@ function Dashboard({ agency, go }: { agency: Agency; go: (p: Page) => void }) {
                   {r.title}
                   {r.subtitle ? <span className="dim"> · {r.subtitle}</span> : ''}
                 </td>
-                <td className="r gold">+{inr(r.inr)}</td>
+                <td className="r">
+                  <Gems n={r.gems} sign />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -135,7 +152,7 @@ function Dashboard({ agency, go }: { agency: Agency; go: (p: Page) => void }) {
 }
 
 /* ---------- My hosts ---------- */
-type Hosts = { items: { name: string | null; publicId: number | null; avatarUrl: string | null; age: number | null; online: boolean; status: string; calls: number; earningsInr: number; joinedAt: string | null }[] };
+type Hosts = { items: { name: string | null; publicId: number | null; avatarUrl: string | null; age: number | null; online: boolean; status: string; calls: number; gems30: number; gems: number; joinedAt: string | null }[] };
 
 function MyHosts() {
   const { data: d, error } = useLoad<Hosts>('/hosts');
@@ -153,7 +170,8 @@ function MyHosts() {
               <th>HOST</th>
               <th>STATUS</th>
               <th>CALLS 30d</th>
-              <th className="r">EARNINGS 30d</th>
+              <th className="r">GEMS 30d</th>
+              <th className="r">GEMS SINCE JOINING YOU</th>
               <th>JOINED</th>
             </tr>
           </thead>
@@ -181,7 +199,8 @@ function MyHosts() {
                     <StatusPill s={h.status} />
                   </td>
                   <td>{live ? num(h.calls) : '—'}</td>
-                  <td className="r gold">{live ? inr(h.earningsInr) : '—'}</td>
+                  <td className="r">{live ? <Gems n={h.gems30} /> : '—'}</td>
+                  <td className="r">{live ? <Gems n={h.gems} /> : '—'}</td>
                   <td className="dim nowrap">{h.joinedAt ? new Date(h.joinedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}</td>
                 </tr>
               );
@@ -189,6 +208,185 @@ function MyHosts() {
           </tbody>
         </table>
         {d && !d.items.length && <div className="empty">No hosts yet — share your invite link</div>}
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Send gems ---------- */
+type Lite = { publicId: number; name: string | null; age: number | null; avatarUrl: string | null };
+type GemHistory = { gemBalance: number; items: { id: number; kind: 'admin_add' | 'send'; gems: number; balanceAfter: number; user: Lite | null; at: string }[] };
+
+// Meto ID se user dhoondo → gems daalo → confirm → bhejo. Stock se zyada nahi, host ko nahi.
+function SendGems() {
+  const h = useLoad<GemHistory>('/gems');
+  const [id, setId] = useState('');
+  const [user, setUser] = useState<Lite | null>(null);
+  const [findErr, setFindErr] = useState('');
+  const [gems, setGems] = useState('');
+  const [step, setStep] = useState<'edit' | 'confirm'>('edit');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const stock = h.data?.gemBalance ?? 0;
+  const g = Math.round(Number(gems));
+  const gemsErr = !gems ? '' : !(g >= 1) ? 'Enter gems' : g > stock ? `You have only ${num(stock)} gems` : '';
+
+  const find = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUser(null);
+    setFindErr('');
+    setMsg(null);
+    setStep('edit');
+    const clean = id.replace(/\D/g, '');
+    if (!clean) return setFindErr('Enter the Meto ID');
+    try {
+      setUser((await api<{ user: Lite }>(`/users/${clean}`)).user);
+    } catch (e2) {
+      setFindErr(e2 instanceof ApiError ? e2.message : 'Something went wrong');
+    }
+  };
+  const send = async () => {
+    if (!user) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      await api('/gems/send', { body: { publicId: user.publicId, gems: g } });
+      setMsg({ ok: true, text: `Sent ${num(g)} gems to ${user.name ?? 'user'} (ID ${user.publicId}).` });
+      setGems('');
+      setUser(null);
+      setId('');
+      setStep('edit');
+      h.reload();
+    } catch (e2) {
+      setMsg({ ok: false, text: e2 instanceof ApiError ? e2.message : 'Something went wrong' });
+      setStep('edit');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section>
+      <div className="top">
+        <h2>Send gems</h2>
+        <div className="sub">Send gems from your stock to a user · search by Meto ID</div>
+      </div>
+      {h.error && <div className="alert">{h.error}</div>}
+      <div className="grid2 mt">
+        <div className="card pad">
+          <div className="stock">
+            <span className="dim">Your gems stock</span>
+            <b>
+              <Gems n={stock} />
+            </b>
+          </div>
+          <form onSubmit={find}>
+            <label className="lbl">
+              User’s Meto ID
+              <div className="row mt-s">
+                <input className="field" inputMode="numeric" value={id} placeholder="e.g. 448708254" onChange={e => setId(e.target.value)} />
+                <button className="btn b-ghost">Find</button>
+              </div>
+            </label>
+          </form>
+          {findErr && <div className="err">{findErr}</div>}
+          {user && (
+            <>
+              <div className="found">
+                <Avatar name={user.name} url={user.avatarUrl} />
+                <div>
+                  <b>
+                    {user.name ?? 'User'}
+                    {user.age ? `, ${user.age}` : ''}
+                  </b>
+                  <small>Meto ID {user.publicId}</small>
+                </div>
+              </div>
+              <label className="lbl">
+                Gems to send
+                <input className="field" type="number" min={1} value={gems} placeholder="e.g. 10000" onChange={e => (setGems(e.target.value), setStep('edit'))} />
+              </label>
+              <div className="chips">
+                {[5_000, 10_000, 50_000, 1_00_000].map(v => (
+                  <button type="button" key={v} className={g === v ? 'on' : ''} onClick={() => (setGems(String(v)), setStep('edit'))}>
+                    {num(v)}
+                  </button>
+                ))}
+              </div>
+              {gemsErr && <div className="err">{gemsErr}</div>}
+              {step === 'confirm' && !gemsErr && (
+                <div className="confirm">
+                  Send <b>{num(g)} gems</b> to <b>{user.name ?? 'user'}</b> (ID {user.publicId})? This can’t be undone. Stock after: {num(stock - g)}.
+                </div>
+              )}
+              <div className="acts mt-s">
+                {step === 'edit' ? (
+                  <button className="btn b-rose" disabled={!gems || !!gemsErr} onClick={() => setStep('confirm')}>
+                    Send {g >= 1 ? num(g) : ''} gems
+                  </button>
+                ) : (
+                  <>
+                    <button className="btn b-ghost" onClick={() => setStep('edit')}>
+                      Back
+                    </button>
+                    <button className="btn b-rose" disabled={busy || !!gemsErr} onClick={send}>
+                      {busy ? 'Sending…' : 'Yes, send'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+          {msg && <div className={msg.ok ? 'okmsg' : 'err'}>{msg.text}</div>}
+        </div>
+        <div className="card pad">
+          <h4>How it works</h4>
+          <ol className="steps">
+            <li>Take the money from the user yourself (outside the app).</li>
+            <li>Find the user by their Meto ID (they can see it on their profile).</li>
+            <li>Send gems — they reach the user’s wallet at once with a notice.</li>
+          </ol>
+          <p className="dim small mt-s">Gems can be sent only to users, not to hosts. Sent gems can’t be taken back. Need more stock? Contact the Meto team.</p>
+        </div>
+      </div>
+
+      <div className="card mt">
+        <h3>Gems history</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>DATE</th>
+              <th>WHAT</th>
+              <th className="r">GEMS</th>
+              <th className="r">STOCK AFTER</th>
+            </tr>
+          </thead>
+          <tbody>
+            {h.data?.items.map(x => (
+              <tr key={x.id}>
+                <td className="dim nowrap">{new Date(x.at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
+                <td>
+                  {x.kind === 'admin_add' ? (
+                    'Added by Meto team'
+                  ) : (
+                    <div className="u">
+                      <Avatar name={x.user?.name ?? null} url={x.user?.avatarUrl} />
+                      <span>
+                        <b>{x.user?.name ?? 'User'}</b>
+                        <small>ID {x.user?.publicId ?? '—'}</small>
+                      </span>
+                    </div>
+                  )}
+                </td>
+                <td className="r">
+                  <Gems n={x.gems} sign />
+                </td>
+                <td className="r dim">{num(x.balanceAfter)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {h.data && !h.data.items.length && <div className="empty">No gems yet — the Meto team adds gems to your stock</div>}
       </div>
     </section>
   );
@@ -395,6 +593,7 @@ export default function App() {
 
   const NAV: [Page, string][] = [
     ['dashboard', '📊 Dashboard'],
+    ['gems', '💎 Send gems'],
     ['hosts', '💖 My hosts'],
     ['invite', '🔗 Invite link'],
     ['account', '⚙️ Account'],
@@ -426,6 +625,7 @@ export default function App() {
       </aside>
       <main className="main">
         {page === 'dashboard' && <Dashboard agency={agency} go={go} />}
+        {page === 'gems' && <SendGems />}
         {page === 'hosts' && <MyHosts />}
         {page === 'invite' && <InviteLink />}
         {page === 'account' && <Account agency={agency} signOut={signOut} />}

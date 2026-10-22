@@ -16,7 +16,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CustomerService'>;
 // Aam sawaal + Meto team se chat (pichhli baat-cheet upar, naye jawab ki ginti)
 // User aur host ke sawal alag (user ko host / withdraw wali baatein nahi)
 const HOST_FAQ = [
-  { q: 'How do I earn as a host?', a: 'You earn points for every call minute, gifts and paid messages. If the user ends the call you get every started minute; if you end it, only full minutes count. 100 points = ₹1.' },
+  { q: 'How do I earn as a host?', a: 'You earn gems for every call minute, gifts and paid messages. If the user ends the call you get every started minute; if you end it, only full minutes count. When you withdraw, your gems change to beans and the Meto team sends the money to your UPI.' },
   { q: 'When can I withdraw?', a: 'Once you have at least ₹500, you can withdraw to your UPI. Payouts usually reach within 48 hours.' },
   { q: 'Someone is rude to me. What do I do?', a: 'Tap the 🛡️ shield during the call or the ⋯ menu in chat to report or block them. Blocking ends the call at once.' },
   { q: 'How do I change my photos?', a: 'Go to Me → Edit profile & photos. Your intro video can be changed from Me too.' },

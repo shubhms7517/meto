@@ -22,6 +22,15 @@ agencyRouter.get('/me', requireAgency(), (req, res) => res.json({ agency: req.ag
 agencyRouter.get('/dashboard', requireAgency(), async (req, res) => res.json(await A.agencyDashboard(req.agency!)));
 agencyRouter.get('/hosts', requireAgency(), async (req, res) => res.json(await A.agencyHosts(req.agency!)));
 agencyRouter.get('/invite', requireAgency(), async (req, res) => res.json(await A.agencyInvite(req.agency!)));
+// Gems: user dhoondo → bhejo, aur history
+const metoId = z.coerce.number().int().min(1).max(9_999_999_999);
+agencyRouter.get('/gems', requireAgency(), async (req, res) => res.json(await A.agencyGemsHistory(req.agency!)));
+agencyRouter.get('/users/:publicId', requireAgency(), async (req, res) => res.json({ user: await A.findUserForGems(metoId.parse(req.params.publicId)) }));
+const sendLimiter = rateLimit({ windowMs: 60_000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false, message: json429 });
+agencyRouter.post('/gems/send', requireAgency(), sendLimiter, async (req, res) => {
+  const p = z.object({ publicId: metoId, gems: z.coerce.number().int().min(1).max(10_000_000) }).parse(req.body);
+  res.json(await A.sendGems(req.agency!.id, p.publicId, p.gems));
+});
 agencyRouter.post('/account/password', requireAgency(), async (req, res) => {
   const p = z.object({ current: z.string().min(1).max(200), next: z.string().max(200) }).parse(req.body);
   await agencyChangePassword(req, p.current, p.next);

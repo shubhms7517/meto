@@ -1155,7 +1155,7 @@ function Ended(p: {
                   : p.call!.coinsCharged}
               </Text>
               <Text style={styles.sumLbl}>
-                {amHost ? 'Points earned' : 'Gems used'}
+                {amHost ? 'Gems earned' : 'Gems used'}
               </Text>
             </View>
             <View style={[styles.sumItem, styles.sumBorder]}>

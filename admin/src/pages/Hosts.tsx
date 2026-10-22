@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { api } from '../api';
 import { date, Empty, Img, inr, num, Pill, useApi, useDebounced, useAuth, useUi, Vid, when, Who, type UserCard } from '../ui';
 
-type Row = UserCard & { agency: string | null; hostStatus: string; rate: number; todayInr: number; totalInr: number; pickupPct: number | null; shortPct: number | null };
+type Row = UserCard & { agency: string | null; agencyCode: string | null; hostStatus: string; rate: number; rateMin: number; rateMax: number; rateOwn: boolean; todayInr: number; totalInr: number; pickupPct: number | null; shortPct: number | null };
 type Detail = {
   user: UserCard & { phone: string | null; joinedAt: string };
-  host: { status: string; rate: number; rateMin: number; rateMax: number; since: string | null; agency: { name: string; code: string } | null };
+  host: { status: string; rate: number; rateMin: number; rateMax: number; rateOwn: boolean; limitMin: number; limitMax: number; step: number; since: string | null; agency: { name: string; code: string } | null };
   points: number;
   pointsInr: number;
+  beans: number;
   totalEarnedInr: number;
   metrics: { pickupPct: number | null; avgCallSec: number; shortPct: number | null; reports: number };
   photos: { id: number; url: string; isLocked: boolean }[];
@@ -17,6 +18,97 @@ type Detail = {
 };
 
 const pct = (n: number | null) => (n == null ? '—' : `${n}%`);
+
+// Admin: host ka rate + uski apni min/max range (ya Settings wali default)
+function RateDialog({ d, id, onClose, onSaved }: { d: Detail; id: string; onClose: () => void; onSaved: () => void }) {
+  const { run } = useUi();
+  const h = d.host;
+  const [useDefault, setUseDefault] = useState(!h.rateOwn);
+  const [min, setMin] = useState(String(h.rateMin));
+  const [max, setMax] = useState(String(h.rateMax));
+  const [rate, setRate] = useState(String(h.rate));
+  const [busy, setBusy] = useState(false);
+  const lo = useDefault ? h.limitMin : Math.round(Number(min));
+  const hi = useDefault ? h.limitMax : Math.round(Number(max));
+  const r = Math.round(Number(rate));
+  const ok = (v: number) => Number.isFinite(v) && v > 0 && v % h.step === 0;
+  let err = '';
+  if (!useDefault) {
+    if (!ok(lo) || !ok(hi)) err = `Minimum and Maximum must be in steps of ${num(h.step)}`;
+    else if (lo < h.limitMin || hi > h.limitMax) err = `Range must stay inside ${num(h.limitMin)} – ${num(h.limitMax)}`;
+    else if (hi < lo) err = 'Maximum must be more than Minimum';
+  }
+  if (!err && !ok(r)) err = `Rate must be in steps of ${num(h.step)}`;
+  else if (!err && (r < lo || r > hi)) err = `Current rate must be ${num(lo)} – ${num(hi)}`;
+  const save = async () => {
+    setBusy(true);
+    const done = await run(() => api(`/hosts/${id}/rate`, { body: useDefault ? { rate: r } : { rate: r, min: lo, max: hi } }), 'Rate saved');
+    setBusy(false);
+    if (done) onSaved();
+  };
+  return (
+    <div className="overlay" onMouseDown={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ width: 440 }}>
+        <h3>Rate &amp; range · {d.user.name}</h3>
+        <p>She can only choose a rate between Minimum and Maximum in the app.</p>
+        <div className="g2" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginTop: 12 }}>
+          <label className="lbl">
+            Minimum
+            <input className="input" type="number" step={h.step} disabled={useDefault} value={useDefault ? h.limitMin : min} onChange={e => setMin(e.target.value)} />
+          </label>
+          <label className="lbl">
+            Maximum
+            <input className="input" type="number" step={h.step} disabled={useDefault} value={useDefault ? h.limitMax : max} onChange={e => setMax(e.target.value)} />
+          </label>
+          <label className="lbl">
+            Current rate
+            <input className="input" type="number" step={h.step} value={rate} onChange={e => setRate(e.target.value)} />
+          </label>
+        </div>
+        <label className="check mt">
+          <input type="checkbox" checked={useDefault} onChange={e => setUseDefault(e.target.checked)} /> Use default range ({num(h.limitMin)} – {num(h.limitMax)} from Settings)
+        </label>
+        <div className="note-blue mt">
+          Range must stay inside {num(h.limitMin)} – {num(h.limitMax)} (Settings limits) and go in steps of {num(h.step)}. If her rate changes, she gets a notice in the app.
+        </div>
+        <div className="acts end mt">
+          {err && (
+            <span className="red ml-auto" style={{ fontSize: 12 }}>
+              {err}
+            </span>
+          )}
+          <button className="btn b-ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="btn b-gold" disabled={busy || !!err} onClick={save}>
+            {busy ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Side panel: rate + range bar (Settings limit ke andar)
+function RateBar({ h }: { h: Detail['host'] }) {
+  const span = Math.max(1, h.limitMax - h.limitMin);
+  const at = (v: number) => Math.min(100, Math.max(0, ((v - h.limitMin) / span) * 100));
+  return (
+    <div className="ratebox">
+      <small>Call rate</small>
+      <b>{num(h.rate)} gems/min</b>
+      <div className="rbar">
+        <div className="fill" style={{ left: `${at(h.rateMin)}%`, right: `${100 - at(h.rateMax)}%` }} />
+        <div className="pin" style={{ left: `${at(h.rate)}%` }} />
+      </div>
+      <div className="ticks">
+        <span>{num(h.limitMin)}</span>
+        <span className={h.rateOwn ? 'blue' : ''}>{h.rateOwn ? `her range ${num(h.rateMin)} – ${num(h.rateMax)}` : 'default range'}</span>
+        <span>{num(h.limitMax)}</span>
+      </div>
+    </div>
+  );
+}
 
 export default function Hosts({ id }: { id?: string }) {
   const { go, can } = useAuth();
@@ -34,16 +126,13 @@ export default function Hosts({ id }: { id?: string }) {
     list.reload();
   };
 
-  const rate = async () => {
-    const r = await ask({ title: `Change rate · ${d!.user.name}`, text: `Now ${num(d!.host.rate)} gems/min.`, input: { label: 'New rate (gems / min)', type: 'number', initial: String(d!.host.rate), check: v => (/^\d+$/.test(v) && +v >= d!.host.rateMin && +v <= d!.host.rateMax ? null : `Enter ${num(d!.host.rateMin)}–${num(d!.host.rateMax)}`) }, confirm: 'Save rate' });
-    if (r && (await run(() => api(`/hosts/${id}/rate`, { body: { rate: Math.round(Number(r.value)) } }), 'Rate changed'))) after();
-  };
+  const [rateOpen, setRateOpen] = useState(false);
   const points = async () => {
-    const r = await ask({ title: `Add / remove points · ${d!.user.name}`, text: `Now ${num(d!.points)} points (${inr(d!.pointsInr)}). Minus to remove.`, input: { label: 'Points', type: 'number', check: v => (/^-?\d+$/.test(v) && +v !== 0 ? null : 'Whole number, not 0') }, confirm: 'Next' });
+    const r = await ask({ title: `Add / remove gems · ${d!.user.name}`, text: `Now ${num(d!.points)} gems (${inr(d!.pointsInr)}). Minus to remove.`, input: { label: 'Gems', type: 'number', check: v => (/^-?\d+$/.test(v) && +v !== 0 ? null : 'Whole number, not 0') }, confirm: 'Next' });
     if (!r) return;
     const n = Math.round(Number(r.value));
-    const why = await ask({ title: 'Reason', input: { label: 'Why?', chips: ['Missed call earnings', 'Correction', 'Fraud reversal'], multiline: true }, confirm: `${n > 0 ? 'Add' : 'Remove'} ${num(Math.abs(n))} points`, tone: 'gold' });
-    if (why && (await run(() => api(`/hosts/${id}/points`, { body: { points: n, reason: why.value } }), 'Points updated'))) after();
+    const why = await ask({ title: 'Reason', input: { label: 'Why?', chips: ['Missed call earnings', 'Correction', 'Fraud reversal'], multiline: true }, confirm: `${n > 0 ? 'Add' : 'Remove'} ${num(Math.abs(n))} gems`, tone: 'gold' });
+    if (why && (await run(() => api(`/hosts/${id}/points`, { body: { points: n, reason: why.value } }), 'Gems updated'))) after();
   };
   const setStatusHost = async (s: 'approved' | 'suspended') => {
     const why = await ask({
@@ -61,7 +150,7 @@ export default function Hosts({ id }: { id?: string }) {
   };
 
   return (
-    <section>
+    <section className="hosts-page">
       <div className="top">
         <div>
           <h2>Hosts</h2>
@@ -92,7 +181,8 @@ export default function Hosts({ id }: { id?: string }) {
             <thead>
               <tr>
                 <th>HOST</th>
-                <th className="r">RATE</th>
+                <th>AGENCY</th>
+                <th className="r">RATE · RANGE</th>
                 <th className="r">TODAY</th>
                 <th className="r">TOTAL</th>
                 <th>PICKUP</th>
@@ -104,9 +194,25 @@ export default function Hosts({ id }: { id?: string }) {
               {list.data?.items.map(h => (
                 <tr key={h.publicId} className={`click${String(h.publicId) === id ? ' sel' : ''}`} onClick={() => go('hosts', String(h.publicId))}>
                   <td>
-                    <Who u={h} sub={h.agency ?? 'No agency'} />
+                    <Who u={h} sub={`ID ${h.publicId}`} />
                   </td>
-                  <td className="r">{num(h.rate)}</td>
+                  <td className="stack">
+                    {h.agency ? (
+                      <>
+                        <b>{h.agency}</b>
+                        <small>{h.agencyCode}</small>
+                      </>
+                    ) : (
+                      <span className="dim">—</span>
+                    )}
+                  </td>
+                  <td className="r stack">
+                    <b>{num(h.rate)}</b>
+                    <small className={h.rateOwn ? 'blue' : ''}>
+                      {num(h.rateMin)} – {num(h.rateMax)}
+                      {h.rateOwn ? '' : ' · default'}
+                    </small>
+                  </td>
                   <td className="r gold">{inr(h.todayInr)}</td>
                   <td className="r">{inr(h.totalInr)}</td>
                   <td className={h.pickupPct != null && h.pickupPct < 50 ? 'red' : ''}>{pct(h.pickupPct)}</td>
@@ -152,11 +258,9 @@ export default function Hosts({ id }: { id?: string }) {
               <div className="kv">
                 <span>Agency</span>
                 <b>{d.host.agency ? `${d.host.agency.name} · ${d.host.agency.code}` : '—'}</b>
-                <span>Rate</span>
-                <b>{num(d.host.rate)} gems/min</b>
-                <span>Points balance</span>
+                <span>Gems balance</span>
                 <b className="gold">
-                  {num(d.points)} pts · {inr(d.pointsInr)}
+                  {num(d.points)} gems · {num(d.beans)} beans · {inr(d.pointsInr)}
                 </b>
                 <span>Total earned</span>
                 <b>{inr(d.totalEarnedInr)}</b>
@@ -165,15 +269,16 @@ export default function Hosts({ id }: { id?: string }) {
                 <span>Phone</span>
                 <b>{d.user.phone ?? '—'}</b>
               </div>
+              <RateBar h={d.host} />
               <div className="acts mt">
                 {can('moderator') && (
-                  <button className="btn b-ghost" onClick={rate}>
-                    Change rate
+                  <button className="btn b-gold" onClick={() => setRateOpen(true)}>
+                    Edit rate &amp; range
                   </button>
                 )}
                 {can('finance') && (
                   <button className="btn b-ghost" onClick={points}>
-                    ± Points
+                    ± Gems
                   </button>
                 )}
                 {can('moderator') &&
@@ -211,7 +316,7 @@ export default function Hosts({ id }: { id?: string }) {
                 ))}
               </div>
               {!d.photos.length && !d.videos.length && <Empty>No photos or videos</Empty>}
-              <h4>Recent points</h4>
+              <h4>Recent gems</h4>
               <div className="timeline">
                 {d.history.map(h => (
                   <div key={h.id}>
@@ -224,7 +329,18 @@ export default function Hosts({ id }: { id?: string }) {
                   </div>
                 ))}
               </div>
-              {!d.history.length && <Empty>No points yet</Empty>}
+              {!d.history.length && <Empty>No gems yet</Empty>}
+              {rateOpen && (
+                <RateDialog
+                  d={d}
+                  id={id!}
+                  onClose={() => setRateOpen(false)}
+                  onSaved={() => {
+                    setRateOpen(false);
+                    after();
+                  }}
+                />
+              )}
             </>
           )}
         </div>

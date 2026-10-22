@@ -25,7 +25,6 @@ import {
   ADMIN_ROLES,
   AdminSession,
   Agency,
-  AgencyPayout,
   Gift,
   User,
   Withdrawal,
@@ -367,15 +366,26 @@ adminRouter.post(
   "/hosts/:id/rate",
   requireAdmin("moderator"),
   async (req, res) => {
-    const p = z.object({ rate: z.number().int().positive() }).parse(req.body);
-    const r = await A.setHostRate(pid.parse(req.params.id), p.rate);
+    // { rate, min?, max? } — min+max dono do to host ki apni range, warna Settings wali
+    const p = z
+      .object({
+        rate: z.number().int().positive(),
+        min: z.number().int().positive().nullish(),
+        max: z.number().int().positive().nullish(),
+      })
+      .parse(req.body);
+    const range = p.min != null && p.max != null ? { min: p.min, max: p.max } : null;
+    const r = await A.setHostRate(pid.parse(req.params.id), p.rate, range);
+    const fmt = (x: { rate: number; rateMin: number | null; rateMax: number | null }) =>
+      `${x.rate}${x.rateMin != null ? ` (range ${x.rateMin}–${x.rateMax})` : " (default range)"}`;
+    const after = { rate: p.rate, rateMin: range?.min ?? null, rateMax: range?.max ?? null };
     await audit(
       req,
       "host.rate",
       { type: "user", id: r.user.publicId },
-      `${r.user.name}: rate ${r.before} → ${p.rate}`,
-      { rate: r.before },
-      { rate: p.rate },
+      `${r.user.name}: rate ${fmt(r.before)} → ${fmt(after)}`,
+      r.before,
+      after,
     );
     res.json({ ok: true });
   },
@@ -520,7 +530,7 @@ adminRouter.post(
       req,
       "withdrawal.paid",
       { type: "withdrawal", id },
-      `₹${(w.net ?? 0).toLocaleString("en-IN")} · UTR ${p.utr}`,
+      `${w.beans.toLocaleString("en-IN")} beans · UTR ${p.utr}`,
       { status: "pending" },
       { status: "paid", utr: p.utr },
     );
@@ -870,11 +880,11 @@ adminRouter.post("/agencies", requireAdmin("owner"), async (req, res) => {
       code: agencyCode,
       email: z.string().email().max(160),
       commissionPct: z.coerce.number().min(0).max(50),
+      gemsPerBean: z.coerce.number().int().min(1).max(100_000).default(10),
       password: z.string().max(200),
-      myPassword: z.string(),
+      myPassword: z.string().optional(), // ab zaroori nahi (owner ne hataya)
     })
     .parse(req.body);
-  await confirmPassword(req.admin!, p.myPassword);
   const problem = passwordProblem(p.password);
   if (problem) throw badRequest(problem);
   if (await Agency.findOne({ where: { code: p.code } }))
@@ -887,15 +897,16 @@ adminRouter.post("/agencies", requireAdmin("owner"), async (req, res) => {
     code: p.code,
     email,
     commissionPct: p.commissionPct,
+    gemsPerBean: p.gemsPerBean,
     passwordHash: await hashPassword(p.password),
   });
   await audit(
     req,
     "agency.create",
     { type: "agency", id: a.id },
-    `${a.name} · ${a.code} · ${p.commissionPct}%`,
+    `${a.name} · ${a.code} · ${p.commissionPct}% · 1 bean = ${p.gemsPerBean} gems`,
     null,
-    { code: a.code, email, commissionPct: p.commissionPct },
+    { code: a.code, email, commissionPct: p.commissionPct, gemsPerBean: p.gemsPerBean },
   );
   res.json({ ok: true, id: a.id });
 });
@@ -905,22 +916,24 @@ adminRouter.patch("/agencies/:id", requireAdmin("owner"), async (req, res) => {
     .object({
       name: z.string().trim().min(2).max(80).optional(),
       commissionPct: z.coerce.number().min(0).max(50).optional(),
+      gemsPerBean: z.coerce.number().int().min(1).max(100_000).optional(),
       status: z.enum(["active", "disabled"]).optional(),
       email: z.string().email().max(160).optional(),
       password: z.string().max(200).optional(),
-      myPassword: z.string(),
+      myPassword: z.string().optional(), // ab zaroori nahi (owner ne hataya)
     })
     .parse(req.body);
-  await confirmPassword(req.admin!, p.myPassword);
   const a = await Agency.findByPk(pid.parse(req.params.id));
   if (!a) throw notFound("Agency not found");
   const before = {
     name: a.name,
     email: a.email,
     commissionPct: Number(a.commissionPct),
+    gemsPerBean: a.gemsPerBean,
     status: a.status,
   };
   const patch: Record<string, unknown> = {};
+  if (p.gemsPerBean !== undefined) patch.gemsPerBean = p.gemsPerBean;
   if (p.name !== undefined) patch.name = p.name;
   if (p.commissionPct !== undefined) patch.commissionPct = p.commissionPct;
   if (p.status !== undefined) patch.status = p.status;
@@ -946,55 +959,33 @@ adminRouter.patch("/agencies/:id", requireAdmin("owner"), async (req, res) => {
     { type: "agency", id: a.id },
     `${a.name}${p.email !== undefined && p.email !== before.email ? " · login email set" : ""}${p.password ? " · password reset" : ""}`,
     before,
-    { name: a.name, email: a.email, commissionPct: Number(a.commissionPct), status: a.status },
+    { name: a.name, email: a.email, commissionPct: Number(a.commissionPct), gemsPerBean: a.gemsPerBean, status: a.status },
   );
   res.json({ ok: true });
 });
 
-// Commission payout: owner bank/UPI se deta hai, yahan record karta hai (delete nahi hota)
 adminRouter.get("/agencies/:id/detail", requireAdmin("owner"), async (req, res) =>
   res.json(await A.agencyDetail(pid.parse(req.params.id))),
 );
-adminRouter.get("/agencies/:id/payouts", requireAdmin("owner"), async (req, res) =>
-  res.json(await A.agencyPayouts(pid.parse(req.params.id))),
+// Agency ke gems ka hisaab (admin ne diye / users ko bheje)
+adminRouter.get("/agencies/:id/gems", requireAdmin("owner"), async (req, res) =>
+  res.json(await A.agencyGemHistory(pid.parse(req.params.id))),
 );
-adminRouter.post("/agencies/:id/payouts", requireAdmin("owner"), async (req, res) => {
+// Agency ke stock me gems daalo (paisa app ke bahar liya) — audit log me record
+adminRouter.post("/agencies/:id/gems", requireAdmin("owner"), async (req, res) => {
   const p = z
-    .object({
-      amountInr: z.coerce.number().int().min(1).max(10_000_000),
-      method: z.enum(["upi", "bank", "cash"]),
-      reference: z.string().trim().max(40).optional(),
-      note: z.string().trim().max(200).optional(),
-      myPassword: z.string(),
-    })
+    .object({ gems: z.coerce.number().int().min(1).max(100_000_000) })
     .parse(req.body);
-  await confirmPassword(req.admin!, p.myPassword);
-  const a = await Agency.findByPk(pid.parse(req.params.id));
-  if (!a) throw notFound("Agency not found");
-  if (p.method !== "cash" && !/^[A-Za-z0-9]{6,40}$/.test(p.reference ?? ""))
-    throw badRequest("Enter the UTR / reference (6–40 letters or numbers)");
-  if (p.method === "cash" && !(p.note && p.note.length >= 3))
-    throw badRequest("Add a note for a cash payment");
-  const row = (await A.listAgencies()).items.find((x) => x.id === a.id)!;
-  if (p.amountInr > row.owedInr)
-    throw badRequest(`Amount is more than owed (₹${row.owedInr.toLocaleString("en-IN")})`);
-  const pay = await AgencyPayout.create({
-    agencyId: a.id,
-    amountInr: p.amountInr,
-    method: p.method,
-    reference: p.method === "cash" ? null : p.reference!,
-    note: p.note || null,
-    adminId: req.admin!.id,
-  });
+  const r = await A.agencyAddGems(pid.parse(req.params.id), p.gems, req.admin!.id);
   await audit(
     req,
-    "agency.payout",
-    { type: "agency", id: a.id },
-    `${a.name} · ₹${p.amountInr.toLocaleString("en-IN")} · ${p.method}${p.reference ? ` · ${p.reference}` : ""}`,
-    { owedInr: row.owedInr },
-    { paidInr: p.amountInr, owedInr: row.owedInr - p.amountInr, payoutId: pay.id },
+    "agency.gems",
+    { type: "agency", id: r.agency.id },
+    `${r.agency.name} · +${p.gems.toLocaleString("en-IN")} gems`,
+    { gemBalance: r.before },
+    { gemBalance: r.after },
   );
-  res.json({ ok: true, id: pay.id });
+  res.json({ ok: true, gemBalance: r.after });
 });
 
 /* ---------- settings ---------- */
@@ -1015,7 +1006,8 @@ adminRouter.put("/settings", requireAdmin("owner"), async (req, res) => {
     (k) =>
       k in clean && JSON.stringify(clean[k]) !== JSON.stringify(current[k]),
   );
-  if (touchesMoney) await confirmPassword(req.admin!, p.password);
+  // Owner ke kehne par: settings badalne pe dobara password nahi maangte (login + audit log kaafi)
+  void touchesMoney;
   const changed = await A.updateSettings(clean);
   for (const c of changed)
     await audit(
@@ -1067,10 +1059,9 @@ adminRouter.post("/admins", requireAdmin("owner"), async (req, res) => {
       name: z.string().trim().min(2).max(60),
       role: z.enum(ADMIN_ROLES),
       password: z.string().max(200),
-      myPassword: z.string(),
+      myPassword: z.string().optional(), // ab zaroori nahi (owner ne hataya)
     })
     .parse(req.body);
-  await confirmPassword(req.admin!, p.myPassword);
   const problem = passwordProblem(p.password);
   if (problem) throw badRequest(problem);
   const email = p.email.toLowerCase();
@@ -1098,10 +1089,9 @@ adminRouter.patch("/admins/:id", requireAdmin("owner"), async (req, res) => {
       role: z.enum(ADMIN_ROLES).optional(),
       status: z.enum(["active", "disabled"]).optional(),
       password: z.string().max(200).optional(),
-      myPassword: z.string(),
+      myPassword: z.string().optional(), // ab zaroori nahi (owner ne hataya)
     })
     .parse(req.body);
-  await confirmPassword(req.admin!, p.myPassword);
   const a = await Admin.findByPk(pid.parse(req.params.id));
   if (!a) throw notFound("Admin not found");
   if (

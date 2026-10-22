@@ -55,6 +55,7 @@ const KIND_ICON: Record<TxKind, { emoji: string; bg: string }> = {
   gift: { emoji: '🌹', bg: 'rgba(255,95,143,0.12)' },
   refund: { emoji: '↩️', bg: 'rgba(62,224,143,0.12)' },
   admin: { emoji: '🛡️', bg: 'rgba(255,255,255,0.08)' },
+  agency: { emoji: '🏢', bg: 'rgba(62,224,143,0.12)' }, // agency ne gems bheje
 };
 
 const time = (d: Date) =>

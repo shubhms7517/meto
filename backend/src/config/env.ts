@@ -14,6 +14,8 @@ const schema = z.object({
 
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().min(1),
   PUBLIC_BASE_URL: z.url(),
+  // Agency invite link ka domain (meto.app live hone par https://meto.app). Khaali = PUBLIC_BASE_URL
+  INVITE_BASE_URL: z.url().optional(),
 
   // Google Play billing: app ka package + service account (khaali = Firebase wala hi)
   PLAY_PACKAGE_NAME: z.string().default('com.meto'),

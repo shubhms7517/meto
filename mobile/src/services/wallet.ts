@@ -15,7 +15,7 @@ export type Pack = {
 
 export type WalletSummary = { balance: number; callRate: number; vipCallDiscountPct?: number; isVip: boolean; isHost?: boolean; hostRate?: number | null; firstRechargeAvailable: boolean; packs: Pack[] };
 
-export type TxKind = 'recharge' | 'bonus' | 'call' | 'gift' | 'checkin' | 'refund' | 'admin' | 'message' | 'unlock';
+export type TxKind = 'recharge' | 'bonus' | 'call' | 'gift' | 'checkin' | 'refund' | 'admin' | 'message' | 'unlock' | 'agency';
 export type WalletTx = {
   id: number;
   kind: TxKind;

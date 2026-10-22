@@ -32,15 +32,27 @@ const GROUPS: { title: string; fields: F[] }[] = [
     ],
   },
   {
-    title: '💸 Host money',
+    title: '💸 Host withdraw (gems → beans → ₹)',
     fields: [
-      { key: 'hostPointsPerGem', label: 'Host points per gem', hint: '1 = host gets 100%' },
-      { key: 'pointsPerInr', label: 'Points per ₹1' },
-      { key: 'minWithdrawInr', label: 'Minimum withdrawal (₹)' },
-      { key: 'tdsPct', label: 'TDS %' },
+      { key: 'gemsPerBean', label: 'Host: 1 bean = how many gems', hint: 'same for all hosts' },
+      { key: 'beansPerInr', label: 'Beans for ₹1', hint: 'only admin sees ₹' },
+      { key: 'minWithdrawBeans', label: 'Minimum withdraw (beans)' },
+      { key: 'tdsPct', label: 'TDS %', hint: 'cut while paying' },
     ],
   },
 ];
+
+// Example: host ke 50,000 gems kitne beans aur kitne ₹ (sirf admin ko dikhta hai)
+function BeanExample({ gpb, bpi }: { gpb: number; bpi: number }) {
+  if (!(gpb >= 1) || !(bpi > 0)) return null;
+  const gems = 50_000;
+  const beans = Math.floor(gems / gpb);
+  return (
+    <div className="hint">
+      Example: {gems.toLocaleString('en-IN')} gems = {beans.toLocaleString('en-IN')} beans = ₹{(beans / bpi).toLocaleString('en-IN', { maximumFractionDigits: 2 })}. Hosts see only beans.
+    </div>
+  );
+}
 
 const show = (v: S[string] | undefined) => (Array.isArray(v) ? v.join(', ') : String(v ?? ''));
 
@@ -76,7 +88,7 @@ export default function Settings() {
           <span style={{ display: 'block', marginTop: 8 }}>Changes reach the app within 30 seconds.</span>
         </>
       ),
-      password: money.length > 0,
+      password: false, // owner ne dobara password hata diya
       confirm: 'Save',
       tone: money.length ? 'red' : 'rose',
     });
@@ -111,7 +123,6 @@ export default function Settings() {
                 <div className="field" key={f.key}>
                   <span>
                     {f.label}
-                    {data.moneyKeys.includes(f.key) && <small>🔒 needs your password</small>}
                     {f.hint && <small>{f.hint}</small>}
                   </span>
                   {f.kind === 'bool' ? (
@@ -126,6 +137,7 @@ export default function Settings() {
                   )}
                 </div>
               ))}
+              {g.fields.some(f => f.key === 'gemsPerBean') && <BeanExample gpb={Number(value(g.fields[0]))} bpi={Number(value(g.fields[1]))} />}
             </div>
           ))}
         </div>

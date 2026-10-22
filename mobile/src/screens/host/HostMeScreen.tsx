@@ -31,10 +31,11 @@ import {
 import IntroVideo from '../../components/IntroVideo';
 import StatCount from '../../components/StatCount';
 import RateSheet from '../../components/RateSheet';
+import Coin from '../../components/Coin';
 import { refreshControl } from '../../components/States';
 import {
+  fmt,
   getHostMe,
-  inr,
   setHostRate,
   type HostSummary,
 } from '../../services/host';
@@ -222,7 +223,7 @@ export default function HostMeScreen() {
     {
       icon: '💰',
       label: 'Earnings history',
-      right: h ? inr(h.points, h.pointsPerInr) : '',
+      right: h ? `${fmt(h.gems)} gems` : '',
       onPress: () => navigation.navigate('HostEarnings'),
     },
     {
@@ -328,12 +329,12 @@ export default function HostMeScreen() {
         >
           <View style={{ flex: 1 }}>
             <Text style={st.todayLbl}>Today's earnings</Text>
-            <Text style={st.todayAmt}>
-              {h ? inr(h.today?.points ?? 0, h.pointsPerInr) : '…'}
-            </Text>
+            <View style={st.todayRow}>
+              <Coin size={24} />
+              <Text style={st.todayAmt}>{h ? fmt(h.today?.gems ?? 0) : '…'}</Text>
+            </View>
             <Text style={st.todaySmall}>
-              {(h?.today?.points ?? 0).toLocaleString('en-IN')} points ·{' '}
-              {h?.today?.minutes ?? 0} min · {h?.today?.calls ?? 0} calls
+              gems · {h?.today?.minutes ?? 0} min · {h?.today?.calls ?? 0} calls
             </Text>
           </View>
           <Pressable onPress={() => navigation.navigate('Withdraw')}>
@@ -358,12 +359,13 @@ export default function HostMeScreen() {
               </Text>
             </View>
             <View style={st.chips}>
-              {h.rates.filter(r => r <= h.rateMax).map(r => {
+              {h.rates.map(r => {
                 const on = r === h.rate;
+                const out = r < h.rateMin || r > h.rateMax; // range se bahar — tap nahi hoga
                 return (
                   <Pressable
                     key={r}
-                    disabled={on}
+                    disabled={on || out}
                     onPress={() => pickRate(r).catch(() => {})}
                     style={{ flex: 1 }}
                   >
@@ -383,9 +385,10 @@ export default function HostMeScreen() {
                         style={[
                           st.chip,
                           st.chipOff,
+                          out && st.chipOut,
                         ]}
                       >
-                        <Text style={st.chipText}>
+                        <Text style={[st.chipText, out && st.chipTextOut]}>
                           {r.toLocaleString('en-IN')}
                         </Text>
                       </View>
@@ -414,8 +417,14 @@ export default function HostMeScreen() {
               <Text style={st.customEdit}>{isCustom ? 'Edit' : 'Set'}</Text>
             </Pressable>
             <Text style={st.rateNote}>
-              {h.rateMin.toLocaleString('en-IN')} – {h.rateMax.toLocaleString('en-IN')} gems/min · if you end a
-              call, only full minutes count
+              {h.rateOwnRange ? (
+                <Text style={st.rateNoteOwn}>
+                  {h.rateMin.toLocaleString('en-IN')} – {h.rateMax.toLocaleString('en-IN')} gems/min · set by Meto team
+                </Text>
+              ) : (
+                `${h.rateMin.toLocaleString('en-IN')} – ${h.rateMax.toLocaleString('en-IN')} gems/min`
+              )}
+              {' '}· if you end a call, only full minutes count
             </Text>
           </View>
         )}
@@ -426,7 +435,6 @@ export default function HostMeScreen() {
             min={h.rateMin}
             max={h.rateMax}
             step={h.rateStep}
-            pointsPerInr={h.pointsPerInr}
             onClose={() => setRateOpen(false)}
             onSave={pickRate}
           />
@@ -541,7 +549,7 @@ export default function HostMeScreen() {
                 </Text>
                 . Others unlock for{' '}
                 <Text style={st.noteB}>{media.photoPrice} gems</Text> — you earn
-                the points.
+                the gems.
               </>
             ) : (
               <>
@@ -555,7 +563,7 @@ export default function HostMeScreen() {
                 </Text>{' '}
                 to watch. Others unlock for{' '}
                 <Text style={st.noteB}>{media.videoPrice} gems</Text> — you earn
-                the points.
+                the gems.
               </>
             )}
           </Text>
@@ -757,6 +765,7 @@ const st = StyleSheet.create({
     fontWeight: '600',
     opacity: 0.8,
   },
+  todayRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   todayAmt: {
     color: colors.goldText,
     fontSize: 26,
@@ -797,6 +806,9 @@ const st = StyleSheet.create({
     justifyContent: 'center',
   },
   chipOff: { backgroundColor: 'rgba(255,255,255,0.06)' },
+  chipOut: { opacity: 0.3 },
+  chipTextOut: { textDecorationLine: 'line-through' },
+  rateNoteOwn: { color: colors.muted, fontWeight: '600' },
   chipText: { color: colors.muted, fontSize: 12, fontWeight: '700' },
   rateNote: {
     color: colors.fine,

@@ -137,10 +137,10 @@ try {
   r = await call('/settings', { method: 'PUT', body: { patch: { freePhotos: settingsBefore.freePhotos + 1 } } });
   ok('setting freePhotos (no password)', r.status === 200 && r.json.settings.freePhotos === settingsBefore.freePhotos + 1);
   await call('/settings', { method: 'PUT', body: { patch: { freePhotos: settingsBefore.freePhotos } } });
-  ok('money setting without password → 401', (await call('/settings', { method: 'PUT', body: { patch: { minWithdrawInr: 600 } } })).status === 401);
-  r = await call('/settings', { method: 'PUT', body: { patch: { minWithdrawInr: 600 }, password: PW } });
-  ok('money setting with password', r.status === 200 && r.json.settings.minWithdrawInr === 600);
-  await call('/settings', { method: 'PUT', body: { patch: { minWithdrawInr: settingsBefore.minWithdrawInr }, password: PW } });
+  ok('money setting without password → 401', (await call('/settings', { method: 'PUT', body: { patch: { minWithdrawBeans: 6000 } } })).status === 401);
+  r = await call('/settings', { method: 'PUT', body: { patch: { minWithdrawBeans: 6000 }, password: PW } });
+  ok('money setting with password', r.status === 200 && r.json.settings.minWithdrawBeans === 6000);
+  await call('/settings', { method: 'PUT', body: { patch: { minWithdrawBeans: settingsBefore.minWithdrawBeans }, password: PW } });
   ok('bad setting → 400', (await call('/settings', { method: 'PUT', body: { patch: { hostRateMin: 5000 } } })).status === 400);
 
   // gifts: SVGA upload
@@ -197,7 +197,7 @@ try {
   await HostProfile.update(aishaBefore, { where: { userId: aisha.id } });
   await User.update({ status: 'active' }, { where: { id: kabir.id } });
   const s = await getSettings();
-  if (s.freePhotos !== settingsBefore.freePhotos || s.minWithdrawInr !== settingsBefore.minWithdrawInr) console.log('⚠ settings differ!');
+  if (s.freePhotos !== settingsBefore.freePhotos || s.minWithdrawBeans !== settingsBefore.minWithdrawBeans) console.log('⚠ settings differ!');
   await WalletTx.destroy({ where: { userId: vihaan.id, kind: 'admin', createdAt: { [Op.gte]: started } } });
   await HostTx.destroy({ where: { userId: aisha.id, kind: 'admin', createdAt: { [Op.gte]: started } } });
   if (created.report) await Report.destroy({ where: { id: created.report } });

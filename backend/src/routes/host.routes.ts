@@ -71,11 +71,11 @@ hostRouter.put('/payout-account', async (req, res) => {
   res.json({ account: await savePayoutAccount(req.user!, p) });
 });
 
-// POST /api/host/withdrawals { amountInr }
+// POST /api/host/withdrawals { beans }
 const wdLimiter = rateLimit({ windowMs: 60 * 60_000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false });
 hostRouter.post('/withdrawals', wdLimiter, async (req, res) => {
-  const { amountInr } = z.object({ amountInr: z.number().int().positive() }).parse(req.body);
-  res.status(201).json({ withdrawal: await requestWithdraw(req.user!, amountInr) });
+  const { beans } = z.object({ beans: z.number().int().positive() }).parse(req.body);
+  res.status(201).json({ withdrawal: await requestWithdraw(req.user!, beans) });
 });
 
 // GET /api/host/withdrawals — history

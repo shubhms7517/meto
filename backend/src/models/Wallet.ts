@@ -21,7 +21,7 @@ Wallet.init(
   { sequelize, tableName: 'wallets' },
 );
 
-export const TX_KINDS = ['recharge', 'bonus', 'call', 'gift', 'checkin', 'refund', 'admin', 'message', 'unlock'] as const;
+export const TX_KINDS = ['recharge', 'bonus', 'call', 'gift', 'checkin', 'refund', 'admin', 'message', 'unlock', 'agency'] as const;
 export type TxKind = (typeof TX_KINDS)[number];
 
 // Ledger: gems ka har aana-jaana. amount + = aaye, − = gaye.

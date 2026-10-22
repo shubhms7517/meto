@@ -10,7 +10,6 @@ type Props = {
   min: number;
   max: number; // sabse zyada rate (admin settings se)
   step: number;
-  pointsPerInr: number;
   onClose: () => void;
   onSave: (rate: number) => Promise<void>;
 };
@@ -18,7 +17,7 @@ type Props = {
 const fmt = (n: number) => n.toLocaleString('en-IN');
 
 // Host apna rate: − / + (step) ya bar pe ungli — min se max tak
-export default function RateSheet({ visible, value, min, max, step, pointsPerInr, onClose, onSave }: Props) {
+export default function RateSheet({ visible, value, min, max, step, onClose, onSave }: Props) {
   const [rate, setRate] = useState(value);
   const [w, setW] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -82,7 +81,7 @@ export default function RateSheet({ visible, value, min, max, step, pointsPerInr
         </View>
 
         <Text style={st.earn}>
-          You earn <Text style={st.earnVal}>₹{fmt(Math.round(rate / Math.max(1, pointsPerInr)))} / min</Text> ({fmt(rate)} points)
+          You earn <Text style={st.earnVal}>{fmt(rate)} gems / min</Text>
         </Text>
 
         <Pressable onPress={save} disabled={saving || rate === value}>

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gems and Beans design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#12070d; --surface:#1d1418; --card:#241c20; --line:rgba(255,255,255,.08); --text:#f6e9ee; --muted:#b9a3ad; --dim:#7d6872; --rose-1:#ff5f8f; --rose-2:#d81b5c; --gold-1:#f6dc9b; --green:#3ee08f; --red:#ff5f7a; --amber:#ffb547; --blue:#7fb0ff; --bean:#ffab5e; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:Poppins,system-ui,sans-serif; background:#0b0408; color:var(--text); padding:30px 26px 70px; font-size:13px; }
+  header.page h1 { font-size:25px; } header.page p { color:var(--muted); font-size:13.5px; margin-top:6px; max-width:900px; line-height:1.6; }
+  .flow { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:16px; }
+  .flow div { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 14px; font-size:12.5px; } .flow b { color:var(--gold-1); } .flow i { color:var(--dim); font-style:normal; }
+  h2.sec { margin:38px 0 2px; font-size:16px; color:var(--gold-1); } h2.sec span { color:var(--dim); font-size:12.5px; font-weight:400; }
+  .row { display:flex; gap:26px; flex-wrap:wrap; margin-top:14px; align-items:flex-start; }
+  figcaption { margin-top:11px; color:var(--muted); font-size:12.5px; max-width:940px; line-height:1.6; } figcaption b { color:var(--text); }
+  .gem { color:#ff9ec0; } .bean { color:var(--bean); } .gold { color:var(--gold-1); } .green { color:var(--green); } .dim { color:var(--dim); } .amber { color:var(--amber); }
+  /* phone */
+  .phone { width:320px; border-radius:30px; border:1px solid rgba(255,255,255,.12); background:linear-gradient(180deg,#2a0f1d,#12070d 40%); padding:18px 15px 22px; }
+  .phone .t { color:var(--dim); font-size:11px; margin-bottom:10px; } .phone h3 { font-size:18px; margin-bottom:12px; }
+  .earn { border-radius:20px; padding:16px; background:linear-gradient(120deg,#fff4d6,#e6bf6a); color:#3a2608; }
+  .earn small { font-size:12px; } .earn b { display:block; font-size:28px; font-weight:800; margin-top:2px; } .earn em { font-style:normal; font-size:11.5px; font-weight:600; }
+  .earn .wd { float:right; margin-top:-46px; background:linear-gradient(100deg,var(--rose-1),var(--rose-2)); color:#fff; border-radius:14px; padding:9px 16px; font-weight:700; font-size:13px; }
+  .pc { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; margin-top:12px; }
+  .pc .lbl { color:var(--muted); font-size:11.5px; } .pc .big { font-size:24px; font-weight:800; margin-top:2px; }
+  .conv { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; gap:6px; align-items:center; text-align:center; margin-top:12px; }
+  .conv div { background:var(--surface); border-radius:12px; padding:10px 4px; } .conv div b { display:block; font-size:15px; } .conv div small { color:var(--dim); font-size:10px; } .conv i { color:var(--dim); font-style:normal; }
+  .inp { margin-top:12px; background:var(--surface); border:1px solid var(--rose-1); border-radius:12px; padding:11px 13px; display:flex; justify-content:space-between; font-size:13px; } .inp small { color:var(--dim); }
+  .kv { display:flex; justify-content:space-between; padding:7px 0; font-size:12px; border-bottom:1px solid var(--line); } .kv span { color:var(--muted); } .kv:last-child { border:0; }
+  .cta { margin-top:14px; text-align:center; border-radius:14px; padding:12px; font-weight:700; background:linear-gradient(100deg,var(--rose-1),var(--rose-2)); }
+  .tx { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:12px; } .tx small { display:block; color:var(--dim); font-size:10.5px; }
+  /* desktop window */
+  .win { margin-top:14px; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:var(--bg); flex:1; min-width:560px; max-width:980px; }
+  .bar { height:34px; display:flex; align-items:center; gap:7px; padding:0 14px; background:#1a1015; border-bottom:1px solid var(--line); }
+  .bar i { width:11px; height:11px; border-radius:50%; background:#3a2a31; } .bar span { margin-left:14px; font-size:11.5px; color:var(--dim); }
+  .main { padding:20px 24px 24px; } .main h3 { font-size:20px; } .main .sub { color:var(--muted); font-size:12px; margin-top:2px; }
+  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:11px; margin-top:14px; } .kpis.k3 { grid-template-columns:repeat(3,1fr); }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:13px; padding:13px 15px; } .kpi small { color:var(--muted); font-size:11px; } .kpi b { display:block; font-size:21px; margin-top:4px; } .kpi em { font-style:normal; color:var(--dim); font-size:10.5px; }
+  .card { margin-top:12px; background:var(--card); border:1px solid var(--line); border-radius:13px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { text-align:left; color:var(--dim); font-size:10px; letter-spacing:.05em; font-weight:600; padding:10px 14px; border-bottom:1px solid var(--line); text-transform:uppercase; }
+  td { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.04); } tr:last-child td { border:0; } .r { text-align:right; }
+  .pill { display:inline-block; font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:20px; } .ok { color:var(--green); background:rgba(62,224,143,.12); } .pend { color:var(--amber); background:rgba(255,181,71,.12); }
+  .btn { display:inline-block; border-radius:10px; padding:7px 13px; font-size:12px; font-weight:600; } .b-gold { background:linear-gradient(100deg,#fff4d6,#e6bf6a); color:#3a2608; } .b-ghost { background:var(--surface); border:1px solid var(--line); } .b-rose { background:linear-gradient(100deg,var(--rose-1),var(--rose-2)); }
+  .tabs { display:flex; gap:4px; margin-top:4px; border-bottom:1px solid var(--line); } .tabs a { padding:8px 13px; font-size:12.5px; color:var(--muted); border-bottom:2px solid transparent; } .tabs a.on { color:#fff; border-color:var(--rose-1); }
+  .side { display:grid; grid-template-columns:170px 1fr; min-height:100%; } .nav { background:#1a1015; border-right:1px solid var(--line); padding:16px 12px; font-size:12px; } .nav div { padding:8px 10px; border-radius:9px; color:var(--muted); } .nav div.on { background:rgba(255,95,143,.12); color:#fff; } .nav .logo { font-weight:800; font-style:italic; color:var(--gold-1); font-size:18px; padding:0 10px 12px; }
+  .form { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+  .fld label { display:block; color:var(--muted); font-size:11px; margin-bottom:5px; } .fld div { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:9px 11px; font-size:13px; font-weight:600; } .fld p { color:var(--dim); font-size:10.5px; margin-top:4px; }
+  .note { margin-top:12px; padding:10px 13px; border-radius:11px; font-size:11.5px; color:#bcd5ff; background:rgba(127,176,255,.08); border:1px solid rgba(127,176,255,.25); line-height:1.55; }
+  .new { outline:2px dashed rgba(246,220,155,.5); outline-offset:3px; border-radius:12px; }
+  .dlg { width:400px; background:var(--card); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:18px 20px; margin:22px auto; }
+  .dlg h4 { font-size:15px; } .dlg .s { color:var(--muted); font-size:12px; margin-top:3px; }
+  .found { display:flex; align-items:center; gap:10px; margin-top:12px; background:var(--surface); border-radius:12px; padding:10px 12px; } .found i { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#7fb0ff,#4f6fd8); } .found small { display:block; color:var(--dim); font-size:10.5px; }
+  .act { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+.gem::before{content:'💎';margin-right:.3em;font-size:1em}.bean::before{content:'';display:inline-block;width:1.2em;height:1.2em;margin-right:.3em;vertical-align:-.25em;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ffd08a'/><stop offset='1' stop-color='%23d9741f'/></linearGradient></defs><path d='M7.5 3.5c3-1.6 6.4-.6 7.4 2 .8 2 2.6 2.3 4.2 3.6 2.6 2.1 2.2 6.6-1.1 9.2-3.6 2.8-9.6 3-13 .2C2 16.3 1.6 12 3.2 8.6 4.2 6.4 5.5 4.6 7.5 3.5z' fill='url(%23g)'/><path d='M9 6.6c1.8-.6 3.4.2 3.9 1.5' stroke='%23fff3dc' stroke-width='1.6' stroke-linecap='round' fill='none' opacity='.85'/><path d='M12.6 12.4c1.6 1.6 1.2 4-1 5.2' stroke='%238a3f0c' stroke-width='1.4' stroke-linecap='round' fill='none' opacity='.7'/></svg>") no-repeat center/contain}.nb::before{display:none!important}.legend{display:flex;gap:18px;margin-top:12px;font-size:13px}.legend span{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 14px}
+.flow b.gem,.legend b.gem{color:#ff9ec0}.flow b.bean,.legend b.bean{color:var(--bean)}
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Gems &amp; Beans — new money system (design)</h1>
+  <p>Inside the app everything works in <b class="gem nb" style="color:#ff9ec0">Gems</b>. <b class="bean nb" style="color:var(--bean)">Beans</b> appear only when someone withdraws. Admin sets every rate. Agencies sell gems to users (paid to admin by hand, outside the app) and earn a commission in beans on their hosts’ gems.</p>
+  <div class="legend"><span><b class="gem">Gems</b> — used inside the app (pink)</span><span><b class="bean">Beans</b> — only for withdraw (orange)</span></div>
+  <div class="flow">
+    <div>User spends <b class="gem">1,000 gems</b> on a call</div><i>→</i>
+    <div>Host gets <b class="gem">1,000 gems</b> (full)</div><i>→</i>
+    <div>Withdraw: <b class="gem">gems</b> ÷ <b>10</b> = <b class="bean">100 beans</b><br><i>1 bean = 10 gems · admin sets</i></div><i>→</i>
+    <div><b class="bean">100 beans</b> → <b class="green">₹10</b><br><i>10 beans = ₹1 · admin sets</i></div>
+  </div>
+  <div class="flow">
+    <div>Agency’s hosts earned <b class="gem">1,00,000 gems</b></div><i>→</i>
+    <div>Commission 10% = 10,000 gems<br><i>% set per agency</i></div><i>→</i>
+    <div>÷ <b>8</b> (this agency’s rate) = <b class="bean">1,250 beans</b><br><i>bean rate set per agency</i></div><i>→</i>
+    <div><b class="bean">1,250 beans</b> → <b class="green">₹125</b><br><i>same beans → ₹ rate</i></div>
+  </div>
+  <p style="font-size:12px">Numbers above are only examples — admin can change all of them.</p>
+</header>
+
+<!-- ============ HOST APP ============ -->
+<h2 class="sec">A · Host app <span>· Me screen, Withdraw screen, earnings history</span></h2>
+<div class="row">
+  <div class="phone"><div class="t">Me screen — earnings in gems</div>
+    <div class="earn"><small>Today's earnings</small><b>12,400</b><em>12 min · 4 calls</em><span class="wd">Withdraw</span></div>
+    <div class="pc"><div class="lbl">Total balance</div><div class="big gem">84,100 gems</div><div class="dim" style="font-size:11px;margin-top:4px">Change to beans when you withdraw</div></div>
+  </div>
+  <div class="phone"><div class="t">Withdraw screen — beans only</div><h3>Withdraw</h3>
+    <div class="pc" style="margin-top:0;text-align:center"><div class="lbl">Beans you can withdraw</div><div class="big bean" style="font-size:30px">8,410</div></div>
+    <div class="inp"><span>Beans to withdraw</span><b class="bean">5,000</b></div>
+    <div class="pc">
+      <div class="kv"><span>Withdraw</span><b class="bean">5,000</b></div>
+      <div class="kv"><span>Left after this</span><b class="bean">3,410</b></div>
+      <div class="kv"><span>Send to</span><b>riya@okaxis</b></div>
+    </div>
+    <div class="cta">Withdraw 5,000 beans</div>
+    <div class="dim" style="font-size:10.5px;margin-top:8px;text-align:center">Minimum 5,000 beans · Meto team sends the money to your UPI within 24 hours</div>
+    <div class="lbl" style="color:var(--muted);font-size:12px;margin-top:16px">Your withdrawals</div>
+    <div class="tx"><div>21 Oct · riya@okaxis<small>UTR 412398765432</small></div><div style="text-align:right"><b class="bean">5,000 beans</b><small style="display:block;color:var(--green);font-size:10.5px">Paid ✓</small></div></div>
+    <div class="tx"><div>12 Oct · riya@okaxis<small>Wrong UPI name</small></div><div style="text-align:right"><b class="bean">6,000 beans</b><small style="display:block;color:var(--red);font-size:10.5px">Returned</small></div></div>
+  </div>
+  <div class="phone"><div class="t">Earnings — only gems</div><h3>Earnings</h3>
+    <div class="tx"><div>Video call · Arjun<small>Today 9:12 PM · 4 min</small></div><b class="gem">+4,000 gems</b></div>
+    <div class="tx"><div>Gift · Rose<small>Today 8:40 PM</small></div><b class="gem">+500 gems</b></div>
+    <div class="tx"><div>Message · Kabir<small>Today 8:02 PM</small></div><b class="gem">+200 gems</b></div>
+    <div class="tx"><div>Photo unlock · Dev<small>Yesterday 11:20 PM</small></div><b class="gem">+200 gems</b></div>
+  </div>
+</div>
+<figcaption>Host only sees <b>gems</b> in the app (full gems the user paid). <b>No ₹ value on the Me screen any more.</b> On the Withdraw screen she sees <b>only beans</b> — no gems→beans maths, no rate, no ₹. She types beans; Meto team sends the money by the admin’s rate. Earnings list shows only gems; withdrawals (in beans) are listed on the Withdraw screen, so the two never mix. Her old “points” become the same number of gems (1 point = 1 gem today), so nobody loses anything.</figcaption>
+
+<!-- ============ ADMIN SETTINGS ============ -->
+<h2 class="sec">B · Admin → Settings <span>· host withdraw rates (one rate for all hosts)</span></h2>
+<div class="row"><div class="win"><div class="bar"><i></i><i></i><i></i><span>admin / settings</span></div><div class="main">
+  <h3>Settings · Withdraw</h3>
+  <div class="form new">
+    <div class="fld"><label>Host: 1 bean = how many gems</label><div>10</div><p>84,100 gems → 8,410 beans</p></div>
+    <div class="fld"><label>Beans for ₹1 (hosts)</label><div>10</div><p>4,000 beans = ₹400</p></div>
+    <div class="fld"><label>Minimum withdraw (beans)</label><div>5,000</div><p>hosts</p></div>
+    <div class="fld"><label>TDS %</label><div>1</div></div>
+  </div>
+  <div class="note">Old settings “Host points per gem” and “Points per ₹1” are removed. Hosts and agencies never see these rates or any ₹. Only admin sees the ₹ amount in host Withdrawals (to know how much to pay). Changing a rate changes only future withdrawals.</div>
+</div></div></div>
+
+<!-- ============ ADMIN AGENCIES ============ -->
+<h2 class="sec">C · Admin → Agencies <span>· per-agency rates, add gems to agency, gems sent</span></h2>
+<div class="row"><div class="win"><div class="bar"><i></i><i></i><i></i><span>admin / agencies</span></div><div class="main">
+  <h3>Agencies</h3><div class="sub">Gems stock for selling to users · commission in beans</div>
+  <div class="kpis"><div class="kpi"><small>Gems given to agencies</small><b class="gem">25,00,000</b><em>all time</em></div><div class="kpi"><small>Gems sent to users</small><b class="gem">18,40,000</b><em>by agencies</em></div><div class="kpi"><small>Commission beans earned</small><b class="bean">14,200</b><em>all agencies</em></div><div class="kpi"><small>Agencies</small><b>2</b><em>active</em></div></div>
+  <div class="card"><table>
+    <thead><tr><th>Agency</th><th class="r">Commission</th><th class="r">Bean rate</th><th class="r">Gems stock</th><th class="r">Commission beans</th><th></th></tr></thead>
+    <tbody>
+      <tr><td><b>Star Agency</b><div class="dim" style="font-size:10.5px">AG1045 · 8 hosts · 14 users</div></td><td class="r">10%</td><td class="r">1 bean = 8 gems</td><td class="r gem">6,60,000</td><td class="r bean">25,000</td><td class="r"><span class="btn b-gold">+ Gems</span> <span class="btn b-ghost">Edit</span></td></tr>
+      <tr><td><b>Moon Agency</b><div class="dim" style="font-size:10.5px">AG2210 · 3 hosts · 5 users</div></td><td class="r">12%</td><td class="r">1 bean = 10 gems</td><td class="r gem">0</td><td class="r bean">310</td><td class="r"><span class="btn b-gold">+ Gems</span> <span class="btn b-ghost">Edit</span></td></tr>
+    </tbody></table></div>
+  <div class="row" style="gap:16px;margin-top:4px">
+    <div class="dlg"><h4>Add gems · Star Agency</h4><div class="s">Take the money from the agency first (outside the app), then add gems here.</div>
+      <div class="fld" style="margin-top:12px"><label>Gems</label><div>5,00,000</div></div>
+      <div class="fld" style="margin-top:10px"><label>Your password (to confirm)</label><div>••••••••••</div></div>
+      <div class="act"><span class="btn b-ghost">Cancel</span><span class="btn b-gold">Add 5,00,000 gems</span></div></div>
+    <div class="dlg"><h4>Edit · Star Agency</h4>
+      <div class="form" style="grid-template-columns:1fr 1fr"><div class="fld"><label>Commission %</label><div>10</div></div><div class="fld"><label>1 bean = how many gems</label><div>8</div><p>this agency only</p></div></div>
+      <div class="act"><span class="btn b-ghost">Cancel</span><span class="btn b-gold">Save</span></div></div>
+  </div>
+  <div class="tabs" style="margin-top:6px"><a>Hosts</a><a>Signed up via link</a><a class="on">Gems sent</a></div>
+  <div class="card"><table>
+    <thead><tr><th>Date</th><th>To user</th><th class="r">Gems</th></tr></thead>
+    <tbody>
+      <tr><td>22 Oct, 9:10 PM</td><td>Ram · ID 448708254</td><td class="r gem">10,000</td></tr>
+      <tr><td>22 Oct, 6:02 PM</td><td>Arjun · ID 100000011</td><td class="r gem">50,000</td></tr>
+    </tbody></table></div>
+</div></div></div>
+<figcaption><b>+ Gems</b> puts gems in the agency’s stock (owner password, audit log; no ₹ is recorded — as you said). <b>Edit</b> sets commission % and this agency’s bean rate. The old “Pay ₹” button and payout dialog go away. <b>Agency commission withdraw is off for now</b> — beans only add up. “Gems sent” lists every gift of gems from this agency to users.</figcaption>
+
+<!-- ============ AGENCY PORTAL ============ -->
+<h2 class="sec">D · Agency portal <span>· dashboard, send gems to a user</span></h2>
+<div class="row"><div class="win" style="max-width:1080px"><div class="bar"><i></i><i></i><i></i><span>agency / dashboard</span></div><div class="side">
+  <div class="nav"><div class="logo">Meto</div><div class="on">Dashboard</div><div>Send gems</div><div>My hosts</div><div>Invite link</div><div>Account</div></div>
+  <div class="main">
+    <h3>Star Agency</h3><div class="sub">AG1045</div>
+    <div class="kpis"><div class="kpi"><small>Gems stock</small><b class="gem">6,60,000</b><em>to send to users</em></div><div class="kpi"><small>Your hosts earned</small><b class="gem">20,00,000</b><em>gems, since you joined</em></div><div class="kpi"><small>Commission</small><b class="bean">25,000 beans</b><em>your commission</em></div><div class="kpi"><small>Users you sent gems to</small><b>42</b><em>this month</em></div></div>
+    <div class="row" style="gap:16px">
+      <div class="dlg" style="margin:14px 0"><h4>Send gems</h4><div class="s">Search the user’s Meto ID.</div>
+        <div class="fld" style="margin-top:12px"><label>Meto ID</label><div>448708254</div></div>
+        <div class="found"><i></i><div><b>Ram, 27</b><small>ID 448708254 · user</small></div></div>
+        <div class="fld" style="margin-top:10px"><label>Gems</label><div>10,000</div><p>Stock after: 6,50,000</p></div>
+        <div class="act"><span class="btn b-rose">Send 10,000 gems</span></div></div>
+
+    </div>
+  </div></div></div></div>
+<figcaption><b>Send gems:</b> only to normal users (hosts can’t be picked). The user gets the gems in their wallet + a notice “Star Agency sent you 10,000 gems”. Every send is listed (Gems sent tab, for agency and admin). <b>Commission</b> is shown only in beans — no ₹, no rate. <b>No withdraw for agencies for now</b> — commission only adds up and is shown. Gems stock can’t be withdrawn.</figcaption>
+
+<h2 class="sec">E · Open points <span>· defaults I picked — tell me if any is wrong</span></h2>
+<div class="note" style="max-width:940px;font-size:12.5px">
+1. Gems an agency sends to a user <b>count for the user’s level</b> (like a purchase).<br>
+2. Agency <b>can’t take gems back</b> after sending. A wrong send is fixed by admin.<br>
+3. Agency commission <b>withdraw is not built now</b> (can be added later).<br>
+4. Agency link already works for users too (they show in “Signed up via link”). Commission comes only from <b>hosts’</b> gems.
+</div>
+</body>
+</html>

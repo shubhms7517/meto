@@ -47,7 +47,7 @@ const DOCS = {
       ['On calls', 'Be respectful. No nudity or sexual content, no recording users, no rude or abusive talk. Users can report you; you can report or block them too.'],
       ['Money', 'Never ask users for money, phone numbers, UPI or other apps. All earnings are paid only through Meto withdrawals.'],
       ['Your rate', 'You choose your call rate (up to the limit shown). Users see it before they call. Match calls use the fixed match rate.'],
-      ['Earnings', 'If the user ends a call you earn every started minute. If you end it, only full minutes count and the rest goes back to the user. You also earn from gifts, paid messages and unlocked photos or videos. 100 points = ₹1.'],
+      ['Earnings', 'If the user ends a call you earn every started minute. If you end it, only full minutes count and the rest goes back to the user. You also earn from gifts, paid messages and unlocked photos or videos. Earnings are in gems; when you withdraw they change to beans and are paid to your UPI.'],
       ['Withdrawals', 'Minimum ₹500 to your own UPI, with your PAN. TDS (now 1%) is deducted as per law. Payouts usually reach within 48 hours.'],
       ['Breaking rules', 'Can lead to a warning, a ban and frozen earnings.'],
       ['Contact', CONTACT],

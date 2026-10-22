@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { api, download } from '../api';
-import { ago, date, Empty, inr, Pill, Tabs, useApi, useDebounced, useAuth, useUi, Who, type UserCard } from '../ui';
+import { ago, date, Empty, inr, num, Pill, Tabs, useApi, useDebounced, useAuth, useUi, Who, type UserCard } from '../ui';
 
 type W = {
   id: number;
   user: UserCard | null;
   agency: string | null;
+  beans: number;
   requestedInr: number;
   tdsInr: number;
   netInr: number;
@@ -48,12 +49,12 @@ export default function Withdrawals() {
   const reject = async (w: W) => {
     const r = await ask({
       title: `Reject ${inr(w.netInr)} for ${w.user?.name}?`,
-      text: 'Her points come back automatically.',
+      text: `Her ${num(w.beans)} beans come back automatically.`,
       input: { label: 'Reason (shown to host)', chips: ['UPI name does not match PAN', 'UPI ID is wrong', 'Suspicious activity — contact support'], multiline: true },
       confirm: 'Reject',
       tone: 'red',
     });
-    if (r && (await run(() => api(`/withdrawals/${w.id}/reject`, { body: { reason: r.value } }), 'Rejected · points returned'))) done();
+    if (r && (await run(() => api(`/withdrawals/${w.id}/reject`, { body: { reason: r.value } }), 'Rejected · beans returned'))) done();
   };
   const done = () => {
     list.reload();
@@ -92,6 +93,7 @@ export default function Withdrawals() {
           <thead>
             <tr>
               <th>HOST</th>
+              <th>BEANS</th>
               <th>REQUESTED</th>
               <th>TDS</th>
               <th>{status === 'pending' ? 'TO PAY' : 'NET'}</th>
@@ -108,6 +110,7 @@ export default function Withdrawals() {
                 <td>
                   <Who u={w.user} sub={w.agency ?? '—'} />
                 </td>
+                <td className="bean">{num(w.beans)}</td>
                 <td>{inr(w.requestedInr)}</td>
                 <td>{inr(w.tdsInr)}</td>
                 <td className="gold">

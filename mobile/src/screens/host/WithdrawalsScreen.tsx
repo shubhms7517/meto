@@ -4,7 +4,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
-import { getWithdrawals, rupees } from '../../services/host';
+import { fmt, getWithdrawals } from '../../services/host';
+import Bean, { BEAN_COLOR } from '../../components/Bean';
 import { HostHeader } from './common';
 import { EmptyState, ErrorState, refreshControl, SkeletonList } from '../../components/States';
 import { useLoad } from '../../hooks/useLoad';
@@ -14,10 +15,10 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Withdrawals'>;
 const STATUS = {
   pending: { label: 'Processing', bg: 'rgba(246,220,155,0.15)', fg: colors.gold1 },
   paid: { label: 'Paid ✓', bg: 'rgba(62,224,143,0.15)', fg: colors.online },
-  rejected: { label: 'Rejected', bg: 'rgba(255,59,92,0.15)', fg: '#ff8a9e' },
+  rejected: { label: 'Returned', bg: 'rgba(255,59,92,0.15)', fg: '#ff8a9e' },
 } as const;
 
-// Withdraw history: Processing / Paid (UTR) / Rejected (points wapas)
+// Withdraw history (beans me): Processing / Paid (UTR) / Returned (beans wapas)
 export default function WithdrawalsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const L = useLoad(() => getWithdrawals().then(r => r.items), { focus: true });
@@ -40,14 +41,14 @@ export default function WithdrawalsScreen({ navigation }: Props) {
           renderItem={({ item: w }) => {
             const s = STATUS[w.status];
             const date = new Date(w.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-            const sub = w.status === 'paid' && w.utr ? `${date} · UTR ${w.utr}` : w.status === 'rejected' ? `${date} · ${w.reason ?? ''} · points returned` : `${date} · ${w.upiId}`;
+            const sub = w.status === 'paid' && w.utr ? `${date} · UTR ${w.utr}` : w.status === 'rejected' ? `${date} · ${w.reason ?? ''} · beans returned` : `${date} · ${w.upiId}`;
             return (
               <View style={st.row}>
                 <View style={st.ic}>
-                  <Text style={{ fontSize: 15 }}>🏦</Text>
+                  <Bean size={20} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={st.amt}>{rupees(w.net)}</Text>
+                  <Text style={[st.amt, { color: BEAN_COLOR }]}>{fmt(w.beans)} beans</Text>
                   <Text style={st.sub} numberOfLines={2}>
                     {sub}
                   </Text>
@@ -58,12 +59,12 @@ export default function WithdrawalsScreen({ navigation }: Props) {
               </View>
             );
           }}
-          ListEmptyComponent={<EmptyState icon="🏦" title="No withdrawals yet" text="Once you have ₹500 or more, withdraw to your UPI from Me → Withdraw." />}
+          ListEmptyComponent={<EmptyState icon="🏦" title="No withdrawals yet" text="When you have enough beans, withdraw to your UPI from Me → Withdraw." />}
           ListFooterComponent={
             items.length ? (
               <View style={st.info}>
                 <Text style={st.infoText}>
-                  If a payout fails, your <Text style={{ color: colors.gold1, fontWeight: '800' }}>points come back</Text> automatically.
+                  If a payout fails, your <Text style={{ color: BEAN_COLOR, fontWeight: '800' }}>beans come back</Text> automatically.
                 </Text>
               </View>
             ) : undefined

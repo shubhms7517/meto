@@ -24,7 +24,9 @@ export class Agency extends Model<InferAttributes<Agency>, InferCreationAttribut
   declare id: CreationOptional<number>;
   declare code: string;
   declare name: string;
-  declare commissionPct: CreationOptional<number>; // host ki kamai ka kitna % agency ko (company ke hisse se)
+  declare commissionPct: CreationOptional<number>; // agency ke hosts ke gems ka kitna % commission
+  declare gemsPerBean: CreationOptional<number>; // is agency ka rate: commission ke kitne gems = 1 bean
+  declare gemBalance: CreationOptional<number>; // admin se liye gems (users ko bhejne ke liye, withdraw nahi)
   declare status: CreationOptional<(typeof AGENCY_STATUSES)[number]>;
   declare email: CreationOptional<string | null>; // agency portal login
   declare passwordHash: CreationOptional<string | null>;
@@ -46,6 +48,8 @@ Agency.init(
     code: { type: DataTypes.STRING(20), allowNull: false, unique: true },
     name: { type: DataTypes.STRING(80), allowNull: false },
     commissionPct: { type: DataTypes.DECIMAL(5, 2), allowNull: false, defaultValue: 0 },
+    gemsPerBean: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 10 },
+    gemBalance: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false, defaultValue: 0 },
     status: { type: DataTypes.ENUM(...AGENCY_STATUSES), allowNull: false, defaultValue: 'active' },
     email: { type: DataTypes.STRING(160), allowNull: true, defaultValue: null },
     passwordHash: { type: DataTypes.STRING(255), allowNull: true, defaultValue: null },
@@ -93,6 +97,8 @@ export class HostProfile extends Model<InferAttributes<HostProfile>, InferCreati
   declare agencyId: number | null;
   declare status: CreationOptional<HostStatus>;
   declare rate: CreationOptional<number>; // gems per minute jo user dega (host chunti hai)
+  declare rateMin: CreationOptional<number | null>; // admin ki di hui range (null = Settings wali)
+  declare rateMax: CreationOptional<number | null>;
   declare available: CreationOptional<boolean>; // "Online for calls" switch
   declare application: Record<string, unknown> | null; // photos, video, selfie, dob
   declare rejectReason: string | null;
@@ -107,6 +113,8 @@ HostProfile.init(
     agencyId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     status: { type: DataTypes.ENUM(...HOST_STATUSES), allowNull: false, defaultValue: 'pending' },
     rate: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 1000 },
+    rateMin: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+    rateMax: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     available: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     application: { type: DataTypes.JSON, allowNull: true },
     rejectReason: { type: DataTypes.STRING(200), allowNull: true },
@@ -195,4 +203,32 @@ AgencyPayout.init(
     createdAt: DataTypes.DATE,
   },
   { sequelize, tableName: 'agency_payouts', updatedAt: false, indexes: [{ fields: ['agency_id'] }] },
+);
+
+// Agency ke gems ka hisaab (ledger): admin ne diye (+) / user ko bheje (−). Kabhi delete nahi.
+export const AGENCY_GEM_KINDS = ['admin_add', 'send'] as const;
+
+export class AgencyGemTx extends Model<InferAttributes<AgencyGemTx>, InferCreationAttributes<AgencyGemTx>> {
+  declare id: CreationOptional<number>;
+  declare agencyId: number;
+  declare kind: (typeof AGENCY_GEM_KINDS)[number];
+  declare gems: number; // + aaye / − gaye
+  declare balanceAfter: number;
+  declare userId: number | null; // kis user ko bheje (send)
+  declare adminId: number | null; // kis admin ne diye (admin_add)
+  declare createdAt: CreationOptional<Date>;
+}
+
+AgencyGemTx.init(
+  {
+    id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+    agencyId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+    kind: { type: DataTypes.ENUM(...AGENCY_GEM_KINDS), allowNull: false },
+    gems: { type: DataTypes.BIGINT, allowNull: false },
+    balanceAfter: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    userId: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+    adminId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+    createdAt: DataTypes.DATE,
+  },
+  { sequelize, tableName: 'agency_gem_txs', updatedAt: false, indexes: [{ fields: ['agency_id', 'id'] }, { fields: ['user_id'] }] },
 );

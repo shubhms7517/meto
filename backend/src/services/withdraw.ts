@@ -1,6 +1,6 @@
 import { badRequest, forbidden, HttpError, notFound } from '../lib/errors.js';
 import { emitToUser } from '../lib/realtime.js';
-import { getSettings } from '../lib/settings.js';
+import { gemsToBeans, getSettings } from '../lib/settings.js';
 import { HostWallet, PayoutAccount, User, Withdrawal } from '../models/index.js';
 import { applyHostTx } from './host.js';
 import { notifyLater } from './notifications.js';
@@ -13,12 +13,10 @@ const maskPan = (p: string) => `${p.slice(0, 2)}••••••${p.slice(-2)}
 export const accountJSON = (a: PayoutAccount | null) =>
   a ? { upiId: a.upiId, upiName: a.upiName, panMasked: maskPan(a.pan), panName: a.panName } : null;
 
+// Host ko sirf beans dikhte hain — ₹ / TDS / gems wala hisaab nahi
 export const withdrawalJSON = (w: Withdrawal) => ({
   id: w.id,
-  points: Number(w.points),
-  amount: Number(w.amountPaise) / 100,
-  tds: Number(w.tdsPaise) / 100,
-  net: Number(w.netPaise) / 100,
+  beans: Number(w.beans),
   upiId: w.upiId,
   status: w.status,
   utr: w.utr,
@@ -40,13 +38,9 @@ export async function withdrawInfo(user: User) {
     PayoutAccount.findByPk(user.id),
     Withdrawal.findOne({ where: { userId: user.id, status: 'pending' }, order: [['id', 'DESC']] }),
   ]);
-  const points = Number(w?.points ?? 0);
   return {
-    points,
-    pointsPerInr: s.pointsPerInr,
-    availableInr: Math.floor(points / s.pointsPerInr), // poore rupaye hi nikalte hain
-    minInr: s.minWithdrawInr,
-    tdsPct: s.tdsPct,
+    beans: gemsToBeans(Number(w?.points ?? 0), s), // sirf beans (gems/rate nahi)
+    minBeans: s.minWithdrawBeans,
     account: accountJSON(acc),
     pending: pending ? withdrawalJSON(pending) : null,
   };
@@ -68,24 +62,26 @@ export async function savePayoutAccount(user: User, p: { upiId: string; upiName:
   return accountJSON(await PayoutAccount.findByPk(user.id));
 }
 
-// Withdraw maango: points turant kat-te hain, request "pending" (admin pay karke Paid karega)
-export async function requestWithdraw(user: User, amountInr: number) {
+// Withdraw maango (beans me): utne gems turant kat-te hain, request "pending".
+// ₹ admin ke rate se banta hai (sirf admin dekhta hai, wahi UPI pe bhejta hai).
+export async function requestWithdraw(user: User, beans: number) {
   assertHost(user);
   const s = await getSettings();
-  if (!Number.isInteger(amountInr) || amountInr < s.minWithdrawInr) throw badRequest(`Minimum withdrawal is ₹${s.minWithdrawInr}`);
+  if (!Number.isInteger(beans) || beans < s.minWithdrawBeans) throw badRequest(`Minimum withdrawal is ${s.minWithdrawBeans.toLocaleString('en-IN')} beans`);
   const acc = await PayoutAccount.findByPk(user.id);
   if (!acc) throw new HttpError(409, 'no_payout_account', 'Please add your UPI and PAN first');
   if (await Withdrawal.findOne({ where: { userId: user.id, status: 'pending' } }))
     throw new HttpError(409, 'withdraw_pending', 'You already have a withdrawal in progress');
-  const points = amountInr * s.pointsPerInr;
+  const points = beans * s.gemsPerBean; // kitne gems katenge
   const w = await HostWallet.findByPk(user.id);
-  if (Number(w?.points ?? 0) < points) throw badRequest('Not enough earnings for this amount');
+  if (Number(w?.points ?? 0) < points) throw badRequest('You don’t have that many beans');
 
-  const amountPaise = amountInr * 100;
+  const amountPaise = Math.round((beans * 100) / s.beansPerInr);
   const tdsPaise = Math.round((amountPaise * s.tdsPct) / 100);
   const wd = await Withdrawal.create({
     userId: user.id,
     points,
+    beans,
     amountPaise,
     tdsPaise,
     netPaise: amountPaise - tdsPaise,
@@ -96,7 +92,7 @@ export async function requestWithdraw(user: User, amountInr: number) {
     paidAt: null,
   });
   try {
-    await applyHostTx(user.id, -points, { kind: 'withdraw', title: `Withdraw · ₹${amountInr.toLocaleString('en-IN')}`, subtitle: acc.upiId, uniqueKey: `wd:${wd.id}` });
+    await applyHostTx(user.id, -points, { kind: 'withdraw', title: `Withdraw · ${beans.toLocaleString('en-IN')} beans`, subtitle: acc.upiId, uniqueKey: `wd:${wd.id}` });
   } catch (e) {
     await wd.destroy(); // points nahi kate to request bhi nahi
     throw e;
@@ -117,8 +113,7 @@ export async function markWithdrawalPaid(id: number, utr: string) {
   if (!wd) throw notFound('Withdrawal not found');
   if (wd.status !== 'pending') throw badRequest(`Already ${wd.status}`);
   await wd.update({ status: 'paid', utr: utr.trim().slice(0, 40), paidAt: new Date() });
-  const net = (Number(wd.netPaise) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-  notifyLater(wd.userId, 'notice', { data: { title: `₹${net} paid to your UPI ✓`, body: `Sent to ${wd.upiId} · UTR ${wd.utr}` } });
+  notifyLater(wd.userId, 'notice', { data: { title: `${Number(wd.beans).toLocaleString('en-IN')} beans withdrawal paid ✓`, body: `Sent to ${wd.upiId} · UTR ${wd.utr}` } });
   emitToUser(wd.userId, 'withdraw:update', withdrawalJSON(wd));
   return withdrawalJSON(wd);
 }
@@ -130,7 +125,7 @@ export async function rejectWithdrawal(id: number, reason: string) {
   await wd.update({ status: 'rejected', reason: reason.trim().slice(0, 200) });
   // Points wapas
   await applyHostTx(wd.userId, Number(wd.points), { kind: 'refund', title: 'Withdraw returned', subtitle: wd.reason, uniqueKey: `wdrefund:${wd.id}` });
-  notifyLater(wd.userId, 'notice', { data: { title: 'Withdrawal not completed', body: `${wd.reason} · your points are back` } });
+  notifyLater(wd.userId, 'notice', { data: { title: 'Withdrawal not completed', body: `${wd.reason} · your beans are back` } });
   emitToUser(wd.userId, 'withdraw:update', withdrawalJSON(wd));
   return withdrawalJSON(wd);
 }

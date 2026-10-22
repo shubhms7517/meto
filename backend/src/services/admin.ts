@@ -6,7 +6,11 @@ import { env } from "../config/env.js";
 import { ONLINE_WINDOW_MS } from "../lib/age.js";
 import { badRequest, notFound } from "../lib/errors.js";
 import {
+  agencyCommission,
+  gemsPerInr,
+  gemsToBeans,
   getSettings,
+  hostRange,
   SETTING_DEFAULTS,
   setSetting,
   type SettingKey,
@@ -15,6 +19,7 @@ import {
 import {
   Admin,
   Agency,
+  AgencyGemTx,
   AuditLog,
   Call,
   DeletedAccount,
@@ -168,7 +173,7 @@ export async function dashboard(range: "today" | "7d" | "30d") {
     ]);
 
   const rechargeInr = Number(rech.inr ?? 0);
-  const hostInr = Number(earn.pts ?? 0) / s.pointsPerInr;
+  const hostInr = Number(earn.pts ?? 0) / gemsPerInr(s);
   const callsN = Number(calls.n ?? 0);
 
   const days = range === "30d" ? 30 : 7;
@@ -189,7 +194,7 @@ export async function dashboard(range: "today" | "7d" | "30d") {
       : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const rcm = new Map(rc.map((r) => [key(r.d), Number(r.v ?? 0)]));
   const hcm = new Map(
-    hc.map((r) => [key(r.d), Number(r.v ?? 0) / s.pointsPerInr]),
+    hc.map((r) => [key(r.d), Number(r.v ?? 0) / gemsPerInr(s)]),
   );
   const chart = Array.from({ length: days }, (_, i) => {
     const d = new Date(chartFrom.getTime() + i * 86_400_000);
@@ -254,7 +259,7 @@ export async function dashboard(range: "today" | "7d" | "30d") {
         agency: u?.host?.agencyId
           ? (agencyNames.get(u.host.agencyId) ?? null)
           : null,
-        inr: Math.round(Number(r.v) / s.pointsPerInr),
+        inr: Math.round(Number(r.v) / gemsPerInr(s)),
       };
     }),
     topSpenders: topSpenders.map((r) => ({
@@ -562,9 +567,8 @@ export async function giveVip(publicId: number, days: number) {
 /* ---------------- agencies ---------------- */
 
 export async function listAgencies() {
-  const s = await getSettings();
   const agencies = await Agency.findAll({ order: [['id', 'ASC']] });
-  // har agency: hosts, 30 din ki earnings, aur agency banne ke baad se poori earnings (commission ke liye)
+  // har agency: hosts, 30 din ke gems, aur agency banne ke baad se hosts ke saare gems (commission ke liye)
   const stats = await q<{ aid: number; hosts: number; pts30: number; ptsAll: number }>(
     `SELECT hp.agency_id aid, COUNT(DISTINCT hp.user_id) hosts,
             COALESCE(SUM(CASE WHEN ht.points > 0 AND ht.kind IN ('call','gift','message','unlock') AND ht.created_at >= :d THEN ht.points ELSE 0 END), 0) pts30,
@@ -575,30 +579,37 @@ export async function listAgencies() {
       GROUP BY hp.agency_id`,
     { d: daysAgo(30) },
   );
-  const paid = await q<{ aid: number; inr: number; n: number }>(
-    `SELECT agency_id aid, COALESCE(SUM(amount_inr), 0) inr, COUNT(*) n FROM agency_payouts GROUP BY agency_id`,
+  const gemTx = await q<{ aid: number; added: number; sent: number; users: number }>(
+    `SELECT agency_id aid,
+            COALESCE(SUM(CASE WHEN kind='admin_add' THEN gems ELSE 0 END), 0) added,
+            COALESCE(SUM(CASE WHEN kind='send' THEN -gems ELSE 0 END), 0) sent,
+            COUNT(DISTINCT CASE WHEN kind='send' THEN user_id END) users
+       FROM agency_gem_txs GROUP BY agency_id`,
   );
   const m = new Map(stats.map((r) => [Number(r.aid), r]));
-  const pm = new Map(paid.map((r) => [Number(r.aid), r]));
+  const gm = new Map(gemTx.map((r) => [Number(r.aid), r]));
   const items = agencies.map((a) => {
     const st = m.get(a.id);
-    const pct = Number(a.commissionPct);
-    const earn30 = Math.round(Number(st?.pts30 ?? 0) / s.pointsPerInr);
-    const earnAll = Math.round(Number(st?.ptsAll ?? 0) / s.pointsPerInr);
-    const earnedInr = Math.round((earnAll * pct) / 100); // commission abhi wale % se
-    const paidInr = Number(pm.get(a.id)?.inr ?? 0);
+    const g = gm.get(a.id);
+    const hostGems = Number(st?.ptsAll ?? 0);
+    const c = agencyCommission(a, hostGems);
     return {
       id: a.id,
       code: a.code,
       name: a.name,
       email: a.email,
-      commissionPct: pct,
+      commissionPct: Number(a.commissionPct),
+      gemsPerBean: a.gemsPerBean,
       status: a.status,
       hosts: Number(st?.hosts ?? 0),
-      earningsInr: earn30,
-      earnedInr,
-      paidInr,
-      owedInr: Math.max(0, earnedInr - paidInr),
+      hostGems30: Number(st?.pts30 ?? 0),
+      hostGems,
+      commissionGems: c.gems,
+      commissionBeans: c.beans,
+      gemBalance: Number(a.gemBalance),
+      gemsAdded: Number(g?.added ?? 0),
+      gemsSent: Number(g?.sent ?? 0),
+      usersSent: Number(g?.users ?? 0),
       lastLoginAt: a.lastLoginAt,
     };
   });
@@ -608,30 +619,55 @@ export async function listAgencies() {
       agencies: agencies.length,
       active: agencies.filter((a) => a.status === 'active').length,
       hosts: items.reduce((n, x) => n + x.hosts, 0),
-      earnedInr: items.reduce((n, x) => n + x.earnedInr, 0),
-      paidInr: items.reduce((n, x) => n + x.paidInr, 0),
-      payouts: paid.reduce((n, r) => n + Number(r.n), 0),
-      owedInr: items.reduce((n, x) => n + x.owedInr, 0),
+      gemsAdded: items.reduce((n, x) => n + x.gemsAdded, 0),
+      gemsSent: items.reduce((n, x) => n + x.gemsSent, 0),
+      commissionBeans: items.reduce((n, x) => n + x.commissionBeans, 0),
     },
   };
 }
 
-// Ek agency ki payout history
-export async function agencyPayouts(agencyId: number) {
-  const rows = await q<{ id: number; amount_inr: number; method: string; reference: string | null; note: string | null; created_at: Date; admin: string | null }>(
-    `SELECT p.id, p.amount_inr, p.method, p.reference, p.note, p.created_at, ad.name admin
-       FROM agency_payouts p LEFT JOIN admins ad ON ad.id = p.admin_id
-      WHERE p.agency_id = :aid ORDER BY p.id DESC`,
-    { aid: agencyId },
-  );
-  return { items: rows.map((r) => ({ id: r.id, amountInr: Number(r.amount_inr), method: r.method, reference: r.reference, note: r.note, at: r.created_at, by: r.admin })) };
+// Admin → agency ke stock me gems (paisa app ke bahar liya). Ledger + balance ek transaction me.
+export async function agencyAddGems(agencyId: number, gems: number, adminId: number) {
+  if (!Number.isInteger(gems) || gems < 1 || gems > 100_000_000) throw badRequest('Enter gems between 1 and 10,00,00,000');
+  return sequelize.transaction(async (t) => {
+    const a = await Agency.findByPk(agencyId, { transaction: t, lock: t.LOCK.UPDATE });
+    if (!a) throw notFound('Agency not found');
+    const before = Number(a.gemBalance);
+    a.gemBalance = before + gems;
+    await a.save({ transaction: t });
+    await AgencyGemTx.create({ agencyId: a.id, kind: 'admin_add', gems, balanceAfter: a.gemBalance, userId: null, adminId }, { transaction: t });
+    return { agency: a, before, after: a.gemBalance };
+  });
 }
 
-// Ek agency ka poora hisaab: kaun link se aaya, kaun host bana, har host ki kamai + commission
+// Agency ke gems ka hisaab: admin ne kab diye, kis user ko bheje
+export async function agencyGemHistory(agencyId: number) {
+  const rows = await AgencyGemTx.findAll({ where: { agencyId }, order: [['id', 'DESC']], limit: 300 });
+  const uids = [...new Set(rows.map((r) => r.userId).filter((x): x is number => x != null))];
+  const aids = [...new Set(rows.map((r) => r.adminId).filter((x): x is number => x != null))];
+  const [users, admins] = await Promise.all([
+    uids.length ? User.findAll({ where: { id: uids } }) : [],
+    aids.length ? Admin.findAll({ where: { id: aids } }) : [],
+  ]);
+  const um = new Map(users.map((u) => [u.id, u]));
+  const am = new Map(admins.map((x) => [x.id, x.name]));
+  return {
+    items: rows.map((r) => ({
+      id: r.id,
+      kind: r.kind,
+      gems: Number(r.gems),
+      balanceAfter: Number(r.balanceAfter),
+      user: r.userId && um.get(r.userId) ? userCard(um.get(r.userId)!) : null,
+      by: r.adminId ? (am.get(r.adminId) ?? null) : null,
+      at: r.createdAt,
+    })),
+  };
+}
+
+// Ek agency ka poora hisaab: kaun link se aaya, kaun host bana, har host ke gems + commission beans
 export async function agencyDetail(id: number) {
   const a = await Agency.findByPk(id);
   if (!a) throw notFound('Agency not found');
-  const s = await getSettings();
   const pct = Number(a.commissionPct);
   const row = (await listAgencies()).items.find((x) => x.id === a.id)!;
   const hostRows = await q<{ uid: number; status: string; joined: Date; pts: number; calls: number }>(
@@ -651,37 +687,39 @@ export async function agencyDetail(id: number) {
     limit: 500,
   });
   const formOf = new Map(hostRows.map((h) => [Number(h.uid), h.status]));
-  // link se aaye log + jinki host profile is agency me hai (dono ki details chahiye)
   const ids = [...new Set([...hostRows.map((h) => Number(h.uid)), ...signed.map((u) => u.id)])];
   const users = new Map((ids.length ? await User.findAll({ where: { id: ids } }) : []).map((u) => [u.id, u]));
   const hosts = hostRows
     .map((h) => {
       const u = users.get(Number(h.uid));
-      const earningsInr = Math.round(Number(h.pts) / s.pointsPerInr);
       const live = h.status === 'approved' || h.status === 'suspended';
+      const gems = Number(h.pts);
       return {
         user: u ? userCard(u) : null,
         status: h.status,
         joinedAt: h.joined,
         calls: live ? Number(h.calls) : null,
-        earningsInr: live ? earningsInr : null,
-        commissionInr: live ? Math.round((earningsInr * pct) / 100) : null,
+        gems: live ? gems : null,
+        commissionBeans: live ? agencyCommission(a, gems).beans : null,
       };
     })
-    .sort((x, y) => (y.earningsInr ?? -1) - (x.earningsInr ?? -1));
+    .sort((x, y) => (y.gems ?? -1) - (x.gems ?? -1));
   const count = (st: string[]) => hostRows.filter((h) => st.includes(h.status)).length;
   return {
-    agency: { id: a.id, code: a.code, name: a.name, email: a.email, commissionPct: pct, status: a.status, createdAt: a.createdAt },
+    agency: { id: a.id, code: a.code, name: a.name, email: a.email, commissionPct: pct, gemsPerBean: a.gemsPerBean, status: a.status, createdAt: a.createdAt },
     counts: {
       signedUp: signed.length,
       approved: count(['approved', 'suspended']),
       pending: count(['pending']),
       rejected: count(['rejected']),
     },
-    earningsInr: hosts.reduce((n, h) => n + (h.earningsInr ?? 0), 0),
-    earnedInr: row.earnedInr,
-    paidInr: row.paidInr,
-    owedInr: row.owedInr,
+    hostGems: row.hostGems,
+    commissionGems: row.commissionGems,
+    commissionBeans: row.commissionBeans,
+    gemBalance: row.gemBalance,
+    gemsAdded: row.gemsAdded,
+    gemsSent: row.gemsSent,
+    usersSent: row.usersSent,
     hosts,
     signedUp: signed.map((u) => {
       const st = formOf.get(u.id);
@@ -856,21 +894,25 @@ export async function listHosts(p: {
     ),
     Agency.findAll(),
   ]);
-  const tm = new Map(today.map((r) => [r.uid, Number(r.v) / s.pointsPerInr]));
+  const tm = new Map(today.map((r) => [r.uid, Number(r.v) / gemsPerInr(s)]));
   const wm = new Map(wallets.map((w) => [w.userId, w]));
   const cm = new Map(callStats.map((c) => [c.uid, c]));
-  const am = new Map(agencies.map((a) => [a.id, a.name]));
+  const am = new Map(agencies.map((a) => [a.id, a]));
   const items = users.map((u) => {
     const c = cm.get(u.id);
     const answered = Number(c?.answered ?? 0);
     return {
       ...userCard(u),
-      agency: u.host?.agencyId ? (am.get(u.host.agencyId) ?? null) : null,
+      agency: u.host?.agencyId ? (am.get(u.host.agencyId)?.name ?? null) : null,
+      agencyCode: u.host?.agencyId ? (am.get(u.host.agencyId)?.code ?? null) : null,
       hostStatus: u.host!.status,
       rate: u.host!.rate,
+      rateMin: hostRange(u.host!, s).min,
+      rateMax: hostRange(u.host!, s).max,
+      rateOwn: hostRange(u.host!, s).own,
       todayInr: Math.round(tm.get(u.id) ?? 0),
       totalInr: Math.round(
-        Number(wm.get(u.id)?.totalEarned ?? 0) / s.pointsPerInr,
+        Number(wm.get(u.id)?.totalEarned ?? 0) / gemsPerInr(s),
       ),
       pickupPct:
         c && Number(c.total)
@@ -936,14 +978,19 @@ export async function hostDetail(publicId: number) {
     host: {
       status: hp.status,
       rate: hp.rate,
-      rateMin: s.hostRateMin,
-      rateMax: s.hostRateOpenMax,
+      rateMin: hostRange(hp, s).min,
+      rateMax: hostRange(hp, s).max,
+      rateOwn: hostRange(hp, s).own, // true = admin ne is host ki range set ki
+      limitMin: s.hostRateMin, // Settings ki limit (range isse bahar nahi)
+      limitMax: s.hostRateOpenMax,
+      step: s.hostRateStep,
       since: hp.reviewedAt,
       agency: agency ? { name: agency.name, code: agency.code } : null,
     },
     points: Number(wallet?.points ?? 0),
-    pointsInr: Number(wallet?.points ?? 0) / s.pointsPerInr,
-    totalEarnedInr: Number(wallet?.totalEarned ?? 0) / s.pointsPerInr,
+    pointsInr: Number(wallet?.points ?? 0) / gemsPerInr(s),
+    beans: gemsToBeans(Number(wallet?.points ?? 0), s), // host ko withdraw me itne beans dikhte hain
+    totalEarnedInr: Number(wallet?.totalEarned ?? 0) / gemsPerInr(s),
     metrics: {
       pickupPct: Number(stats.total)
         ? Math.round((answered / Number(stats.total)) * 100)
@@ -1001,15 +1048,38 @@ export async function setHostStatus(
   return { user: u, before };
 }
 
-export async function setHostRate(publicId: number, rate: number) {
+// Admin: host ka rate + uski range. range = null → Settings wali default range.
+export async function setHostRate(
+  publicId: number,
+  rate: number,
+  range: { min: number; max: number } | null,
+) {
   const u = await findUser(publicId);
   const hp = await HostProfile.findByPk(u.id);
   if (!hp) throw notFound("Not a host");
   const s = await getSettings();
-  if (rate < s.hostRateMin || rate > s.hostRateOpenMax)
-    throw badRequest(`Rate must be ${s.hostRateMin}–${s.hostRateOpenMax}`);
-  const before = hp.rate;
-  await hp.update({ rate });
+  const step = s.hostRateStep;
+  const lo = range?.min ?? s.hostRateMin;
+  const hi = range?.max ?? s.hostRateOpenMax;
+  if (range) {
+    if (range.min < s.hostRateMin || range.max > s.hostRateOpenMax)
+      throw badRequest(`Range must stay inside ${s.hostRateMin}–${s.hostRateOpenMax}`);
+    if (range.max < range.min)
+      throw badRequest("Maximum must be more than Minimum");
+    if (range.min % step || range.max % step)
+      throw badRequest(`Minimum and Maximum must be in steps of ${step}`);
+  }
+  if (rate < lo || rate > hi) throw badRequest(`Rate must be ${lo}–${hi}`);
+  if (rate % step) throw badRequest(`Rate must be in steps of ${step}`);
+  const before = { rate: hp.rate, rateMin: hp.rateMin ?? null, rateMax: hp.rateMax ?? null };
+  await hp.update({ rate, rateMin: range?.min ?? null, rateMax: range?.max ?? null });
+  if (before.rate !== rate)
+    notify(u.id, "notice", {
+      data: {
+        title: "Your call rate was changed",
+        body: `Meto team set your call rate to ${rate} gems/min.`,
+      },
+    }).catch(() => {});
   return { user: u, before };
 }
 
@@ -1019,11 +1089,11 @@ export async function adjustPoints(
   reason: string,
 ) {
   const u = await findUser(publicId);
-  if (!points) throw badRequest("Points cannot be 0");
+  if (!points) throw badRequest("Gems cannot be 0");
   const w = await HostWallet.findByPk(u.id);
   const before = Number(w?.points ?? 0);
   if (points < 0 && before + points < 0)
-    throw badRequest(`Host has only ${before} points`);
+    throw badRequest(`Host has only ${before} gems`);
   await applyHostTx(u.id, points, {
     kind: "admin",
     title: points > 0 ? "Added by Meto team" : "Removed by Meto team",
@@ -1257,6 +1327,7 @@ export async function listWithdrawalsAdmin(
       checks.push("new_upi");
     return {
       id: w.id,
+      beans: Number(w.beans),
       user: u ? userCard(u) : null,
       agency: hm.get(w.userId) ? (am.get(hm.get(w.userId)!) ?? null) : null,
       requestedInr: w.amountPaise / 100,
@@ -1371,9 +1442,9 @@ export async function solveTicket(id: number) {
 /* ---------------- settings ---------------- */
 
 export const MONEY_KEYS: SettingKey[] = [
-  "hostPointsPerGem",
-  "pointsPerInr",
-  "minWithdrawInr",
+  "gemsPerBean",
+  "beansPerInr",
+  "minWithdrawBeans",
   "tdsPct",
   "matchRate",
   "vipCallDiscountPct",
@@ -1400,8 +1471,10 @@ export function validateSettings(patch: Partial<Settings>) {
       throw badRequest("Minimum rate must be lower than maximum rate");
   if ("tdsPct" in out && merged.tdsPct > 30)
     throw badRequest("TDS looks too high");
-  if ("hostPointsPerGem" in out && merged.hostPointsPerGem > 1)
-    throw badRequest("Host cannot get more than 100%");
+  if ("gemsPerBean" in out && !(Number.isInteger(merged.gemsPerBean) && merged.gemsPerBean >= 1))
+    throw badRequest("1 bean must be at least 1 gem");
+  if ("beansPerInr" in out && !(merged.beansPerInr > 0))
+    throw badRequest("Beans for ₹1 must be more than 0");
   return out as Partial<Settings>;
 }
 

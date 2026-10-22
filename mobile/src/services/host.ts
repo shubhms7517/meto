@@ -2,7 +2,8 @@ import { api, jsonBody } from './api';
 
 export type HostStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
 
-export type HostToday = { points: number; inr: number; calls: number; minutes: number };
+// Host ko sirf gems dikhte hain (₹ / rate nahi). Beans sirf Withdraw pe.
+export type HostToday = { gems: number; calls: number; minutes: number };
 
 export type HostSummary = {
   role: 'user' | 'host';
@@ -12,15 +13,13 @@ export type HostSummary = {
   application: { status: HostStatus; rejectReason: string | null; agency: { code: string; name: string } | null; reviewedAt: string | null } | null;
   rate: number | null;
   rates: number[]; // jaldi chunne ke chips
-  rateMin: number; // custom rate (admin settings se)
+  rateMin: number; // is host ki range (Meto team ki di hui, warna Settings wali)
   rateMax: number; // sabse zyada rate
+  rateOwnRange?: boolean; // true = Meto team ne is host ki range set ki
   rateStep: number;
   available: boolean;
-  points: number;
+  gems: number; // balance (gems)
   totalEarned: number;
-  pointsPerInr: number;
-  inr: number;
-  minWithdrawInr: number;
   media?: { freePhotos: number; photoPrice: number; freeVideos: number; videoPrice: number; maxVideos: number };
 };
 
@@ -50,22 +49,20 @@ export async function applyForHost(a: HostApplication): Promise<HostSummary> {
 export const setHostRate = (rate: number) => api<HostSummary>('/api/host/me', { method: 'PATCH', ...jsonBody({ rate }) });
 
 export type HostTxKind = 'call' | 'gift' | 'message' | 'withdraw' | 'refund' | 'admin' | 'unlock';
-export type HostTx = { id: number; kind: HostTxKind; points: number; title: string; subtitle: string | null; createdAt: string };
-export type EarningsPage = { items: HostTx[]; nextBefore: number | null; totals: { call: number; gift: number; message: number }; pointsPerInr: number };
+export type HostTx = { id: number; kind: HostTxKind; gems: number; title: string; subtitle: string | null; createdAt: string };
+export type EarningsPage = { items: HostTx[]; nextBefore: number | null; totals: { call: number; gift: number; message: number } };
 
 export const getEarnings = (kind: 'all' | 'call' | 'gift' | 'message', before?: number | null) =>
   api<EarningsPage>(`/api/host/earnings?kind=${kind}${before ? `&before=${before}` : ''}`);
 
-export const inr = (points: number, perInr: number) => `₹${(points / Math.max(1, perInr)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+export const fmt = (n: number) => Math.round(n).toLocaleString('en-IN');
 
 /* ---------------- Withdraw (UPI) ---------------- */
 export type PayoutAccount = { upiId: string; upiName: string; panMasked: string; panName: string };
+// Withdraw sirf beans me — ₹ / TDS host ko nahi dikhte (Meto team admin ke rate se bhejti hai)
 export type Withdrawal = {
   id: number;
-  points: number;
-  amount: number;
-  tds: number;
-  net: number;
+  beans: number;
   upiId: string;
   status: 'pending' | 'paid' | 'rejected';
   utr: string | null;
@@ -74,11 +71,8 @@ export type Withdrawal = {
   createdAt: string;
 };
 export type WithdrawInfo = {
-  points: number;
-  pointsPerInr: number;
-  availableInr: number;
-  minInr: number;
-  tdsPct: number;
+  beans: number; // kitne beans nikal sakti hai
+  minBeans: number;
   account: PayoutAccount | null;
   pending: Withdrawal | null;
 };
@@ -86,8 +80,7 @@ export type WithdrawInfo = {
 export const getWithdrawInfo = () => api<WithdrawInfo>('/api/host/withdraw');
 export const savePayoutAccount = (p: { upiId: string; upiName: string; pan: string; panName: string }) =>
   api<{ account: PayoutAccount }>('/api/host/payout-account', { method: 'PUT', ...jsonBody(p) });
-export const requestWithdraw = (amountInr: number) =>
-  api<{ withdrawal: Withdrawal }>('/api/host/withdrawals', { method: 'POST', ...jsonBody({ amountInr }) });
+export const requestWithdraw = (beans: number) =>
+  api<{ withdrawal: Withdrawal }>('/api/host/withdrawals', { method: 'POST', ...jsonBody({ beans }) });
 export const getWithdrawals = () => api<{ items: Withdrawal[] }>('/api/host/withdrawals');
 
-export const rupees = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

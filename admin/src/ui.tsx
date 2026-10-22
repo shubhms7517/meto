@@ -231,7 +231,7 @@ export function UiProvider({ children }: { children: ReactNode }) {
             )}
             {dialog.password && (
               <label className="lbl">
-                Your password (to confirm)
+                Your admin password (the one you log in with)
                 <input className="input" type="password" autoFocus={!dialog.input} value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
               </label>
             )}

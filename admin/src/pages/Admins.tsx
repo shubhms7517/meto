@@ -20,19 +20,19 @@ export default function Admins() {
   const [form, setForm] = useState({ email: '', name: '', role: 'support' as Role, password: '' });
 
   const invite = async () => {
-    const r = await ask({ title: `Add ${form.name} as ${form.role}?`, text: `Give them the email and password yourself (not by public chat). They can change the password later.`, password: true, confirm: 'Add admin', tone: 'green' });
-    if (r && (await run(() => api('/admins', { body: { ...form, myPassword: r.password } }), 'Admin added'))) {
+    const r = await ask({ title: `Add ${form.name} as ${form.role}?`, text: `Give them the email and password yourself (not by public chat). They can change the password later.`, confirm: 'Add admin', tone: 'green' });
+    if (r && (await run(() => api('/admins', { body: form }), 'Admin added'))) {
       setForm({ email: '', name: '', role: 'support', password: '' });
       list.reload();
     }
   };
   const change = async (a: AdminMe, patch: { role?: Role; status?: 'active' | 'disabled' }) => {
-    const r = await ask({ title: patch.status === 'disabled' ? `Remove access for ${a.name}?` : `Change ${a.name}?`, text: patch.role ? `Role: ${a.role} → ${patch.role}` : undefined, password: true, confirm: 'Confirm', tone: patch.status === 'disabled' ? 'red' : 'rose' });
-    if (r && (await run(() => api(`/admins/${a.id}`, { method: 'PATCH', body: { ...patch, myPassword: r.password } }), 'Saved'))) list.reload();
+    const r = await ask({ title: patch.status === 'disabled' ? `Remove access for ${a.name}?` : `Change ${a.name}?`, text: patch.role ? `Role: ${a.role} → ${patch.role}` : undefined, confirm: 'Confirm', tone: patch.status === 'disabled' ? 'red' : 'rose' });
+    if (r && (await run(() => api(`/admins/${a.id}`, { method: 'PATCH', body: patch }), 'Saved'))) list.reload();
   };
   const reset = async (a: AdminMe) => {
-    const r = await ask({ title: `New password for ${a.name}`, text: '10+ characters with letters and numbers. They are signed out everywhere.', input: { label: 'New password', type: 'password' }, password: true, confirm: 'Set password', tone: 'red' });
-    if (r && (await run(() => api(`/admins/${a.id}`, { method: 'PATCH', body: { password: r.value, myPassword: r.password } }), 'Password changed'))) list.reload();
+    const r = await ask({ title: `New password for ${a.name}`, text: '10+ characters with letters and numbers. They are signed out everywhere.', input: { label: 'New password', type: 'password' }, confirm: 'Set password', tone: 'red' });
+    if (r && (await run(() => api(`/admins/${a.id}`, { method: 'PATCH', body: { password: r.value } }), 'Password changed'))) list.reload();
   };
   const myPassword = async () => {
     const cur = await ask({ title: 'Change your password', input: { label: 'Current password', type: 'password' }, confirm: 'Next' });

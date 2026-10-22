@@ -33,8 +33,9 @@ export type WithdrawStatus = (typeof WITHDRAW_STATUSES)[number];
 export class Withdrawal extends Model<InferAttributes<Withdrawal>, InferCreationAttributes<Withdrawal>> {
   declare id: CreationOptional<number>;
   declare userId: number;
-  declare points: number;
-  declare amountPaise: number; // jitna maanga
+  declare points: number; // kitne gems kate
+  declare beans: CreationOptional<number>; // host ne kitne beans maange
+  declare amountPaise: number; // admin ke rate se ₹ (sirf admin dekhta hai)
   declare tdsPaise: number;
   declare netPaise: number; // host ko milega
   declare upiId: string;
@@ -52,6 +53,7 @@ Withdrawal.init(
     id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
     userId: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
     points: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+    beans: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false, defaultValue: 0 },
     amountPaise: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
     tdsPaise: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
     netPaise: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },

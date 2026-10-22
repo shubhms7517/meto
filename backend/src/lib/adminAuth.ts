@@ -95,7 +95,7 @@ export function requireAdmin(...roles: AdminRole[]) {
 
 // Khatarnak kaam se pehle password dobara (settings ke paise, admin team)
 export async function confirmPassword(admin: Admin, password: unknown) {
-  if (typeof password !== 'string' || !(await checkPassword(password, admin.passwordHash))) throw new HttpError(401, 'bad_password', 'Wrong password');
+  if (typeof password !== 'string' || !(await checkPassword(password, admin.passwordHash))) throw new HttpError(401, 'bad_password', 'Wrong admin password — type the password you use to log in here');
 }
 
 // Audit: har badlav ka record (sirf jodna, kabhi badalna nahi)

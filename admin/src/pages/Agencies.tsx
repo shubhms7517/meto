@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
-import { Avatar, date, Empty, inr, num, Pill, Tabs, useApi, useAuth, useUi, Who, type UserCard } from '../ui';
+import { Avatar, date, Empty, num, Pill, Tabs, useApi, useAuth, useUi, Who, type UserCard } from '../ui';
 
 type Agency = {
   id: number;
@@ -8,17 +8,27 @@ type Agency = {
   name: string;
   email: string | null;
   commissionPct: number;
+  gemsPerBean: number;
   status: 'active' | 'disabled';
   hosts: number;
-  earningsInr: number;
-  earnedInr: number;
-  paidInr: number;
-  owedInr: number;
+  hostGems: number; // agency banne ke baad se hosts ke gems
+  commissionBeans: number;
+  gemBalance: number; // users ko bhejne ke liye stock
+  gemsAdded: number;
+  gemsSent: number;
+  usersSent: number;
   lastLoginAt: string | null;
 };
-type Data = { items: Agency[]; totals: { agencies: number; active: number; hosts: number; earnedInr: number; paidInr: number; payouts: number; owedInr: number } };
-type Payout = { id: number; amountInr: number; method: string; reference: string | null; note: string | null; at: string; by: string | null };
-const METHOD: Record<string, string> = { upi: 'UPI', bank: 'Bank', cash: 'Cash' };
+type Data = { items: Agency[]; totals: { agencies: number; active: number; hosts: number; gemsAdded: number; gemsSent: number; commissionBeans: number } };
+type GemRow = { id: number; kind: 'admin_add' | 'send'; gems: number; balanceAfter: number; user: UserCard | null; by: string | null; at: string };
+
+const Gems = ({ n, sign }: { n: number; sign?: boolean }) => (
+  <span className="gem">
+    {sign && n > 0 ? '+' : ''}
+    {num(n)}
+  </span>
+);
+const Beans = ({ n }: { n: number }) => <span className="bean">{num(n)}</span>;
 
 // Naya / edit agency — modal (owner password se confirm)
 function AgencyEditor({ agency, onClose, onSaved }: { agency: Agency | null; onClose: () => void; onSaved: () => void }) {
@@ -27,9 +37,9 @@ function AgencyEditor({ agency, onClose, onSaved }: { agency: Agency | null; onC
   const [code, setCode] = useState(agency?.code ?? '');
   const [email, setEmail] = useState(agency?.email ?? '');
   const [pct, setPct] = useState(String(agency?.commissionPct ?? 10));
+  const [gpb, setGpb] = useState(String(agency?.gemsPerBean ?? 10));
   const [status, setStatus] = useState<'active' | 'disabled'>(agency?.status ?? 'active');
   const [password, setPassword] = useState('');
-  const [myPassword, setMyPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const editing = !!agency;
   // Purani agency jiska login abhi nahi bana (jaise seed wali) — email ke saath password bhi chahiye
@@ -50,22 +60,26 @@ function AgencyEditor({ agency, onClose, onSaved }: { agency: Agency | null; onC
   if (!editing && !/^[A-Za-z0-9]{2,20}$/.test(code.trim())) miss.push('code');
   if ((firstLogin || emailChanged) && !/^\S+@\S+\.\S+$/.test(email.trim())) miss.push('email');
   if (!(Number(pct) >= 0 && Number(pct) <= 50)) miss.push('commission 0–50%');
+  if (!(Number.isInteger(Number(gpb)) && Number(gpb) >= 1)) miss.push('bean rate (1 or more)');
   if (firstLogin && password.length < 10) miss.push('password (10+)');
-  if (!myPassword) miss.push('your password');
 
   const save = async () => {
     setBusy(true);
+    const common = { name: name.trim(), commissionPct: Number(pct), gemsPerBean: Number(gpb) };
     const body = editing
-      ? { name: name.trim(), commissionPct: Number(pct), ...(status !== agency!.status ? { status } : {}), ...(emailChanged ? { email: email.trim() } : {}), ...(password ? { password } : {}), myPassword }
-      : { name: name.trim(), code: code.trim().toUpperCase(), email: email.trim(), commissionPct: Number(pct), password, myPassword };
+      ? { ...common, ...(status !== agency!.status ? { status } : {}), ...(emailChanged ? { email: email.trim() } : {}), ...(password ? { password } : {}) }
+      : { ...common, code: code.trim().toUpperCase(), email: email.trim(), password };
     const ok = await run(() => api(editing ? `/agencies/${agency!.id}` : '/agencies', { method: editing ? 'PATCH' : 'POST', body }), editing ? 'Agency saved' : 'Agency created');
     setBusy(false);
     if (ok) onSaved();
   };
 
+  const exGems = 100_000;
+  const exBeans = Math.floor(Math.floor((exGems * Number(pct)) / 100) / Math.max(1, Number(gpb) || 1));
+
   return (
     <div className="overlay" onMouseDown={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ width: 480 }}>
+      <div className="modal" style={{ width: 500 }}>
         <h3>{editing ? `Edit · ${agency!.name}` : 'New agency'}</h3>
         <p>They log in to the separate agency portal with this email + password.</p>
         <div className="g2" style={{ gridTemplateColumns: '1fr 1fr', marginTop: 8 }}>
@@ -77,7 +91,7 @@ function AgencyEditor({ agency, onClose, onSaved }: { agency: Agency | null; onC
             Invite code {editing ? '(fixed)' : '*'}
             <input className="input" value={code} placeholder="e.g. AG1045" disabled={editing} onChange={e => setCode(e.target.value.toUpperCase())} maxLength={20} />
           </label>
-          <label className="lbl">
+          <label className="lbl" style={{ gridColumn: '1 / 3' }}>
             Login email *
             <input className="input" type="email" value={email} placeholder="agency@email.com" onChange={e => setEmail(e.target.value)} />
           </label>
@@ -85,11 +99,20 @@ function AgencyEditor({ agency, onClose, onSaved }: { agency: Agency | null; onC
             Commission % *
             <input className="input" type="number" min={0} max={50} value={pct} onChange={e => setPct(e.target.value)} />
           </label>
-          <label className="lbl" style={{ gridColumn: '1 / 3' }}>
-            {firstLogin ? 'First password (10+ chars) *' : 'New password (leave blank to keep)'}
-            <input className="input" type="password" value={password} placeholder={firstLogin ? '10+ letters and numbers' : '••••••••••'} onChange={e => setPassword(e.target.value)} />
+          <label className="lbl">
+            1 bean = how many gems *
+            <input className="input" type="number" min={1} value={gpb} onChange={e => setGpb(e.target.value)} />
           </label>
         </div>
+        {miss.every(m => !m.startsWith('commission') && !m.startsWith('bean')) && (
+          <div className="note-blue mt">
+            Example: their hosts earn {num(exGems)} gems → commission {pct}% → <b>{num(exBeans)} beans</b>. The agency sees only beans — not the % or this rate.
+          </div>
+        )}
+        <label className="lbl mt">
+          {firstLogin ? 'Agency’s first password (10+ chars) *' : 'Agency’s new password (leave blank to keep)'}
+          <input className="input" type="password" autoComplete="new-password" value={password} placeholder={firstLogin ? '10+ letters and numbers' : '••••••••••'} onChange={e => setPassword(e.target.value)} />
+        </label>
         {editing && (
           <div className="lbl mt">
             Status
@@ -104,10 +127,6 @@ function AgencyEditor({ agency, onClose, onSaved }: { agency: Agency | null; onC
             {status === 'disabled' && agency!.status === 'active' && <span className="dimtxt">Their invite link stops working and they can’t log in.</span>}
           </div>
         )}
-        <label className="lbl mt">
-          Your password (to confirm) *
-          <input className="input" type="password" value={myPassword} onChange={e => setMyPassword(e.target.value)} autoComplete="current-password" />
-        </label>
         <div className="acts end mt">
           {miss.length > 0 && <span className="red ml-auto" style={{ fontSize: 12 }}>Enter {miss.slice(0, 2).join(' and ')}</span>}
           <button className="btn b-ghost" onClick={onClose}>
@@ -122,153 +141,103 @@ function AgencyEditor({ agency, onClose, onSaved }: { agency: Agency | null; onC
   );
 }
 
-// Commission payout record karo (paise owner apne bank / UPI se bhejta hai)
-function PayDialog({ agency, onClose, onSaved }: { agency: Agency; onClose: () => void; onSaved: () => void }) {
+// Agency ke stock me gems (paisa owner app ke bahar leta hai)
+function AddGemsDialog({ agency, onClose, onSaved }: { agency: { id: number; name: string; gemBalance: number }; onClose: () => void; onSaved: () => void }) {
   const { run } = useUi();
-  const [amount, setAmount] = useState(String(agency.owedInr));
-  const [method, setMethod] = useState<'upi' | 'bank' | 'cash'>('upi');
-  const [reference, setReference] = useState('');
-  const [note, setNote] = useState('');
-  const [myPassword, setMyPassword] = useState('');
+  const [gems, setGems] = useState('');
   const [busy, setBusy] = useState(false);
-  const amt = Math.round(Number(amount));
+  const g = Math.round(Number(gems));
   const miss: string[] = [];
-  if (!(amt >= 1)) miss.push('amount');
-  else if (amt > agency.owedInr) miss.push(`amount up to ${inr(agency.owedInr)}`);
-  if (method !== 'cash' && !/^[A-Za-z0-9]{6,40}$/.test(reference.trim())) miss.push('UTR / reference');
-  if (method === 'cash' && note.trim().length < 3) miss.push('a note');
-  if (!myPassword) miss.push('your password');
+  if (!(g >= 1 && g <= 100_000_000)) miss.push('gems');
   const save = async () => {
     setBusy(true);
-    const ok = await run(
-      () => api(`/agencies/${agency.id}/payouts`, { body: { amountInr: amt, method, reference: method === 'cash' ? undefined : reference.trim(), note: note.trim() || undefined, myPassword } }),
-      'Payout recorded',
-    );
+    const ok = await run(() => api(`/agencies/${agency.id}/gems`, { body: { gems: g } }), 'Gems added');
     setBusy(false);
     if (ok) onSaved();
   };
   return (
     <div className="overlay" onMouseDown={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ width: 460 }}>
-        <h3>Pay {agency.name}</h3>
-        <p>First send the money from your bank app, then record it here.</p>
-        <div className="g2" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginTop: 10 }}>
-          <div className="kpi">
-            <small>Earned</small>
-            <b className="gold" style={{ fontSize: 16 }}>
-              {inr(agency.earnedInr)}
-            </b>
-          </div>
-          <div className="kpi">
-            <small>Paid</small>
-            <b className="green" style={{ fontSize: 16 }}>
-              {inr(agency.paidInr)}
-            </b>
-          </div>
-          <div className="kpi">
-            <small>Owed</small>
-            <b className="amber" style={{ fontSize: 16 }}>
-              {inr(agency.owedInr)}
-            </b>
-          </div>
+      <div className="modal" style={{ width: 420 }}>
+        <h3>Add gems · {agency.name}</h3>
+        <p>Take the money from the agency first (outside the app), then add the gems here.</p>
+        <div className="kpi mt">
+          <small>Gems stock now</small>
+          <b style={{ fontSize: 18 }}>
+            <Gems n={agency.gemBalance} />
+          </b>
         </div>
         <label className="lbl mt">
-          Amount (₹) *
-          <input className="input" type="number" min={1} max={agency.owedInr} value={amount} onChange={e => setAmount(e.target.value)} />
+          Gems to add *
+          <input className="input" type="number" min={1} value={gems} placeholder="e.g. 500000" onChange={e => setGems(e.target.value)} autoFocus />
         </label>
-        <div className="lbl mt">
-          Paid by *
-          <div className="pill-chips">
-            {(
-              [
-                ['upi', 'UPI'],
-                ['bank', 'Bank transfer'],
-                ['cash', 'Cash'],
-              ] as const
-            ).map(([k, label]) => (
-              <button type="button" key={k} className={method === k ? 'on' : ''} onClick={() => setMethod(k)}>
-                {label}
-              </button>
-            ))}
-          </div>
+        <div className="pill-chips">
+          {[100_000, 500_000, 1_000_000].map(v => (
+            <button type="button" key={v} className={g === v ? 'on' : ''} onClick={() => setGems(String(v))}>
+              {num(v)}
+            </button>
+          ))}
         </div>
-        {method !== 'cash' && (
-          <label className="lbl">
-            UTR / reference *
-            <input className="input" value={reference} placeholder="e.g. 412398765432" onChange={e => setReference(e.target.value)} maxLength={40} />
-          </label>
-        )}
-        <label className="lbl">
-          Note {method === 'cash' ? '*' : '(optional)'}
-          <input className="input" value={note} placeholder="e.g. October commission" onChange={e => setNote(e.target.value)} maxLength={200} />
-        </label>
-        <label className="lbl">
-          Your password (to confirm) *
-          <input className="input" type="password" value={myPassword} onChange={e => setMyPassword(e.target.value)} autoComplete="current-password" />
-        </label>
         <div className="acts end mt">
-          {miss.length > 0 && (
-            <span className="red ml-auto" style={{ fontSize: 12 }}>
-              Enter {miss.slice(0, 2).join(' and ')}
-            </span>
-          )}
+          {miss.length > 0 && <span className="red ml-auto" style={{ fontSize: 12 }}>Enter {miss.join(' and ')}</span>}
           <button className="btn b-ghost" onClick={onClose}>
             Cancel
           </button>
           <button className="btn b-gold" disabled={busy || miss.length > 0} onClick={save}>
-            {busy ? 'Saving…' : `Record payout ${amt >= 1 ? inr(amt) : ''}`}
+            {busy ? 'Adding…' : `Add ${g >= 1 ? num(g) : ''} gems`}
           </button>
         </div>
-        <div className="dimtxt mt">Can’t be more than owed. Every payout is saved in the audit log and can’t be deleted.</div>
+        <div className="dimtxt mt">Stock after: {num(agency.gemBalance + (g >= 1 ? g : 0))} gems · saved in the audit log.</div>
       </div>
     </div>
   );
 }
 
-function PayoutsTable({ agencyId }: { agencyId: number }) {
-  const h = useApi<{ items: Payout[] }>(`/agencies/${agencyId}/payouts`);
+// Gems ka hisaab: admin ne diye / agency ne users ko bheje
+function GemsTable({ agencyId }: { agencyId: number }) {
+  const { go } = useAuth();
+  const h = useApi<{ items: GemRow[] }>(`/agencies/${agencyId}/gems`);
   return (
     <div className="card mt">
       <table>
         <thead>
           <tr>
             <th>DATE</th>
-            <th className="r">AMOUNT</th>
-            <th>METHOD</th>
-            <th>UTR / REF</th>
-            <th>NOTE</th>
-            <th>BY</th>
+            <th>WHAT</th>
+            <th className="r">GEMS</th>
+            <th className="r">STOCK AFTER</th>
           </tr>
         </thead>
         <tbody>
           {h.data?.items.map(x => (
-            <tr key={x.id}>
+            <tr key={x.id} className={x.user ? 'click' : ''} onClick={() => x.user && go('users', String(x.user.publicId))}>
               <td className="nowrap">{date(x.at)}</td>
-              <td className="r green">{inr(x.amountInr)}</td>
-              <td>{METHOD[x.method] ?? x.method}</td>
-              <td className="dimtxt">{x.reference ?? '—'}</td>
-              <td>{x.note ?? '—'}</td>
-              <td>{x.by ?? '—'}</td>
+              <td>{x.kind === 'admin_add' ? <span>Added by {x.by ?? 'admin'}</span> : <Who u={x.user} sub={x.user ? `sent to ID ${x.user.publicId}` : undefined} />}</td>
+              <td className={`r ${x.gems > 0 ? 'green' : ''}`}>
+                <Gems n={x.gems} sign />
+              </td>
+              <td className="r dimtxt">{num(x.balanceAfter)}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      {h.data && !h.data.items.length && <Empty>No payouts yet</Empty>}
+      {h.data && !h.data.items.length && <Empty>No gems added or sent yet</Empty>}
     </div>
   );
 }
 
 type Detail = {
-  agency: { id: number; code: string; name: string; email: string | null; commissionPct: number; status: 'active' | 'disabled'; createdAt: string };
+  agency: { id: number; code: string; name: string; email: string | null; commissionPct: number; gemsPerBean: number; status: 'active' | 'disabled'; createdAt: string };
   counts: { signedUp: number; approved: number; pending: number; rejected: number };
-  earningsInr: number;
-  earnedInr: number;
-  paidInr: number;
-  owedInr: number;
-  hosts: { user: UserCard | null; status: string; joinedAt: string; calls: number | null; earningsInr: number | null; commissionInr: number | null }[];
+  hostGems: number;
+  commissionBeans: number;
+  gemBalance: number;
+  gemsAdded: number;
+  gemsSent: number;
+  usersSent: number;
+  hosts: { user: UserCard | null; status: string; joinedAt: string; calls: number | null; gems: number | null; commissionBeans: number | null }[];
   signedUp: { user: UserCard; signedUpAt: string; form: string }[];
 };
-type DTab = 'hosts' | 'signed' | 'payouts';
+type DTab = 'hosts' | 'signed' | 'gems';
 
 const HostStatus = ({ s }: { s: string }) =>
   s === 'approved' ? <Pill tone="ok">Approved</Pill> : s === 'suspended' ? <Pill tone="no">Suspended</Pill> : s === 'pending' ? <Pill tone="pend">Pending</Pill> : <Pill tone="no">Rejected</Pill>;
@@ -280,19 +249,20 @@ const FORM: Record<string, [string, 'ok' | 'pend' | 'no' | 'gray']> = {
   not_allowed: ['Not allowed (men can’t host)', 'gray'],
 };
 
-// Agency ka poora hisaab — kaun aaya, kaun host bana, har host se kitna commission
+// Agency ka poora hisaab — kaun aaya, kaun host bana, har host se kitna commission, gems stock
 function AgencyDetail({ aid, initialTab }: { aid: number; initialTab: DTab }) {
   const { go } = useAuth();
   const d = useApi<Detail>(`/agencies/${aid}/detail`);
   const [tab, setTab] = useState<DTab>(initialTab);
   const [edit, setEdit] = useState(false);
-  const [pay, setPay] = useState(false);
+  const [addGems, setAddGems] = useState(false);
+  const [gemsKey, setGemsKey] = useState(0);
   const x = d.data;
-  // Edit / Pay dialog ko list wala shape chahiye
+  // Edit dialog ko list wala shape chahiye
   const asRow: Agency | null = x
-    ? { ...x.agency, hosts: x.counts.approved, earningsInr: x.earningsInr, earnedInr: x.earnedInr, paidInr: x.paidInr, owedInr: x.owedInr, lastLoginAt: null }
+    ? { ...x.agency, hosts: x.counts.approved, hostGems: x.hostGems, commissionBeans: x.commissionBeans, gemBalance: x.gemBalance, gemsAdded: x.gemsAdded, gemsSent: x.gemsSent, usersSent: x.usersSent, lastLoginAt: null }
     : null;
-  const approvedHosts = x?.hosts.filter(h => h.earningsInr !== null) ?? [];
+  const approvedHosts = x?.hosts.filter(h => h.gems !== null) ?? [];
   const open = (u: UserCard | null) => u && go(u.role === 'host' ? 'hosts' : 'users', String(u.publicId));
 
   return (
@@ -311,7 +281,7 @@ function AgencyDetail({ aid, initialTab }: { aid: number; initialTab: DTab }) {
                   {x.agency.name} {x.agency.status === 'active' ? <Pill tone="ok">Active</Pill> : <Pill tone="no">Paused</Pill>}
                 </h2>
                 <small>
-                  {x.agency.code} · {x.agency.email ?? 'no login'} · {x.agency.commissionPct}% commission · since {date(x.agency.createdAt)}
+                  {x.agency.code} · {x.agency.email ?? 'no login'} · {x.agency.commissionPct}% commission · 1 bean = {num(x.agency.gemsPerBean)} gems · since {date(x.agency.createdAt)}
                 </small>
               </span>
             </div>
@@ -319,8 +289,8 @@ function AgencyDetail({ aid, initialTab }: { aid: number; initialTab: DTab }) {
               <button className="btn b-ghost" onClick={() => setEdit(true)}>
                 Edit
               </button>
-              <button className="btn b-gold" disabled={x.owedInr < 1} onClick={() => setPay(true)}>
-                Pay {inr(x.owedInr)}
+              <button className="btn b-gold" onClick={() => setAddGems(true)}>
+                + Gems
               </button>
             </div>
           </div>
@@ -329,25 +299,33 @@ function AgencyDetail({ aid, initialTab }: { aid: number; initialTab: DTab }) {
             <div className="kpi">
               <small>Signed up via link</small>
               <b>{num(x.counts.signedUp)}</b>
-              <em>opened the app with their link</em>
-            </div>
-            <div className="kpi">
-              <small>Hosts</small>
-              <b className="green">{num(x.counts.approved)}</b>
               <em>
-                approved · {x.counts.pending} pending · {x.counts.rejected} rejected
+                hosts: {x.counts.approved} approved · {x.counts.pending} pending · {x.counts.rejected} rejected
               </em>
             </div>
-            <div className="kpi gold">
-              <small>Host earnings · since joining</small>
-              <b>{inr(x.earningsInr)}</b>
-              <em>what their hosts earned</em>
+            <div className="kpi">
+              <small>Hosts earned · since joining</small>
+              <b>
+                <Gems n={x.hostGems} />
+              </b>
+              <em>gems their hosts earned</em>
             </div>
             <div className="kpi">
               <small>Commission</small>
-              <b className="amber">{inr(x.owedInr)} owed</b>
+              <b>
+                <Beans n={x.commissionBeans} />
+              </b>
               <em>
-                earned {inr(x.earnedInr)} · paid {inr(x.paidInr)}
+                {x.agency.commissionPct}% · 1 bean = {num(x.agency.gemsPerBean)} gems
+              </em>
+            </div>
+            <div className="kpi">
+              <small>Gems stock</small>
+              <b>
+                <Gems n={x.gemBalance} />
+              </b>
+              <em>
+                sent {num(x.gemsSent)} to {num(x.usersSent)} user{x.usersSent === 1 ? '' : 's'}
               </em>
             </div>
           </div>
@@ -359,7 +337,7 @@ function AgencyDetail({ aid, initialTab }: { aid: number; initialTab: DTab }) {
               items={[
                 ['hosts', `Hosts · ${x.hosts.length}`],
                 ['signed', `Signed up via link · ${x.counts.signedUp}`],
-                ['payouts', 'Payouts'],
+                ['gems', 'Gems added / sent'],
               ]}
             />
           </div>
@@ -373,8 +351,8 @@ function AgencyDetail({ aid, initialTab }: { aid: number; initialTab: DTab }) {
                     <th>STATUS</th>
                     <th>JOINED</th>
                     <th className="r">CALLS</th>
-                    <th className="r">EARNED</th>
-                    <th className="r">COMMISSION ({x.agency.commissionPct}%)</th>
+                    <th className="r">GEMS EARNED</th>
+                    <th className="r">COMMISSION BEANS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -388,8 +366,8 @@ function AgencyDetail({ aid, initialTab }: { aid: number; initialTab: DTab }) {
                       </td>
                       <td className="nowrap">{date(h.joinedAt)}</td>
                       <td className="r">{h.calls === null ? '—' : num(h.calls)}</td>
-                      <td className="r gold">{h.earningsInr === null ? '—' : inr(h.earningsInr)}</td>
-                      <td className="r amber">{h.commissionInr === null ? '—' : inr(h.commissionInr)}</td>
+                      <td className="r">{h.gems === null ? '—' : <Gems n={h.gems} />}</td>
+                      <td className="r">{h.commissionBeans === null ? '—' : <Beans n={h.commissionBeans} />}</td>
                     </tr>
                   ))}
                   {approvedHosts.length > 0 && (
@@ -402,11 +380,15 @@ function AgencyDetail({ aid, initialTab }: { aid: number; initialTab: DTab }) {
                       <td className="r">
                         <b>{num(approvedHosts.reduce((n, h) => n + (h.calls ?? 0), 0))}</b>
                       </td>
-                      <td className="r gold">
-                        <b>{inr(x.earningsInr)}</b>
+                      <td className="r">
+                        <b>
+                          <Gems n={x.hostGems} />
+                        </b>
                       </td>
-                      <td className="r amber">
-                        <b>{inr(approvedHosts.reduce((n, h) => n + (h.commissionInr ?? 0), 0))}</b>
+                      <td className="r">
+                        <b>
+                          <Beans n={x.commissionBeans} />
+                        </b>
                       </td>
                     </tr>
                   )}
@@ -416,7 +398,9 @@ function AgencyDetail({ aid, initialTab }: { aid: number; initialTab: DTab }) {
             </div>
           )}
           {tab === 'hosts' && x.hosts.length > 0 && (
-            <div className="alert a-blue">Earned = what the host made since this agency was added. Commission = Earned × agency %. The total matches “Earned” in the Agencies list.</div>
+            <div className="alert a-blue">
+              Gems earned = since this agency was added. Commission = all hosts’ gems × {x.agency.commissionPct}% ÷ {num(x.agency.gemsPerBean)} = beans. The agency sees only the beans. Agency withdraw is off for now.
+            </div>
           )}
 
           {tab === 'signed' && (
@@ -452,12 +436,18 @@ function AgencyDetail({ aid, initialTab }: { aid: number; initialTab: DTab }) {
             </div>
           )}
 
-          {tab === 'payouts' && <PayoutsTable agencyId={x.agency.id} />}
+          {tab === 'gems' && <GemsTable key={gemsKey} agencyId={x.agency.id} />}
         </>
       )}
 
       {edit && asRow && <AgencyEditor agency={asRow} onClose={() => setEdit(false)} onSaved={() => (setEdit(false), d.reload())} />}
-      {pay && asRow && <PayDialog agency={asRow} onClose={() => setPay(false)} onSaved={() => (setPay(false), d.reload())} />}
+      {addGems && x && (
+        <AddGemsDialog
+          agency={{ id: x.agency.id, name: x.agency.name, gemBalance: x.gemBalance }}
+          onClose={() => setAddGems(false)}
+          onSaved={() => (setAddGems(false), d.reload(), setGemsKey(k => k + 1))}
+        />
+      )}
     </section>
   );
 }
@@ -466,13 +456,13 @@ export default function Agencies({ id }: { id?: string }) {
   const { go } = useAuth();
   const list = useApi<Data>(id ? null : '/agencies');
   const [edit, setEdit] = useState<'new' | null>(null);
-  const [pay, setPay] = useState<Agency | null>(null);
+  const [addGems, setAddGems] = useState<Agency | null>(null);
   const t = list.data?.totals;
 
-  // #/agencies/4 = detail · #/agencies/4-payouts = seedha payouts tab
+  // #/agencies/4 = detail · #/agencies/4-gems = seedha gems tab
   if (id) {
     const [n, tab] = id.split('-');
-    return <AgencyDetail key={id} aid={Number(n)} initialTab={tab === 'payouts' ? 'payouts' : tab === 'signed' ? 'signed' : 'hosts'} />;
+    return <AgencyDetail key={id} aid={Number(n)} initialTab={tab === 'gems' ? 'gems' : tab === 'signed' ? 'signed' : 'hosts'} />;
   }
 
   return (
@@ -480,7 +470,7 @@ export default function Agencies({ id }: { id?: string }) {
       <div className="top">
         <div>
           <h2>Agencies</h2>
-          <div className="sub">Partners who bring hosts · commission is paid by you, outside the app</div>
+          <div className="sub">Partners who bring hosts and sell gems to users · money for gems is taken outside the app</div>
         </div>
         <div className="right">
           <button className="btn b-rose" onClick={() => setEdit('new')}>
@@ -495,20 +485,20 @@ export default function Agencies({ id }: { id?: string }) {
           <b>{t?.agencies ?? '—'}</b>
           <em>{t ? `${t.active} active · ${num(t.hosts)} host${t.hosts === 1 ? '' : 's'}` : ''}</em>
         </div>
-        <div className="kpi gold">
-          <small>Commission earned · all time</small>
-          <b>{t ? inr(t.earnedInr) : '—'}</b>
-          <em>at each agency’s %</em>
+        <div className="kpi">
+          <small>Gems given to agencies</small>
+          <b>{t ? <Gems n={t.gemsAdded} /> : '—'}</b>
+          <em>all time</em>
         </div>
         <div className="kpi">
-          <small>Paid to agencies</small>
-          <b className="green">{t ? inr(t.paidInr) : '—'}</b>
-          <em>{t ? `${num(t.payouts)} payout${t.payouts === 1 ? '' : 's'}` : ''}</em>
+          <small>Gems sent to users</small>
+          <b>{t ? <Gems n={t.gemsSent} /> : '—'}</b>
+          <em>by agencies</em>
         </div>
         <div className="kpi">
-          <small>Owed now</small>
-          <b className="amber">{t ? inr(t.owedInr) : '—'}</b>
-          <em>still to pay</em>
+          <small>Commission</small>
+          <b>{t ? <Beans n={t.commissionBeans} /> : '—'}</b>
+          <em>beans · all agencies</em>
         </div>
       </div>
 
@@ -518,10 +508,10 @@ export default function Agencies({ id }: { id?: string }) {
             <tr>
               <th>AGENCY</th>
               <th>HOSTS</th>
-              <th>%</th>
-              <th className="r">EARNED</th>
-              <th className="r">PAID</th>
-              <th className="r">OWED</th>
+              <th>COMMISSION</th>
+              <th className="r">HOSTS EARNED</th>
+              <th className="r">COMMISSION BEANS</th>
+              <th className="r">GEMS STOCK</th>
               <th>STATUS</th>
               <th></th>
             </tr>
@@ -545,18 +535,30 @@ export default function Agencies({ id }: { id?: string }) {
                     {num(a.hosts)}
                   </button>
                 </td>
-                <td>{a.commissionPct}%</td>
-                <td className="r gold">{inr(a.earnedInr)}</td>
-                <td className="r green">{inr(a.paidInr)}</td>
-                <td className="r amber">
-                  <b>{inr(a.owedInr)}</b>
+                <td className="stack nowrap">
+                  <b>{a.commissionPct}%</b>
+                  <small>1 bean = {num(a.gemsPerBean)} gems</small>
+                </td>
+                <td className="r">
+                  <Gems n={a.hostGems} />
+                </td>
+                <td className="r">
+                  <Beans n={a.commissionBeans} />
+                </td>
+                <td className="r stack">
+                  <b>
+                    <Gems n={a.gemBalance} />
+                  </b>
+                  <small>
+                    sent {num(a.gemsSent)} · {num(a.usersSent)} user{a.usersSent === 1 ? '' : 's'}
+                  </small>
                 </td>
                 <td>{a.status === 'active' ? <Pill tone="ok">Active</Pill> : <Pill tone="no">Paused</Pill>}</td>
                 <td className="r nowrap">
-                  <button className="btn b-gold sm" disabled={a.owedInr < 1} onClick={() => setPay(a)}>
-                    Pay
+                  <button className="btn b-gold sm" onClick={() => setAddGems(a)}>
+                    + Gems
                   </button>
-                  <button className="btn b-ghost sm" onClick={() => go('agencies', `${a.id}-payouts`)} style={{ marginLeft: 6 }}>
+                  <button className="btn b-ghost sm" onClick={() => go('agencies', `${a.id}-gems`)} style={{ marginLeft: 6 }}>
                     History
                   </button>
                 </td>
@@ -568,7 +570,7 @@ export default function Agencies({ id }: { id?: string }) {
       </div>
 
       {edit && <AgencyEditor agency={null} onClose={() => setEdit(null)} onSaved={() => (setEdit(null), list.reload())} />}
-      {pay && <PayDialog agency={pay} onClose={() => setPay(null)} onSaved={() => (setPay(null), list.reload())} />}
+      {addGems && <AddGemsDialog agency={addGems} onClose={() => setAddGems(null)} onSaved={() => (setAddGems(null), list.reload())} />}
     </section>
   );
 }

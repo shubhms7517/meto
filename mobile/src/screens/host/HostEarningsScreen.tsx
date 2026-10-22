@@ -15,11 +15,12 @@ import type { RootStackParamList } from '../../navigation/types';
 import {
   getEarnings,
   getHostMe,
-  inr,
+  fmt,
   type EarningsPage,
   type HostTx,
 } from '../../services/host';
 import { HostHeader } from './common';
+import Coin from '../../components/Coin';
 import TxRow from './TxRow';
 import {
   EmptyState,
@@ -52,7 +53,7 @@ export default function HostEarningsScreen({ navigation }: Props) {
       const [p, h] = await Promise.all([getEarnings(k), getHostMe()]);
       setPage(p);
       setItems(p.items);
-      setBalance(h.points);
+      setBalance(h.gems);
       setFailed(false);
     } catch {
       setFailed(true);
@@ -76,7 +77,6 @@ export default function HostEarningsScreen({ navigation }: Props) {
     setItems(x => [...x, ...p.items]);
   };
 
-  const per = page?.pointsPerInr ?? 100;
   const withdraw = () => navigation.navigate('Withdraw');
 
   return (
@@ -90,21 +90,19 @@ export default function HostEarningsScreen({ navigation }: Props) {
       <FlatList
         data={items}
         keyExtractor={t => String(t.id)}
-        renderItem={({ item }) => <TxRow t={item} perInr={per} />}
+        renderItem={({ item }) => <TxRow t={item} />}
         onEndReached={more}
         onEndReachedThreshold={0.4}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         ListHeaderComponent={
           <View>
             <View style={st.big}>
-              <Text style={st.bigLbl}>Available balance</Text>
-              <Text style={st.bigAmt}>
-                {balance == null ? '…' : inr(balance, per)}
-              </Text>
-              <Text style={st.bigSub}>
-                {balance == null ? '…' : balance.toLocaleString('en-IN')} points
-                · {per} points = ₹1
-              </Text>
+              <Text style={st.bigLbl}>Your gems</Text>
+              <View style={st.bigRow}>
+                <Coin size={26} />
+                <Text style={st.bigAmt}>{balance == null ? '…' : fmt(balance)}</Text>
+              </View>
+              <Text style={st.bigSub}>Change to beans when you withdraw</Text>
             </View>
             <Pressable onPress={withdraw}>
               <LinearGradient
@@ -145,7 +143,7 @@ export default function HostEarningsScreen({ navigation }: Props) {
               <View style={st.split}>
                 {(['call', 'gift', 'message'] as const).map(k => (
                   <View key={k} style={st.splitItem}>
-                    <Text style={st.splitAmt}>{inr(page.totals[k], per)}</Text>
+                    <Text style={st.splitAmt}>{fmt(page.totals[k])}</Text>
                     <Text style={st.splitLbl}>
                       {k === 'call'
                         ? 'Calls'
@@ -190,6 +188,7 @@ const st = StyleSheet.create({
     borderColor: 'rgba(246,220,155,0.4)',
   },
   bigLbl: { color: colors.muted, fontSize: 12 },
+  bigRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   bigAmt: {
     color: colors.gold1,
     fontSize: 34,

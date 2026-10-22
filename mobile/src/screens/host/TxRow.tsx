@@ -1,12 +1,14 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme';
-import { inr, type HostTx } from '../../services/host';
+import { fmt, type HostTx } from '../../services/host';
+import Coin from '../../components/Coin';
 
 const ICON: Record<string, string> = { call: '📞', gift: '🎁', message: '💬', withdraw: '🏦', refund: '↩️', admin: '⭐', unlock: '🔓' };
 
-export default function TxRow({ t, perInr }: { t: HostTx; perInr: number }) {
-  const zero = t.points === 0;
+// Host ki kamai ki ek line — sirf gems (₹ nahi)
+export default function TxRow({ t }: { t: HostTx }) {
+  const zero = t.gems === 0;
   return (
     <View style={st.tx}>
       <View style={st.txIc}>
@@ -22,11 +24,14 @@ export default function TxRow({ t, perInr }: { t: HostTx; perInr: number }) {
         </Text>
       </View>
       <View style={{ alignItems: 'flex-end' }}>
-        <Text style={[st.txPts, t.points < 0 && { color: colors.rose1 }, zero && { color: colors.muted }]}>
-          {t.points > 0 ? '+' : ''}
-          {t.points.toLocaleString('en-IN')}
-        </Text>
-        <Text style={st.txInr}>{inr(Math.abs(t.points), perInr)}</Text>
+        <View style={st.gemRow}>
+          <Coin size={14} />
+          <Text style={[st.txPts, t.gems < 0 && { color: colors.rose1 }, zero && { color: colors.muted }]}>
+            {t.gems > 0 ? '+' : ''}
+            {fmt(t.gems)}
+          </Text>
+        </View>
+        <Text style={st.txInr}>gems</Text>
       </View>
     </View>
   );
@@ -37,6 +42,7 @@ const st = StyleSheet.create({
   txIc: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,95,143,0.12)' },
   txTitle: { color: colors.text, fontSize: 13.5, fontWeight: '700' },
   txSub: { color: colors.muted, fontSize: 11, marginTop: 1 },
+  gemRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   txPts: { color: colors.online, fontSize: 13.5, fontWeight: '800' },
   txInr: { color: colors.fine, fontSize: 10.5, marginTop: 1 },
 });

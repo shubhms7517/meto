@@ -122,10 +122,9 @@ export async function sendMessage(
     return m;
   });
 
-  // Host ko message ke points
+  // Host ko message ke poore gems
   if (pricing?.paid) {
-    const s = await getSettings();
-    await applyHostTx(receiver.id, Math.floor(pricing.price * s.hostPointsPerGem), { kind: 'message', title: `Message · ${sender.name ?? 'User'}`, uniqueKey: payKey }).catch(e =>
+    await applyHostTx(receiver.id, pricing.price, { kind: 'message', title: `Message · ${sender.name ?? 'User'}`, uniqueKey: payKey }).catch(e =>
       console.error('host msg credit', e),
     );
   }
