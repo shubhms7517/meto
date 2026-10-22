@@ -228,7 +228,7 @@ export default function MeScreen() {
           ))}
         </ScrollView>
 
-        {/* Host banna — sirf agency link wali ladki ko (server batata hai canApply) */}
+        {/* Host banna — har ladki ko (server batata hai canApply). Agency link ho to us agency ke under */}
         {host?.canApply && (
           <Pressable
             onPress={() => navigation.navigate(host.role === 'host' || host.application ? 'HostStatus' : 'HostIntro')}

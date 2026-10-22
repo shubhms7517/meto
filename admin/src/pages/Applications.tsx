@@ -38,7 +38,7 @@ export default function Applications({ id }: { id?: string }) {
   const reject = async (block: boolean) => {
     const r = await ask({
       title: block ? 'Reject and block?' : 'Reject application?',
-      text: block ? 'She can’t apply again without a new agency invite link.' : 'She can fix it and apply again.',
+      text: block ? 'She can’t apply to be a host again.' : 'She can fix it and apply again.',
       input: { label: 'Reason (shown to the applicant)', chips: REASONS, multiline: true },
       confirm: 'Reject',
       tone: 'red',

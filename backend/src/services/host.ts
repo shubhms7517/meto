@@ -107,7 +107,8 @@ export async function hostSummary(userId: number) {
     today,
     role: user?.role ?? 'user',
     // "Become a host" sirf agency link se aayi ladki ko (ya jiska form pehle se hai)
-    canApply: !!user && canBeHost(user) && (!!invite || !!hp),
+    // "Become a host" har ladki ko (agency link ho to us agency ke under, warna seedha Meto)
+    canApply: !!user && canBeHost(user) && !hp?.blocked,
     invite: invite ? { code: invite.code, name: invite.name } : null,
     application: hp ? { status: hp.status, rejectReason: hp.rejectReason, agency: agency ? { code: agency.code, name: agency.name } : null, reviewedAt: hp.reviewedAt } : null,
     rate: hp?.rate ?? null,
@@ -162,15 +163,15 @@ export async function acceptInvite(user: User, code: string) {
 type ApplyFiles = { photos: Buffer[]; video: Buffer; selfies: Buffer[] };
 
 // Form jama: sirf ladki, 18+, pehle se pending/approved nahi. Status → pending (admin dekhega)
-// Agency invite zaroori — code wahi jo link se aaya (form me badal nahi sakte)
+// Agency link se aayi → us agency ke under (badal nahi sakte). Bina link → seedha Meto (agency nahi, commission nahi)
 export async function applyHost(user: User, files: ApplyFiles) {
   assertCanBeHost(user);
   const agency = user.inviteAgencyId ? await Agency.findOne({ where: { id: user.inviteAgencyId, status: 'active' } }) : null;
-  if (!agency) throw forbidden('invite_required', 'You need an invite link from an agency to become a host');
   if (!user.age || user.age < 18) throw forbidden('underage', 'You must be 18 or older');
   if (files.photos.length !== 3) throw badRequest('Please add 3 photos');
   if (files.selfies.length !== 3) throw badRequest('Please take all 3 selfie poses');
   const existing = await HostProfile.findByPk(user.id);
+  if (existing?.blocked) throw forbidden('host_blocked', 'You can’t apply to be a host. Contact customer service');
   if (existing?.status === 'pending') throw new HttpError(409, 'already_applied', 'Your application is already under review');
   if (existing?.status === 'approved') throw new HttpError(409, 'already_host', 'You are already a host');
   if (existing?.status === 'suspended') throw forbidden('host_suspended', 'Your host account is suspended. Contact support');
@@ -184,7 +185,7 @@ export async function applyHost(user: User, files: ApplyFiles) {
   const s = await getSettings();
   await HostProfile.upsert({
     userId: user.id,
-    agencyId: agency.id,
+    agencyId: agency?.id ?? null,
     status: 'pending',
     rate: existing?.rate ?? s.hostRateDefault,
     available: false,

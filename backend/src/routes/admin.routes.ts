@@ -26,6 +26,7 @@ import {
   AdminSession,
   Agency,
   Gift,
+  HostProfile,
   User,
   Withdrawal,
   WalletTx,
@@ -194,7 +195,11 @@ adminRouter.post(
     });
     if (!u) throw notFound("User not found");
     await reviewHost(u.id, false, p.reason);
-    if (p.block) await u.update({ inviteAgencyId: null });
+    if (p.block) {
+      // Dobara apply band (agency link ho ya na ho)
+      await u.update({ inviteAgencyId: null });
+      await HostProfile.update({ blocked: true }, { where: { userId: u.id } });
+    }
     await audit(
       req,
       p.block ? "host.reject_block" : "host.reject",

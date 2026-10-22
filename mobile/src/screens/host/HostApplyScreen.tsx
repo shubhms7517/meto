@@ -15,7 +15,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'HostApply'>;
 const PHOTOS = 3;
 const VIDEO_SEC = 30; // live video (HostVideoScreen ka APPLY_SECONDS)
 
-// Form: 3 photo, 30 sec live video, umar (profile se), agency (invite link se, locked) → selfie
+// Form: 3 photo, 30 sec live video, umar (profile se), agency (invite link se locked, warna seedha Meto) → selfie
 export default function HostApplyScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const [photos, setPhotos] = useState<(string | null)[]>([null, null, null]);
@@ -48,7 +48,7 @@ export default function HostApplyScreen({ navigation, route }: Props) {
   }, [route.params?.video]);
 
   const tooYoung = dob?.age != null && dob.age < 18;
-  const ready = photos.every(Boolean) && !!video && !tooYoung && !!agency;
+  const ready = photos.every(Boolean) && !!video && !tooYoung;
 
   const next = () =>
     navigation.navigate('HostSelfie', { photos: photos as string[], video: video! });
@@ -100,15 +100,15 @@ export default function HostApplyScreen({ navigation, route }: Props) {
 
         <Text style={s.label}>Agency</Text>
         <View style={[st.input, st.locked]}>
-          <Text style={st.inputText}>{agency ? `${agency.name} · ${agency.code}` : '…'}</Text>
+          <Text style={st.inputText}>{agency ? `${agency.name} · ${agency.code}` : 'No agency · directly with Meto'}</Text>
           {agency && <Text style={st.okText}>✓ Locked</Text>}
         </View>
-        <Text style={st.hint}>You came from this agency's invite link, so it can't be changed.</Text>
+        <Text style={st.hint}>{agency ? "You came from this agency's invite link, so it can't be changed." : 'You are applying directly with the Meto team.'}</Text>
 
         <BigButton label="Next: live selfie" onPress={next} disabled={!ready} />
         {!ready && !tooYoung && (
           <Text style={st.need}>
-            {!photos.every(Boolean) ? 'Add 3 photos' : !video ? 'Record your intro video' : 'Agency invite missing'}
+            {!photos.every(Boolean) ? 'Add 3 photos' : !video ? 'Record your intro video' : 'You must be 18 or older'}
           </Text>
         )}
       </ScrollView>

@@ -99,6 +99,7 @@ export class HostProfile extends Model<InferAttributes<HostProfile>, InferCreati
   declare rate: CreationOptional<number>; // gems per minute jo user dega (host chunti hai)
   declare rateMin: CreationOptional<number | null>; // admin ki di hui range (null = Settings wali)
   declare rateMax: CreationOptional<number | null>;
+  declare blocked: CreationOptional<boolean>; // admin ne "Reject & block" kiya → dobara apply nahi
   declare available: CreationOptional<boolean>; // "Online for calls" switch
   declare application: Record<string, unknown> | null; // photos, video, selfie, dob
   declare rejectReason: string | null;
@@ -115,6 +116,7 @@ HostProfile.init(
     rate: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 1000 },
     rateMin: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
     rateMax: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+    blocked: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     available: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     application: { type: DataTypes.JSON, allowNull: true },
     rejectReason: { type: DataTypes.STRING(200), allowNull: true },

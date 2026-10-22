@@ -20,6 +20,7 @@ const COLUMNS: { table: string; column: string; ddl: string }[] = [
   { table: 'agencies', column: 'locked_until', ddl: 'DATETIME NULL DEFAULT NULL' },
   { table: 'host_profiles', column: 'rate_min', ddl: 'INT UNSIGNED NULL DEFAULT NULL' },
   { table: 'host_profiles', column: 'rate_max', ddl: 'INT UNSIGNED NULL DEFAULT NULL' },
+  { table: 'host_profiles', column: 'blocked', ddl: 'TINYINT(1) NOT NULL DEFAULT 0' },
   { table: 'agencies', column: 'gems_per_bean', ddl: 'INT UNSIGNED NOT NULL DEFAULT 10' },
   { table: 'agencies', column: 'gem_balance', ddl: 'BIGINT UNSIGNED NOT NULL DEFAULT 0' },
   { table: 'withdrawals', column: 'beans', ddl: 'BIGINT UNSIGNED NOT NULL DEFAULT 0' },

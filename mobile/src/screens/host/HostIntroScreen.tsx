@@ -19,28 +19,42 @@ const EARN = [
 
 type Agency = { code: string; name: string };
 
-// "Become a Host" (sirf agency link se): kis agency ne bulaya, kya milega, kya chahiye, niyam
+// "Become a Host": agency link se aayi to kis agency ne bulaya; Me tab se to seedha Meto.
+// Kya milega, kya chahiye, niyam → Apply
 export default function HostIntroScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const code = route.params?.invite;
   const [agency, setAgency] = useState<Agency | null>(null);
+  const [ready, setReady] = useState(false);
   const [fail, setFail] = useState<{ emoji: string; title: string; text: string } | null>(null);
 
   useEffect(() => {
-    // Link se aaye → server ko batao (wahi ladki/ladka jaanchta hai). Me tab se aaye → yaad rakha hua invite
-    const load = code ? acceptInvite(code) : getHostMe().then(h => h.invite);
+    // Link se aaye → server ko batao (wahi ladki/ladka jaanchta hai). Me tab se aaye → yaad rakha hua invite (ho to)
+    const load: Promise<Agency | null> = code
+      ? acceptInvite(code)
+      : getHostMe().then(h => {
+          if (h.role === 'host' || h.application) {
+            navigation.replace('HostStatus');
+            return null;
+          }
+          if (!h.canApply) throw new ApiError(403, 'invite_female_only', 'Only women can become hosts');
+          return h.invite;
+        });
     load
-      .then(a => (a ? setAgency(a) : setFail({ emoji: '🔗', title: 'Invite link needed', text: 'Ask an agency for their Meto invite link to become a host.' })))
+      .then(a => {
+        setAgency(a);
+        setReady(true);
+      })
       .catch(e => {
         const c = e instanceof ApiError ? e.code : '';
-        if (c === 'invite_female_only') setFail({ emoji: '🙅', title: 'This invite is only for women', text: 'Only women can become hosts on Meto. You can keep using the app as usual.' });
+        if (c === 'invite_female_only') setFail({ emoji: '🙅', title: 'Only women can be hosts', text: 'Only women can become hosts on Meto. You can keep using the app as usual.' });
         else if (c === 'already_host') navigation.replace('HostStatus');
         else if (c === 'agency_not_found') setFail({ emoji: '🔗', title: 'Invalid invite link', text: 'This agency link is not valid anymore. Ask your agency for a new one.' });
         else setFail({ emoji: '⚠️', title: 'Something went wrong', text: (e as Error).message });
       });
   }, [code, navigation]);
 
-  if (fail || !agency) {
+  if (fail || !ready) {
     return (
       <View style={s.root}>
         <StatusBar barStyle="light-content" />
@@ -66,22 +80,24 @@ export default function HostIntroScreen({ navigation, route }: Props) {
     <View style={s.root}>
       <StatusBar barStyle="light-content" />
       <LinearGradient colors={['#4a1230', '#1c0a15', colors.bg]} locations={[0, 0.45, 0.8]} style={StyleSheet.absoluteFill} />
-      <HostHeader title="Host invite" top={insets.top} onBack={() => navigation.goBack()} />
+      <HostHeader title={agency ? 'Host invite' : 'Become a host'} top={insets.top} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}>
-        <View style={st.agency}>
-          <LinearGradient colors={['#c9a6ff', '#4f2fb3']} style={st.agencyLogo}>
-            <Text style={st.agencyStar}>⭐</Text>
-          </LinearGradient>
-          <View style={st.flex}>
-            <Text style={st.agencyName}>{agency.name}</Text>
-            <Text style={st.agencyCode}>Code {agency.code}</Text>
+        {agency && (
+          <View style={st.agency}>
+            <LinearGradient colors={['#c9a6ff', '#4f2fb3']} style={st.agencyLogo}>
+              <Text style={st.agencyStar}>⭐</Text>
+            </LinearGradient>
+            <View style={st.flex}>
+              <Text style={st.agencyName}>{agency.name}</Text>
+              <Text style={st.agencyCode}>Code {agency.code}</Text>
+            </View>
+            <Text style={st.verified}>✓ Verified</Text>
           </View>
-          <Text style={st.verified}>✓ Verified</Text>
-        </View>
+        )}
 
         <LinearGradient colors={['rgba(255,95,143,0.28)', 'rgba(40,10,25,0.95)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.hero}>
           <Text style={st.heroEmoji}>🎙️</Text>
-          <Text style={st.heroTitle}>You're invited to be a Meto host</Text>
+          <Text style={st.heroTitle}>{agency ? "You're invited to be a Meto host" : 'Become a Meto host'}</Text>
           <Text style={st.heroSub}>Get paid for every call minute, gift and message. Go online whenever you want and withdraw to UPI.</Text>
         </LinearGradient>
 
